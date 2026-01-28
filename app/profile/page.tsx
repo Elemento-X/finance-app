@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Save, Trash2, User, DollarSign, Database, LogOut, MessageCircle, RefreshCw, Link2Off } from "lucide-react"
+import { Save, Trash2, User, DollarSign, Database, LogOut, MessageCircle, Link2Off } from "lucide-react"
 import { toast } from "sonner"
 import { CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from "@/lib/constants"
 import { useTranslation, type Locale } from "@/lib/i18n"
@@ -41,6 +41,18 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadData()
+  }, [loadData])
+
+  // Auto-refresh when window gains focus (for Telegram status update)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadData()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
   }, [loadData])
 
   useEffect(() => {
@@ -130,11 +142,6 @@ export default function ProfilePage() {
     window.open(link, "_blank", "noopener")
     toast.success(t("telegram.linkOpened"))
     setIsLinking(false)
-  }
-
-  const handleRefreshTelegram = async () => {
-    await loadData()
-    toast.success(t("telegram.refreshed"))
   }
 
   const handleDisconnectTelegram = async () => {
@@ -289,7 +296,9 @@ export default function ProfilePage() {
                 <p className="text-sm font-medium">
                   {profile.telegramChatId ? t("profile.telegramConnected") : t("profile.telegramDisconnected")}
                 </p>
-                <p className="text-sm text-muted-foreground">{t("profile.telegramHint")}</p>
+                {!profile.telegramChatId && (
+                  <p className="text-sm text-muted-foreground">{t("profile.telegramHint")}</p>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {profile.telegramChatId ? (
@@ -298,23 +307,18 @@ export default function ProfilePage() {
                     {isDisconnecting ? t("common.loading") : t("profile.telegramDisconnect")}
                   </Button>
                 ) : (
-                  <>
-                    <Button variant="outline" onClick={handleRefreshTelegram}>
-                      <RefreshCw className="size-4 mr-2" />
-                      {t("profile.telegramRefresh")}
-                    </Button>
-                    <Button onClick={handleConnectTelegram} disabled={isLinking}>
-                      <MessageCircle className="size-4 mr-2" />
-                      {isLinking ? t("common.loading") : t("profile.telegramConnect")}
-                    </Button>
-                  </>
+                  <Button onClick={handleConnectTelegram} disabled={isLinking}>
+                    <MessageCircle className="size-4 mr-2" />
+                    {isLinking ? t("common.loading") : t("profile.telegramConnect")}
+                  </Button>
                 )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <MigrationTool />
+        {/* Only show migration tool if user has no data in Supabase yet */}
+        {transactions.length === 0 && <MigrationTool />}
 
         <BackupManager />
 

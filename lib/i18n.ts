@@ -264,7 +264,7 @@ export const translations = {
     "profile.telegramConnect": "Connect Telegram",
     "profile.telegramDisconnect": "Disconnect",
     "profile.telegramRefresh": "Refresh status",
-    "profile.telegramHint": "After clicking Start in Telegram, refresh the status here.",
+    "profile.telegramHint": "Click the button to open Telegram and link your account.",
 
     // Telegram
     "telegram.authRequired": "Sign in to connect Telegram",
@@ -659,7 +659,7 @@ export const translations = {
     "profile.telegramConnect": "Conectar Telegram",
     "profile.telegramDisconnect": "Desconectar",
     "profile.telegramRefresh": "Atualizar status",
-    "profile.telegramHint": "Depois de clicar em Start no Telegram, atualize o status aqui.",
+    "profile.telegramHint": "Clique no botão para abrir o Telegram e vincular sua conta.",
 
     // Telegram
     "telegram.authRequired": "Faça login para conectar o Telegram",
