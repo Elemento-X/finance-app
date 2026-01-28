@@ -30,7 +30,7 @@ next-env.d.ts
 # editor
 .vscode/
 
-# claude code (keep commands/, ignore local settings)
+# claude code
 .claude/settings.local.json
 
 # OS files
