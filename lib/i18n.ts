@@ -257,6 +257,24 @@ export const translations = {
     "profile.deleteSuccess": "All data has been deleted",
     "profile.version": "Personal Financial Control v1.0",
     "profile.localStorage": "All data is stored locally in your browser",
+    "profile.telegramTitle": "Telegram Bot",
+    "profile.telegramDesc": "Connect Telegram to log transactions by chat",
+    "profile.telegramConnected": "Connected",
+    "profile.telegramDisconnected": "Not connected",
+    "profile.telegramConnect": "Connect Telegram",
+    "profile.telegramDisconnect": "Disconnect",
+    "profile.telegramRefresh": "Refresh status",
+    "profile.telegramHint": "After clicking Start in Telegram, refresh the status here.",
+
+    // Telegram
+    "telegram.authRequired": "Sign in to connect Telegram",
+    "telegram.botMissing": "Telegram bot is not configured",
+    "telegram.linkOpened": "Open Telegram and press Start to finish the connection",
+    "telegram.linkError": "Couldn't create the connection",
+    "telegram.alreadyLinked": "Telegram is already connected",
+    "telegram.disconnectSuccess": "Telegram disconnected",
+    "telegram.disconnectError": "Failed to disconnect Telegram",
+    "telegram.refreshed": "Status refreshed",
 
     // Backup
     "backup.title": "Backup & Restore",
@@ -634,6 +652,24 @@ export const translations = {
     "profile.deleteSuccess": "Todos os dados foram excluídos",
     "profile.version": "Controle Financeiro Pessoal v1.0",
     "profile.localStorage": "Todos os dados são armazenados localmente no seu navegador",
+    "profile.telegramTitle": "Bot do Telegram",
+    "profile.telegramDesc": "Conecte o Telegram para registrar transações pelo chat",
+    "profile.telegramConnected": "Conectado",
+    "profile.telegramDisconnected": "Não conectado",
+    "profile.telegramConnect": "Conectar Telegram",
+    "profile.telegramDisconnect": "Desconectar",
+    "profile.telegramRefresh": "Atualizar status",
+    "profile.telegramHint": "Depois de clicar em Start no Telegram, atualize o status aqui.",
+
+    // Telegram
+    "telegram.authRequired": "Faça login para conectar o Telegram",
+    "telegram.botMissing": "Bot do Telegram não configurado",
+    "telegram.linkOpened": "Abra o Telegram e clique em Start para finalizar a conexão",
+    "telegram.linkError": "Não foi possível criar a conexão",
+    "telegram.alreadyLinked": "O Telegram já está conectado",
+    "telegram.disconnectSuccess": "Telegram desconectado",
+    "telegram.disconnectError": "Falha ao desconectar o Telegram",
+    "telegram.refreshed": "Status atualizado",
 
     // Backup
     "backup.title": "Backup e Restauração",
