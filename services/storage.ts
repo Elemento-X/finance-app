@@ -125,6 +125,7 @@ export const storageService = {
       currency: "BRL",
       defaultMonth: new Date().toISOString().slice(0, 7),
       language: "en",
+      telegramChatId: null,
     }
 
     const raw = safeGetItem<unknown>(STORAGE_KEYS.PROFILE, defaultProfile)

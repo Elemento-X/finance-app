@@ -25,7 +25,7 @@ Trate esta conversa como uma discussão estratégica entre sócios que:
 ================================================================
 📚 CONTEXTO DO FINANCE APP
 
-**Nome do Sistema:** Controle Financeiro Pessoal
+**Nome do Sistema:** ControleC (Controle Financeiro Pessoal)
 
 **Objetivo do sistema:**
 
@@ -101,10 +101,11 @@ services/               → Lógica de negócio
 ├── brapi.ts            → API Brapi.dev (Radar de Ativos)
 └── __tests__/          → Testes unitários (Vitest)
 
-app/api/                → API Routes serverless (Vercel) (FUTURO — Fase 6)
+app/api/                → API Routes serverless (Vercel)
 └── telegram/route.ts   → Webhook handler do Telegram Bot
 
 lib/                    → Tipos, constantes, utilitários
+├── supabase-admin.ts   → Client Supabase (service role - server only)
 ├── types.ts            → Tipos de domínio
 ├── investment-types.ts → Tipos de investimentos
 ├── supabase.ts         → Client Supabase (createClient)
@@ -167,15 +168,15 @@ docs/                   → Documentação e scripts SQL
 - Supabase (PostgreSQL) — source of truth (CRUD + sync + stores integradas)
 - Sistema de migrações com versionamento
 
-**Bot / Integração (FUTURO — Fase 6):**
+**Bot / Integração (Fase 6 — em andamento):**
 
 - Telegram Bot API (registro de transações via chat)
-- Groq API (Llama 3) ou Google Gemini (parsing de linguagem natural)
+- Groq API (Llama 3) ou Google Gemini (parsing de linguagem natural) — pendente
 
-**Backend Serverless (FUTURO — Fase 6):**
+**Backend Serverless:**
 
-- Vercel API Routes (webhook handler do Telegram)
-- Supabase (PostgreSQL + Real-time + REST API)
+- Vercel API Routes (`/api/telegram` — webhook handler)
+- Supabase (PostgreSQL + Real-time + REST API + Service Role)
 
 ================================================================
 📊 MODELOS DE DADOS
@@ -242,6 +243,7 @@ docs/                   → Documentação e scripts SQL
   currency: 'BRL' | 'USD' | 'EUR'
   defaultMonth: string
   language: 'en' | 'pt'
+  telegramChatId?: number | null  // Vinculação com Telegram Bot
 }
 ```
 
@@ -295,8 +297,8 @@ docs/                   → Documentação e scripts SQL
 | `market_data_cache`          | Cache de cotações (5 min TTL)               |
 | `finance_data_version`       | Número da versão dos dados (para migrações) |
 | `brapi_stocks_cache`         | Cache do Radar de Ativos (24h TTL)          |
-| `supabase_sync_queue`        | Fila de operações pendentes offline (FUTURO)|
-| `supabase_last_sync`         | Timestamp da última sincronização (FUTURO)  |
+| `supabase_sync_queue`        | Fila de operações pendentes offline         |
+| `supabase_last_sync`         | Timestamp da última sincronização           |
 
 ================================================================
 🔐 VARIÁVEIS DE AMBIENTE
@@ -306,9 +308,11 @@ docs/                   → Documentação e scripts SQL
 | `NEXT_PUBLIC_BRAPI_API_KEY`   | API key Brapi.dev (Radar de Ativos)      | ✅ Ativo |
 | `NEXT_PUBLIC_SUPABASE_URL`    | URL do projeto Supabase                  | ✅ Ativo |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anônima do Supabase              | ✅ Ativo |
-| `TELEGRAM_BOT_TOKEN`          | Token do bot Telegram (via BotFather)    | FUTURO   |
+| `SUPABASE_SERVICE_ROLE_KEY`   | Chave service role do Supabase (webhook) | ✅ Ativo |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Username do bot (deep link)      | ⏳ Pendente |
+| `TELEGRAM_BOT_TOKEN`          | Token do bot Telegram (via BotFather)    | ⏳ Pendente |
+| `TELEGRAM_WEBHOOK_SECRET`     | Secret para validar webhooks do Telegram | ⏳ Pendente |
 | `GROQ_API_KEY`                | API key Groq (parsing de mensagens)      | FUTURO   |
-| `TELEGRAM_WEBHOOK_SECRET`     | Secret para validar webhooks do Telegram | FUTURO   |
 
 **Arquivos:**
 - `.env.local` - Variáveis reais (NÃO commitado)
@@ -316,7 +320,7 @@ docs/                   → Documentação e scripts SQL
 **APIs públicas (sem key):**
 - **Yahoo Finance** - Cotações em tempo real
 - **CoinGecko** - Cotações de criptomoedas
-- **Telegram Bot API** - Gratuito, ilimitado (FUTURO)
+- **Telegram Bot API** - Gratuito, ilimitado
 
 ================================================================
 🔄 SISTEMA DE MIGRAÇÕES
@@ -427,7 +431,7 @@ interface BackupData {
 **Fluxo de uma mensagem:**
 
 1. Usuário no Telegram: "gastei 150 de luz"
-2. Telegram envia webhook POST para `https://app.vercel.app/api/telegram`
+2. Telegram envia webhook POST para `https://controlec.vercel.app/api/telegram`
 3. API Route: chama Groq/Gemini com prompt estruturado
 4. IA retorna: `{ type: "expense", amount: 150, category: "Luz", date: "2026-01-26" }`
 5. API Route: INSERT na tabela `transactions` do Supabase
@@ -500,7 +504,7 @@ interface BackupData {
 
 **Arquivo:** `lib/i18n.ts`
 
-**Cobertura:** 360+ chaves de tradução (180+ por idioma)
+**Cobertura:** 380+ chaves de tradução (190+ por idioma)
 
 **Uso:**
 
@@ -512,11 +516,12 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 ================================================================
 ⚠️ DECISÕES TÉCNICAS CONHECIDAS
 
-**1. Dados em localStorage → Supabase (Fase 5 quase concluída)**
+**1. Dados em localStorage → Supabase (Fase 5 ✅ CONCLUÍDA)**
 
-- Estado atual: Auth + CRUD + Sync + Stores integradas. Falta apenas testar em produção (Etapa 7).
-- Fluxo: localStorage como cache, Supabase como source of truth, sync automático online/offline
-- Ferramenta de migração disponível na página de perfil para upload inicial
+- Supabase é source of truth, localStorage é cache offline
+- Sync automático: online → flush imediato, offline → fila no localStorage
+- Ferramenta de migração na página de perfil para upload inicial
+- SMTP customizado via Resend para emails de auth
 - Estratégia: offline-first — salva local, sincroniza com Supabase quando online
 - Conflitos: last-write-wins (4 usuários, conflitos improváveis)
 - Sync: no load + intervalos de 15 min
@@ -593,7 +598,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Adicionar traduções PT/EN para o modal (título, labels, resultado, explicação)
 - [x] Tratar edge cases: P/L negativo (empresa com prejuízo), P/VP zero ou negativo
 
-### FASE 5 — Supabase (Fundação Cloud) ⬅️ PRÓXIMA
+### FASE 5 — Supabase (Fundação Cloud) ✅ CONCLUÍDA
 
 **Objetivo:** Migrar persistência de localStorage para Supabase, mantendo offline-first.
 
@@ -635,33 +640,64 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Criar botão na página de perfil para upload único: localStorage → Supabase
 - [x] Validar dados antes de enviar (reuso dos schemas Zod)
 
-**Etapa 7 — Validação:**
-- [ ] Testar fluxo offline-first: funciona sem internet, sincroniza quando volta
-- [ ] Testar com os 4 usuários
+**Etapa 7 — Validação:** ✅ CONCLUÍDA
+- [x] Testar fluxo offline-first: funciona sem internet, sincroniza quando volta
+- [x] Dados persistem no Supabase após reconexão
+- [ ] Testar multi-dispositivo (prioridade menor — pendente)
 
-### FASE 6 — Telegram Bot (Chat Interface)
+### FASE 6 — Telegram Bot (Chat Interface) ⬅️ EM ANDAMENTO
 
 **Objetivo:** Permitir registro de transações via Telegram usando linguagem natural.
 
 **Stack:** Telegram Bot API (grátis) + Vercel API Routes (grátis) + Groq/Gemini (grátis)
 
-**Infraestrutura:**
-- [ ] Criar bot via BotFather no Telegram
-- [ ] Criar API Route `app/api/telegram/route.ts` (webhook handler)
-- [ ] Configurar webhook do Telegram apontando para Vercel
-- [ ] Adicionar validação de segurança no webhook (secret token)
-- [ ] Adicionar variáveis de ambiente: `TELEGRAM_BOT_TOKEN`, `GROQ_API_KEY`, `TELEGRAM_WEBHOOK_SECRET`
+**Schema SQL:** `docs/supabase-schema-rls.sql` (inclui `telegram_link_tokens` e `telegram_chat_id` em profiles)
 
-**Parsing de mensagens (IA):**
+**Etapa 1 — Schema e Tipos:** ✅ CONCLUÍDA
+- [x] Tabela `telegram_link_tokens` criada (id, user_id, code, expires_at, used_at, created_at)
+- [x] Coluna `telegram_chat_id` adicionada em `profiles`
+- [x] Coluna `source` adicionada em `transactions` (web/telegram)
+- [x] Index `idx_telegram_tokens_code` e `idx_telegram_tokens_user` criados
+- [x] RLS policy para `telegram_link_tokens` (own data)
+- [x] `UserProfile` atualizado com `telegramChatId?: number | null`
+- [x] `UserProfileSchema` (Zod) atualizado com `telegramChatId`
+
+**Etapa 2 — Infraestrutura Backend:** ✅ CONCLUÍDA
+- [x] Criar `lib/supabase-admin.ts` (client service role para server-side)
+- [x] Criar API Route `app/api/telegram/route.ts` (webhook handler)
+- [x] Validação de segurança no webhook (`x-telegram-bot-api-secret-token`)
+- [x] Handler `/start` com código de vinculação (deep link)
+- [x] Fluxo de vinculação: valida código → verifica expiração → atualiza profile → marca token usado
+- [x] Tratamento de edge cases: código inválido, expirado, já usado, conta já vinculada, chat já vinculado a outro user
+
+**Etapa 3 — UI de Vinculação:** ✅ CONCLUÍDA
+- [x] Card "Telegram Bot" na página de perfil
+- [x] Botão "Conectar Telegram" → gera código → abre deep link `t.me/bot?start=CODE`
+- [x] Botão "Atualizar status" → recarrega dados do Supabase
+- [x] Botão "Desconectar" → limpa `telegram_chat_id` no profile
+- [x] Estados visuais: conectado vs não conectado
+- [x] `services/supabase.ts` com `updateTelegramChatId()`
+- [x] Traduções PT/EN completas (18 chaves: profile.telegram*, telegram.*)
+
+**Etapa 4 — Configuração do Bot:** ⏳ PENDENTE
+- [ ] Criar bot via BotFather no Telegram
+- [ ] Configurar webhook do Telegram apontando para Vercel (`/api/telegram`)
+- [ ] Adicionar variáveis de ambiente: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`
+- [ ] Testar fluxo de vinculação end-to-end
+
+**Etapa 5 — Parsing de mensagens (IA):** ⏳ PENDENTE
 - [ ] Integrar Groq API (Llama 3) ou Google Gemini para parsing
 - [ ] Criar prompt estruturado para extrair: tipo, valor, categoria, data, descrição
 - [ ] Mapear categorias do usuário (consultar Supabase) para matching inteligente
 - [ ] Tratar variações de linguagem natural em PT-BR ("gastei", "paguei", "entrou", "recebi")
 
-**Funcionalidades do bot:**
+**Etapa 6 — Registro de Transações:** ⏳ PENDENTE
 - [ ] Registro de transações por texto livre ("gastei 50 no mercado")
 - [ ] Confirmação no chat ("✓ Despesa R$50,00 — Mercado — 26/01")
 - [ ] Comandos rápidos: `/gasto 50 mercado`, `/receita 3000 salário`
+- [ ] Inserção via Supabase Admin (bypass RLS com service role)
+
+**Etapa 7 — Consultas (MVP+):** ⏳ PENDENTE
 - [ ] Consulta de saldo: "quanto gastei esse mês?"
 - [ ] Resumo sob demanda: "resumo da semana"
 
@@ -730,7 +766,8 @@ Finalize perguntando:
 | Arquivo                          | Descrição                            |
 | -------------------------------- | ------------------------------------ |
 | **Auth**                         |                                      |
-| `lib/supabase.ts`                | Client Supabase (createClient)       |
+| `lib/supabase.ts`                | Client Supabase (browser)            |
+| `lib/supabase-admin.ts`          | Client Supabase (service role - server) |
 | `components/auth-provider.tsx`   | Contexto de autenticação             |
 | `components/auth-guard.tsx`      | Guard de rotas                       |
 | `app/login/page.tsx`             | Página de login (Magic Link)         |
@@ -746,7 +783,7 @@ Finalize perguntando:
 | `services/backup.ts`             | Export/Import de dados JSON          |
 | `services/market-data.ts`        | APIs de cotação                      |
 | `services/brapi.ts`              | API Brapi.dev (Radar de Ativos)      |
-| `services/supabase.ts`           | CRUD Supabase (transactions, categories, goals, profile, assets) |
+| `services/supabase.ts`           | CRUD Supabase (transactions, categories, goals, profile, assets, telegram) |
 | `services/sync.ts`               | Sync offline-first Supabase ↔ localStorage |
 | **Lib**                          |                                      |
 | `lib/types.ts`                   | Tipos de domínio                     |
@@ -768,8 +805,8 @@ Finalize perguntando:
 | `docs/supabase-schema-rls.sql`   | Schema SQL + RLS do Supabase         |
 | `docs/supabase-profile-trigger.sql` | Trigger auto-criar profile        |
 | `docs/HELP.md`                   | Pendências e passo a passo Fase 5    |
-| **FUTURO (ainda não existem)**   |                                      |
-| `app/api/telegram/route.ts`      | Webhook handler Telegram (Fase 6)    |
+| **API**                         |                                      |
+| `app/api/telegram/route.ts`      | Webhook handler Telegram (vinculação + mensagens) |
 
 ================================================================
 🗣️ NOTAS DE ALINHAMENTO (Decisões entre sócios)
@@ -790,7 +827,7 @@ Finalize perguntando:
 
 **2026-01-28:**
 
-- **Deploy Vercel:** Projeto deployado em https://finance-oxygen.vercel.app/
+- **Deploy Vercel:** Projeto deployado em https://controlec.vercel.app/
 - **Redirect URLs configuradas:** Site URL e Redirect URLs configurados no Supabase Dashboard
 - **Auth testado em produção:** Magic Link funcionando corretamente
 - **Etapa 3 concluída:** `services/supabase.ts` criado com CRUD completo (transactions, categories, goals, profile, assets)
@@ -798,7 +835,17 @@ Finalize perguntando:
 - **Etapa 5 concluída:** Stores integradas com syncService (use-finance-store, use-investments-store)
 - **Etapa 6 concluída:** `components/migration-tool.tsx` criado para upload único localStorage → Supabase
 - **Traduções adicionadas:** 22 chaves de migration em PT/EN
-- **Próximo passo:** Etapa 7 — testar fluxo offline-first em produção com os 4 usuários
+- **Etapa 7 validada:** Fluxo offline-first testado e funcionando (cria offline → reconecta → sync automático → dados no Supabase)
+- **SMTP Resend configurado:** Rate limit de emails resolvido com SMTP customizado (onboarding@resend.dev temporário)
+- **Fase 5 concluída:** Supabase totalmente integrado como source of truth
+- **Renomeação:** App renomeado para "ControleC", domínio alterado para https://controlec.vercel.app/
+- **Fase 6 iniciada:** Schema + Backend + UI de vinculação Telegram concluídos
+  - Tabela `telegram_link_tokens` + coluna `telegram_chat_id` em profiles + coluna `source` em transactions
+  - `lib/supabase-admin.ts` (client service role)
+  - `app/api/telegram/route.ts` (webhook handler com /start, validação, vinculação completa)
+  - UI na página de perfil: conectar, desconectar, atualizar status
+  - Traduções PT/EN: 18 chaves (profile.telegram*, telegram.*)
+  - **Próximo passo:** Criar bot no BotFather + configurar webhook + testar vinculação
 
 **2026-01-27:**
 
@@ -853,6 +900,7 @@ Finalize perguntando:
 | 2026-01-26 | Fase 4.1 | Calculadora de Graham: modal com P/L×P/VP, link StatusInvest, traduções PT/EN |
 | 2026-01-27 | Fase 5 | Supabase criado, schema+RLS aplicados, decisões de sync definidas |
 | 2026-01-27 | Fase 5 (Etapa 1-2) | Client Supabase, Auth flow completo (Magic Link, guard, login, callback, traduções) |
-| 2026-01-28 | Fase 5 (Etapa 3-6) | Deploy Vercel, auth testado, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool |
+| 2026-01-28 | Fase 5 ✅ | Deploy Vercel, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool, SMTP Resend, Validação completa |
+| 2026-01-28 | Fase 6 (Etapa 1-3) | Telegram: schema SQL, supabase-admin.ts, webhook handler, UI vinculação, traduções PT/EN |
 
 > Detalhes granulares de cada mudança estão no histórico git.
