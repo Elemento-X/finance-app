@@ -3,17 +3,19 @@ import type { Transaction, Category, UserProfile, FilterPeriod, Goal } from "@/l
 import { storageService } from "@/services/storage"
 import { calculationsService } from "@/services/calculations"
 import { runMigrations } from "@/services/migrations"
+import { syncService } from "@/services/sync"
 
 interface FinanceStore {
   transactions: Transaction[]
   categories: Category[]
   profile: UserProfile
   filterPeriod: FilterPeriod
-  goals: Goal[] // Added goals state
-  isHydrated: boolean // Indicates if data has been loaded from localStorage
+  goals: Goal[]
+  isHydrated: boolean
+  isSyncing: boolean
 
   // Actions
-  loadData: () => void
+  loadData: () => Promise<void>
 
   // Transactions
   addTransaction: (transaction: Transaction) => void
@@ -51,54 +53,89 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   categories: [],
   profile: { name: "", currency: "BRL", defaultMonth: new Date().toISOString().slice(0, 7), language: "en" },
   filterPeriod: { type: "month", date: new Date() },
-  goals: [], // Initialize goals
-  isHydrated: false, // Initially false until data is loaded
+  goals: [],
+  isHydrated: false,
+  isSyncing: false,
 
-  loadData: () => {
+  loadData: async () => {
     // Run migrations before loading data
     runMigrations()
 
+    // Start sync service
+    syncService.startSync()
+
+    // Load from localStorage first (instant)
     set({
       transactions: storageService.getTransactions(),
       categories: storageService.getCategories(),
       profile: storageService.getProfile(),
       goals: storageService.getGoals(),
-      isHydrated: true, // Mark as hydrated after loading
+      isHydrated: true,
     })
+
+    // Then sync with Supabase in background
+    set({ isSyncing: true })
+    try {
+      await syncService.syncOnLoad()
+      // Reload from localStorage after sync (may have new data from Supabase)
+      set({
+        transactions: storageService.getTransactions(),
+        categories: storageService.getCategories(),
+        profile: storageService.getProfile(),
+        goals: storageService.getGoals(),
+      })
+    } finally {
+      set({ isSyncing: false })
+    }
   },
 
   addTransaction: (transaction) => {
     storageService.addTransaction(transaction)
+    syncService.queueTransaction('create', transaction)
     set({ transactions: storageService.getTransactions() })
   },
 
   updateTransaction: (id, transaction) => {
     storageService.updateTransaction(id, transaction)
+    syncService.queueTransaction('update', transaction)
     set({ transactions: storageService.getTransactions() })
   },
 
   deleteTransaction: (id) => {
+    const transactions = storageService.getTransactions()
+    const transaction = transactions.find(t => t.id === id)
     storageService.deleteTransaction(id)
+    if (transaction) {
+      syncService.queueTransaction('delete', transaction)
+    }
     set({ transactions: storageService.getTransactions() })
   },
 
   addCategory: (category) => {
     storageService.addCategory(category)
+    syncService.queueCategory('create', category)
     set({ categories: storageService.getCategories() })
   },
 
   updateCategory: (id, category) => {
     storageService.updateCategory(id, category)
+    syncService.queueCategory('update', category)
     set({ categories: storageService.getCategories() })
   },
 
   deleteCategory: (id) => {
+    const categories = storageService.getCategories()
+    const category = categories.find(c => c.id === id)
     storageService.deleteCategory(id)
+    if (category) {
+      syncService.queueCategory('delete', category)
+    }
     set({ categories: storageService.getCategories() })
   },
 
   updateProfile: (profile) => {
     storageService.saveProfile(profile)
+    syncService.queueProfile(profile)
     set({ profile })
   },
 
@@ -108,16 +145,23 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
 
   addGoal: (goal) => {
     storageService.addGoal(goal)
+    syncService.queueGoal('create', goal)
     set({ goals: storageService.getGoals() })
   },
 
   updateGoal: (id, goal) => {
     storageService.updateGoal(id, goal)
+    syncService.queueGoal('update', goal)
     set({ goals: storageService.getGoals() })
   },
 
   deleteGoal: (id) => {
+    const goals = storageService.getGoals()
+    const goal = goals.find(g => g.id === id)
     storageService.deleteGoal(id)
+    if (goal) {
+      syncService.queueGoal('delete', goal)
+    }
     set({ goals: storageService.getGoals() })
   },
 
@@ -125,7 +169,9 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
     const goals = storageService.getGoals()
     const goal = goals.find((g) => g.id === id)
     if (goal) {
-      storageService.updateGoal(id, { ...goal, completed: !goal.completed })
+      const updatedGoal = { ...goal, completed: !goal.completed }
+      storageService.updateGoal(id, updatedGoal)
+      syncService.queueGoal('update', updatedGoal)
       set({ goals: storageService.getGoals() })
     }
   },

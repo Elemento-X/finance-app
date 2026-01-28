@@ -358,6 +358,26 @@ export const translations = {
     "auth.verifying": "Verifying your access...",
     "auth.error": "Authentication failed",
     "auth.errorDesc": "The link may have expired. Try again.",
+
+    // Migration
+    "migration.title": "Cloud Sync",
+    "migration.description": "Upload your local data to the cloud for sync across devices",
+    "migration.migrate": "Upload to Cloud",
+    "migration.migrating": "Uploading...",
+    "migration.completed": "Completed",
+    "migration.retry": "Retry",
+    "migration.success": "Data uploaded successfully!",
+    "migration.successDesc": "{{count}} items were synced to the cloud.",
+    "migration.partial": "Partial upload",
+    "migration.partialDesc": "{{success}} items uploaded, {{failed}} failed.",
+    "migration.error": "Upload failed",
+    "migration.errorDesc": "Could not upload data. Check your connection and try again.",
+    "migration.noData": "No local data to upload",
+    "migration.results": "Results",
+    "migration.migrated": "uploaded",
+    "migration.failed": "failed",
+    "migration.note": "This is a one-time upload. After this, all changes sync automatically.",
+    "investments.myAssets": "Assets",
   },
   pt: {
     // Navigation
@@ -715,6 +735,26 @@ export const translations = {
     "auth.verifying": "Verificando seu acesso...",
     "auth.error": "Falha na autenticação",
     "auth.errorDesc": "O link pode ter expirado. Tente novamente.",
+
+    // Migration
+    "migration.title": "Sincronização na Nuvem",
+    "migration.description": "Envie seus dados locais para a nuvem para sincronizar entre dispositivos",
+    "migration.migrate": "Enviar para Nuvem",
+    "migration.migrating": "Enviando...",
+    "migration.completed": "Concluído",
+    "migration.retry": "Tentar novamente",
+    "migration.success": "Dados enviados com sucesso!",
+    "migration.successDesc": "{{count}} itens foram sincronizados com a nuvem.",
+    "migration.partial": "Envio parcial",
+    "migration.partialDesc": "{{success}} itens enviados, {{failed}} falharam.",
+    "migration.error": "Falha no envio",
+    "migration.errorDesc": "Não foi possível enviar os dados. Verifique sua conexão e tente novamente.",
+    "migration.noData": "Nenhum dado local para enviar",
+    "migration.results": "Resultados",
+    "migration.migrated": "enviados",
+    "migration.failed": "falharam",
+    "migration.note": "Este é um envio único. Após isso, todas as alterações sincronizam automaticamente.",
+    "investments.myAssets": "Ativos",
   },
 } as const
 
