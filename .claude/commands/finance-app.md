@@ -673,19 +673,20 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 **Etapa 3 — UI de Vinculação:** ✅ CONCLUÍDA
 - [x] Card "Telegram Bot" na página de perfil
 - [x] Botão "Conectar Telegram" → gera código → abre deep link `t.me/bot?start=CODE`
-- [x] Botão "Atualizar status" → recarrega dados do Supabase
 - [x] Botão "Desconectar" → limpa `telegram_chat_id` no profile
 - [x] Estados visuais: conectado vs não conectado
+- [x] Auto-refresh quando aba ganha foco (visibilitychange listener)
+- [x] MigrationTool oculto se usuário já tem dados no Supabase
 - [x] `services/supabase.ts` com `updateTelegramChatId()`
 - [x] Traduções PT/EN completas (18 chaves: profile.telegram*, telegram.*)
 
-**Etapa 4 — Configuração do Bot:** ⏳ PENDENTE
-- [ ] Criar bot via BotFather no Telegram
-- [ ] Configurar webhook do Telegram apontando para Vercel (`/api/telegram`)
-- [ ] Adicionar variáveis de ambiente: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`
-- [ ] Testar fluxo de vinculação end-to-end
+**Etapa 4 — Configuração do Bot:** ✅ CONCLUÍDA
+- [x] Criar bot via BotFather no Telegram
+- [x] Configurar webhook do Telegram apontando para Vercel (`/api/telegram`)
+- [x] Adicionar variáveis de ambiente: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`, `SUPABASE_SERVICE_ROLE_KEY`
+- [x] Testar fluxo de vinculação end-to-end
 
-**Etapa 5 — Parsing de mensagens (IA):** ⏳ PENDENTE
+**Etapa 5 — Parsing de mensagens (IA):** ⏳ PENDENTE ⬅️ PRÓXIMO
 - [ ] Integrar Groq API (Llama 3) ou Google Gemini para parsing
 - [ ] Criar prompt estruturado para extrair: tipo, valor, categoria, data, descrição
 - [ ] Mapear categorias do usuário (consultar Supabase) para matching inteligente
@@ -839,13 +840,16 @@ Finalize perguntando:
 - **SMTP Resend configurado:** Rate limit de emails resolvido com SMTP customizado (onboarding@resend.dev temporário)
 - **Fase 5 concluída:** Supabase totalmente integrado como source of truth
 - **Renomeação:** App renomeado para "ControleC", domínio alterado para https://controlec.vercel.app/
-- **Fase 6 iniciada:** Schema + Backend + UI de vinculação Telegram concluídos
+- **Fase 6 (Etapas 1-4) concluídas:**
   - Tabela `telegram_link_tokens` + coluna `telegram_chat_id` em profiles + coluna `source` em transactions
   - `lib/supabase-admin.ts` (client service role)
   - `app/api/telegram/route.ts` (webhook handler com /start, validação, vinculação completa)
-  - UI na página de perfil: conectar, desconectar, atualizar status
-  - Traduções PT/EN: 18 chaves (profile.telegram*, telegram.*)
-  - **Próximo passo:** Criar bot no BotFather + configurar webhook + testar vinculação
+  - UI na página de perfil: conectar, desconectar
+  - Auto-refresh do status quando aba ganha foco (visibilitychange)
+  - MigrationTool oculto se já tem dados no Supabase
+  - Bot criado no BotFather, webhook configurado, variáveis na Vercel
+  - Vinculação testada end-to-end e funcionando
+  - **Próximo passo:** Etapa 5 — Parsing de mensagens com IA (Groq/Gemini)
 
 **2026-01-27:**
 
@@ -901,6 +905,6 @@ Finalize perguntando:
 | 2026-01-27 | Fase 5 | Supabase criado, schema+RLS aplicados, decisões de sync definidas |
 | 2026-01-27 | Fase 5 (Etapa 1-2) | Client Supabase, Auth flow completo (Magic Link, guard, login, callback, traduções) |
 | 2026-01-28 | Fase 5 ✅ | Deploy Vercel, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool, SMTP Resend, Validação completa |
-| 2026-01-28 | Fase 6 (Etapa 1-3) | Telegram: schema SQL, supabase-admin.ts, webhook handler, UI vinculação, traduções PT/EN |
+| 2026-01-28 | Fase 6 (Etapa 1-4) ✅ | Telegram: schema, backend, UI, bot criado, webhook configurado, vinculação funcionando, auto-refresh |
 
 > Detalhes granulares de cada mudança estão no histórico git.
