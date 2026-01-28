@@ -1,0 +1,766 @@
+export type Locale = "en" | "pt"
+
+export const translations = {
+  en: {
+    // Navigation
+    "nav.home": "Home",
+    "nav.goals": "Goals",
+    "nav.categories": "Categories",
+    "nav.investments": "Investments",
+    "nav.profile": "Profile",
+
+    // Common
+    "common.save": "Save",
+    "common.cancel": "Cancel",
+    "common.delete": "Delete",
+    "common.edit": "Edit",
+    "common.add": "Add",
+    "common.back": "Back",
+    "common.confirm": "Confirm",
+    "common.loading": "Loading",
+    "common.refresh": "Refresh",
+    "common.today": "Today",
+    "common.update": "Update",
+
+    // Home page
+    "home.title": "Financial Control",
+    "home.hello": "Hello",
+    "home.dashboard": "Dashboard",
+    "home.transactions": "Transactions",
+    "home.newTransaction": "New Transaction",
+
+    // Financial Summary
+    "summary.balance": "Balance",
+    "summary.income": "Income",
+    "summary.expenses": "Expenses",
+    "summary.investments": "Investments",
+    "summary.negativeBalance": "Negative balance",
+
+    // Charts
+    "chart.expensesByCategory": "Expenses by Category",
+    "chart.incomeVsExpenses": "Income vs Expenses vs Investments",
+    "chart.monthlyEvolution": "Monthly Evolution (last 6 months)",
+    "chart.noExpenses": "No expenses recorded",
+    "chart.noData": "No data available",
+
+    // Period Filter
+    "period.day": "Day",
+    "period.week": "Week",
+    "period.month": "Month",
+    "period.year": "Year",
+    "period.weekOf": "Week of",
+
+    // Goals page
+    "goals.title": "Year Goals",
+    "goals.active": "Active",
+    "goals.completed": "Completed",
+    "goals.placeholder": "Enter your new goal...",
+    "goals.empty": "No active goals",
+    "goals.emptyDesc": "Add your goals for the year",
+    "goals.addSuccess": "Goal added!",
+    "goals.deleteSuccess": "Goal deleted!",
+    "goals.enterGoal": "Enter a goal",
+
+    // Categories page
+    "categories.title": "Categories",
+    "categories.new": "New Category",
+    "categories.edit": "Edit Category",
+    "categories.registered": "categories registered",
+    "categories.empty": "No categories registered",
+    "categories.emptyDesc": 'Click "New Category" to get started',
+    "categories.usedIn": "Used in",
+    "categories.transaction": "transaction",
+    "categories.transactions": "transactions",
+    "categories.deleteSuccess": "Category deleted successfully!",
+    "categories.cannotDelete": "Cannot delete a category in use",
+    "categories.nameRequired": "Category name is required",
+    "categories.duplicateName": "A category with this name already exists",
+    "categories.created": "Category created successfully!",
+    "categories.updated": "Category updated successfully!",
+    "categories.namePlaceholder": "E.g. Housing, Food",
+    "categories.typeLabel": "Type",
+    "categories.typeMixed": "Mixed",
+    "categories.typeDesc": "Mixed categories can be used for any transaction type",
+    "categories.iconLabel": "Icon",
+    "categories.iconPlaceholder": "Enter an emoji",
+
+    // Transaction Form
+    "transaction.new": "New Transaction",
+    "transaction.edit": "Edit Transaction",
+    "transaction.type": "Type",
+    "transaction.typeRequired": "Type is required",
+    "transaction.selectType": "Select type",
+    "transaction.amount": "Amount",
+    "transaction.amountRequired": "Amount is required",
+    "transaction.amountPositive": "Amount must be greater than zero",
+    "transaction.category": "Category",
+    "transaction.categoryRequired": "Category is required",
+    "transaction.selectCategory": "Select category",
+    "transaction.date": "Date",
+    "transaction.dateRequired": "Date is required",
+    "transaction.description": "Description",
+    "transaction.descriptionPlaceholder": "Add a description (optional)",
+    "transaction.future": "Future transaction (won't be included in calculations until date arrives)",
+    "transaction.created": "Transaction created successfully!",
+    "transaction.updated": "Transaction updated successfully!",
+    "transaction.deleted": "Transaction deleted successfully!",
+    "transaction.fillRequired": "Please fill in all required fields",
+    "transaction.noTransactions": "No transactions found",
+    "transaction.addToStart": "Add a transaction to get started",
+    "transaction.confirmDelete": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "transaction.futureBadge": "Future",
+    "transaction.unexpected": "Unexpected (unplanned income or expense)",
+    "transaction.unexpectedBadge": "Unexpected",
+
+    // Transaction List
+    "transactionList.confirmDeleteTitle": "Confirm deletion",
+
+    // Investments page
+    "investments.title": "Investments",
+    "investments.lastUpdate": "Last update",
+    "investments.refresh": "Refresh",
+    "investments.portfolio": "My Portfolio",
+    "investments.radar": "Asset Radar",
+    "investments.arca": "ARCA Allocation",
+    "investments.addAsset": "Add Asset",
+    "investments.assetsByClass": "Assets by Class",
+
+    // Portfolio
+    "portfolio.noAssets": "No investments yet. Add your first asset to get started.",
+    "portfolio.totalInvested": "Total Invested",
+    "portfolio.currentValue": "Current Value",
+    "portfolio.capitalGain": "Capital Gain",
+    "portfolio.return": "Return",
+
+    // Asset Form
+    "asset.add": "Add",
+    "asset.edit": "Edit",
+    "asset.symbol": "Symbol / Ticker",
+    "asset.symbolPlaceholder": "e.g., AAPL, PETR4, BTC",
+    "asset.name": "Name",
+    "asset.namePlaceholder": "Asset name",
+    "asset.quantity": "Quantity",
+    "asset.averagePrice": "Average Price",
+    "asset.purchaseDate": "Purchase Date",
+    "asset.totalInvested": "Total Invested",
+    "asset.updateAsset": "Update Asset",
+    "asset.addAsset": "Add Asset",
+
+    // Assets List
+    "assets.noAssets": "No assets in this category yet. Add your first {{class}} asset.",
+    "assets.quantity": "Quantity",
+    "assets.avgPrice": "Avg Price",
+    "assets.currentPrice": "Current Price",
+    "assets.invested": "Invested",
+    "assets.currentValue": "Current Value",
+    "assets.gainLoss": "Gain/Loss",
+    "assets.return": "Return",
+    "assets.purchaseDate": "Purchase Date",
+    "assets.deleteAsset": "Delete Asset",
+    "assets.confirmDelete": "Are you sure you want to delete this asset? This action cannot be undone.",
+
+    // Asset Radar
+    "radar.title": "Top Assets by Class",
+    "radar.subtitle": "Discover the top 10 assets in each category based on multiple metrics",
+    "radar.disclaimer":
+      "This is educational content only. Not financial advice. Always do your own research before investing.",
+    "radar.score": "Score",
+    "radar.dividendYield": "Dividend Yield",
+    "radar.priceToBook": "P/B Ratio",
+    "radar.stability": "Stability",
+    "radar.vacancy": "Vacancy",
+    "radar.yield": "Yield",
+    "radar.expenseRatio": "Expense Ratio",
+    "radar.marketCap": "Market Cap",
+    "radar.change24h": "24h Change",
+    "radar.peRatio": "P/E Ratio",
+    "radar.grahamNumber": "P/E x P/B",
+    "radar.fairPrice": "Fair Price",
+    "radar.roe": "ROE",
+    "radar.lastDividend": "Last Dividend",
+    "radar.bookValue": "Book Value",
+    "radar.currentPrice": "Current Price",
+    "radar.grahamCheap": "Good to buy",
+    "radar.grahamFair": "Fair price",
+    "radar.grahamExpensive": "Expensive",
+    "radar.loading": "Loading stock data...",
+    "radar.error": "Failed to load data",
+    "radar.cachedData": "Data updated {{hours}}h ago",
+    "radar.noData": "No data available",
+    "radar.refresh": "Refresh",
+    "radar.sector": "Sector",
+    "radar.previousClose": "Previous Close",
+    "radar.open": "Open",
+    "radar.change": "Change",
+    "radar.dayHigh": "Day High",
+    "radar.dayLow": "Day Low",
+    "radar.weekHigh52": "52 Week High",
+    "radar.weekLow52": "52 Week Low",
+    "radar.volume": "Volume",
+    "radar.eps": "EPS",
+    "radar.grahamButton": "Graham Calculator",
+    "radar.grahamTitle": "Graham Calculator",
+    "radar.grahamDescription": "Benjamin Graham's simplified formula to estimate if a stock may be undervalued.",
+    "radar.grahamFormula": "Formula: P/E \u00d7 P/B \u2264 22.5",
+    "radar.grahamPE": "P/E Ratio (from API)",
+    "radar.grahamPB": "P/B Ratio (manual input)",
+    "radar.grahamPBPlaceholder": "Enter P/B ratio",
+    "radar.grahamResult": "Result",
+    "radar.grahamUndervalued": "Stock may be undervalued (\u2264 22.5)",
+    "radar.grahamOvervalued": "Stock may be overvalued (> 22.5)",
+    "radar.grahamNegativePE": "P/E is negative (company has losses). Graham formula not applicable.",
+    "radar.grahamInvalidPB": "Enter a valid P/B value greater than zero.",
+    "radar.grahamStatusInvest": "Check P/B on StatusInvest",
+    "radar.grahamExplanation": "If P/E \u00d7 P/B \u2264 22.5, the stock may be trading below its intrinsic value according to Graham's criteria. This is a simplified screening tool, not a buy recommendation.",
+
+    // ARCA Allocation
+    "arca.noInvestments": "No investments yet. Add assets to see your ARCA allocation.",
+    "arca.strategy":
+      "ARCA Strategy by Thiago Nigro: 25% Fixed Income, 25% Variable Income, 25% ETFs, 25% Cryptocurrencies",
+    "arca.currentAllocation": "Current Allocation",
+    "arca.arcaTarget": "ARCA Target",
+    "arca.allocationDetails": "Allocation Details",
+    "arca.onTarget": "On Target",
+    "arca.below": "{{percent}}% Below",
+    "arca.above": "{{percent}}% Above",
+    "arca.current": "Current",
+    "arca.target": "Target",
+    "arca.recommendations": "Rebalancing Recommendations",
+    "arca.isBelow": "is below target by",
+    "arca.isAbove": "is above target by",
+    "arca.considerInvesting": "Consider investing",
+    "arca.considerReducing": "Consider reducing allocation by",
+    "arca.more": "more",
+    "arca.perfectBalance": "Your portfolio is perfectly balanced according to the ARCA strategy!",
+
+    // Profile page
+    "profile.title": "Profile",
+    "profile.personalInfo": "Personal Information",
+    "profile.personalInfoDesc": "Configure your basic information",
+    "profile.name": "Name",
+    "profile.namePlaceholder": "Enter your name",
+    "profile.nameRequired": "Name is required",
+    "profile.saveChanges": "Save Changes",
+    "profile.updateSuccess": "Profile updated successfully!",
+    "profile.preferences": "Preferences",
+    "profile.preferencesDesc": "Customize value display",
+    "profile.currency": "Currency",
+    "profile.language": "Language",
+    "profile.savePreferences": "Save Preferences",
+    "profile.data": "Data",
+    "profile.dataDesc": "Manage your stored data",
+    "profile.storage": "Storage",
+    "profile.dangerZone": "Danger Zone",
+    "profile.dangerDesc":
+      "This action will delete all data saved in the browser, including transactions, categories and profile. This action cannot be undone.",
+    "profile.deleteAllData": "Delete All Data",
+    "profile.deleteSuccess": "All data has been deleted",
+    "profile.version": "Personal Financial Control v1.0",
+    "profile.localStorage": "All data is stored locally in your browser",
+
+    // Backup
+    "backup.title": "Backup & Restore",
+    "backup.description": "Export your data or restore from a backup file",
+    "backup.export": "Export Data",
+    "backup.exportDesc": "Download all your data as a JSON file",
+    "backup.downloadBackup": "Download Backup",
+    "backup.import": "Restore Data",
+    "backup.importDesc": "Restore data from a backup file",
+    "backup.selectFile": "Select File",
+    "backup.processing": "Processing...",
+    "backup.exportSuccess": "Backup downloaded successfully!",
+    "backup.exportError": "Error exporting backup",
+    "backup.invalidFileType": "Please select a JSON file",
+    "backup.invalidBackupFile": "Invalid backup file format",
+    "backup.readError": "Error reading file",
+    "backup.confirmImport": "Restore Backup",
+    "backup.exportedAt": "Exported at",
+    "backup.version": "Version",
+    "backup.transactions": "Transactions",
+    "backup.categories": "Categories",
+    "backup.goals": "Goals",
+    "backup.assets": "Assets",
+    "backup.validFile": "Valid backup file",
+    "backup.importMode": "Import mode",
+    "backup.replaceAll": "Replace all",
+    "backup.mergeData": "Merge data",
+    "backup.replaceModeDesc": "All current data will be replaced with the backup data",
+    "backup.mergeModeDesc": "New items will be added without removing existing data",
+    "backup.confirmRestore": "Restore",
+    "backup.tip": "Tip: Make regular backups to avoid losing your data. Store the backup file in a safe place like cloud storage.",
+
+    // Dialog
+    "dialog.confirmDelete": "Confirm deletion",
+    "dialog.confirmDeleteDesc": "Are you sure you want to delete this {{item}}? This action cannot be undone.",
+    "dialog.confirmDeleteAllTitle": "Confirm deletion of all data",
+    "dialog.confirmDeleteAllDesc":
+      "Are you sure you want to delete ALL data? This action will permanently remove all transactions, categories and settings. This action cannot be undone.",
+    "dialog.yesDelete": "Yes, Delete Everything",
+
+    // Transaction types
+    "type.income": "Income",
+    "type.expense": "Expense",
+    "type.investment": "Investment",
+    "type.unexpected": "Unexpected",
+    "type.mixed": "Mixed",
+
+    // Asset classes
+    "assetClass.stocks": "Stocks",
+    "assetClass.fiis": "REITs",
+    "assetClass.fixedIncome": "Fixed Income",
+    "assetClass.etfs": "ETFs",
+    "assetClass.crypto": "Crypto",
+
+    // ARCA Categories
+    "arcaCategory.fixedIncome": "Fixed Income",
+    "arcaCategory.variableIncome": "Variable Income",
+    "arcaCategory.etfs": "ETFs",
+    "arcaCategory.crypto": "Cryptocurrencies",
+
+    // Data Validation
+    "validation.corruptedData": "Corrupted data found",
+    "validation.corruptedDataDesc": "{{count}} invalid item(s) were found and removed from {{type}}.",
+    "validation.transactions": "transactions",
+    "validation.categories": "categories",
+    "validation.goals": "goals",
+    "validation.assets": "assets",
+    "validation.profile": "profile",
+    "validation.profileReset": "Your profile settings were reset due to corrupted data.",
+
+    // Market Data Errors
+    "marketData.fetchError": "Failed to fetch market data",
+    "marketData.fetchErrorDesc": "Could not get quotes for {{symbols}}. Using cached data if available.",
+    "marketData.partialError": "Some quotes failed",
+    "marketData.partialErrorDesc": "Could not update {{count}} asset(s). Showing last available data.",
+    "marketData.noDataAvailable": "No market data",
+    "marketData.noDataAvailableDesc": "Quote not available for {{symbol}}. Check if the ticker is correct.",
+    "marketData.usingCachedData": "Using cached data",
+    "marketData.cacheExpired": "Market data may be outdated",
+    "marketData.fixedIncomeNoQuote": "Fixed income assets don't have real-time quotes",
+
+    // Investment Alerts
+    "alerts.arcaBelow": "{{category}} is below ARCA target by {{percent}}%",
+    "alerts.arcaAbove": "{{category}} is above ARCA target by {{percent}}%",
+    "alerts.highVolatility": "{{symbol}} has high volatility: {{change}}% today",
+    "alerts.concentration": "{{symbol}} represents {{percent}}% of your portfolio",
+
+    // Auth
+    "auth.appName": "Personal Finance",
+    "auth.appDesc": "Manage your finances simply and securely",
+    "auth.email": "Email",
+    "auth.emailPlaceholder": "Enter your email",
+    "auth.sendMagicLink": "Send login link",
+    "auth.sending": "Sending...",
+    "auth.checkEmail": "Check your email!",
+    "auth.checkEmailDesc": "We sent a login link to {{email}}. Click the link to sign in.",
+    "auth.tryAgain": "Send another link",
+    "auth.signOut": "Sign Out",
+    "auth.verifying": "Verifying your access...",
+    "auth.error": "Authentication failed",
+    "auth.errorDesc": "The link may have expired. Try again.",
+  },
+  pt: {
+    // Navigation
+    "nav.home": "Início",
+    "nav.goals": "Objetivos",
+    "nav.categories": "Categorias",
+    "nav.investments": "Investimentos",
+    "nav.profile": "Perfil",
+
+    // Common
+    "common.save": "Salvar",
+    "common.cancel": "Cancelar",
+    "common.delete": "Excluir",
+    "common.edit": "Editar",
+    "common.add": "Adicionar",
+    "common.back": "Voltar",
+    "common.confirm": "Confirmar",
+    "common.loading": "Carregando",
+    "common.refresh": "Atualizar",
+    "common.today": "Hoje",
+    "common.update": "Atualizar",
+
+    // Home page
+    "home.title": "Controle Financeiro",
+    "home.hello": "Olá",
+    "home.dashboard": "Dashboard",
+    "home.transactions": "Lançamentos",
+    "home.newTransaction": "Novo Lançamento",
+
+    // Financial Summary
+    "summary.balance": "Saldo",
+    "summary.income": "Receitas",
+    "summary.expenses": "Despesas",
+    "summary.investments": "Investimentos",
+    "summary.negativeBalance": "Saldo negativo",
+
+    // Charts
+    "chart.expensesByCategory": "Despesas por Categoria",
+    "chart.incomeVsExpenses": "Receitas vs Despesas vs Investimentos",
+    "chart.monthlyEvolution": "Evolução Mensal (últimos 6 meses)",
+    "chart.noExpenses": "Nenhuma despesa registrada",
+    "chart.noData": "Nenhum dado disponível",
+
+    // Period Filter
+    "period.day": "Dia",
+    "period.week": "Semana",
+    "period.month": "Mês",
+    "period.year": "Ano",
+    "period.weekOf": "Semana de",
+
+    // Goals page
+    "goals.title": "Objetivos do Ano",
+    "goals.active": "Ativos",
+    "goals.completed": "Concluídos",
+    "goals.placeholder": "Digite seu novo objetivo...",
+    "goals.empty": "Nenhum objetivo ativo",
+    "goals.emptyDesc": "Adicione seus objetivos para o ano",
+    "goals.addSuccess": "Objetivo adicionado!",
+    "goals.deleteSuccess": "Objetivo excluído!",
+    "goals.enterGoal": "Digite um objetivo",
+
+    // Categories page
+    "categories.title": "Categorias",
+    "categories.new": "Nova Categoria",
+    "categories.edit": "Editar Categoria",
+    "categories.registered": "categorias cadastradas",
+    "categories.empty": "Nenhuma categoria cadastrada",
+    "categories.emptyDesc": 'Clique em "Nova Categoria" para começar',
+    "categories.usedIn": "Usado em",
+    "categories.transaction": "lançamento",
+    "categories.transactions": "lançamentos",
+    "categories.deleteSuccess": "Categoria excluída com sucesso!",
+    "categories.cannotDelete": "Não é possível excluir uma categoria em uso",
+    "categories.nameRequired": "Nome da categoria é obrigatório",
+    "categories.duplicateName": "Já existe uma categoria com este nome",
+    "categories.created": "Categoria criada com sucesso!",
+    "categories.updated": "Categoria atualizada com sucesso!",
+    "categories.namePlaceholder": "Ex: Moradia, Alimentação",
+    "categories.typeLabel": "Tipo",
+    "categories.typeMixed": "Misto",
+    "categories.typeDesc": "Categorias mistas podem ser usadas para qualquer tipo de transação",
+    "categories.iconLabel": "Ícone",
+    "categories.iconPlaceholder": "Digite um emoji",
+
+    // Transaction Form
+    "transaction.new": "Novo Lançamento",
+    "transaction.edit": "Editar Lançamento",
+    "transaction.type": "Tipo",
+    "transaction.typeRequired": "Tipo é obrigatório",
+    "transaction.selectType": "Selecione o tipo",
+    "transaction.amount": "Valor",
+    "transaction.amountRequired": "Valor é obrigatório",
+    "transaction.amountPositive": "O valor deve ser maior que zero",
+    "transaction.category": "Categoria",
+    "transaction.categoryRequired": "Categoria é obrigatória",
+    "transaction.selectCategory": "Selecione a categoria",
+    "transaction.date": "Data",
+    "transaction.dateRequired": "Data é obrigatória",
+    "transaction.description": "Descrição",
+    "transaction.descriptionPlaceholder": "Adicione uma descrição (opcional)",
+    "transaction.future": "Lançamento futuro (não será incluído nos cálculos até a data chegar)",
+    "transaction.created": "Lançamento criado com sucesso!",
+    "transaction.updated": "Lançamento atualizado com sucesso!",
+    "transaction.deleted": "Lançamento excluído com sucesso!",
+    "transaction.fillRequired": "Por favor, preencha todos os campos obrigatórios",
+    "transaction.noTransactions": "Nenhum lançamento encontrado",
+    "transaction.addToStart": "Adicione um lançamento para começar",
+    "transaction.confirmDelete": "Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.",
+    "transaction.futureBadge": "Futuro",
+    "transaction.unexpected": "Imprevisto (receita ou despesa não planejada)",
+    "transaction.unexpectedBadge": "Imprevisto",
+
+    // Transaction List
+    "transactionList.confirmDeleteTitle": "Confirmar exclusão",
+
+    // Investments page
+    "investments.title": "Investimentos",
+    "investments.lastUpdate": "Última atualização",
+    "investments.refresh": "Atualizar",
+    "investments.portfolio": "Meu Portfólio",
+    "investments.radar": "Radar de Ativos",
+    "investments.arca": "Alocação ARCA",
+    "investments.addAsset": "Adicionar Ativo",
+    "investments.assetsByClass": "Ativos por Classe",
+
+    // Portfolio
+    "portfolio.noAssets": "Nenhum investimento ainda. Adicione seu primeiro ativo para começar.",
+    "portfolio.totalInvested": "Total Investido",
+    "portfolio.currentValue": "Valor Atual",
+    "portfolio.capitalGain": "Ganho de Capital",
+    "portfolio.return": "Retorno",
+
+    // Asset Form
+    "asset.add": "Adicionar",
+    "asset.edit": "Editar",
+    "asset.symbol": "Símbolo / Ticker",
+    "asset.symbolPlaceholder": "ex: AAPL, PETR4, BTC",
+    "asset.name": "Nome",
+    "asset.namePlaceholder": "Nome do ativo",
+    "asset.quantity": "Quantidade",
+    "asset.averagePrice": "Preço Médio",
+    "asset.purchaseDate": "Data de Compra",
+    "asset.totalInvested": "Total Investido",
+    "asset.updateAsset": "Atualizar Ativo",
+    "asset.addAsset": "Adicionar Ativo",
+
+    // Assets List
+    "assets.noAssets": "Nenhum ativo nesta categoria ainda. Adicione seu primeiro ativo de {{class}}.",
+    "assets.quantity": "Quantidade",
+    "assets.avgPrice": "Preço Médio",
+    "assets.currentPrice": "Preço Atual",
+    "assets.invested": "Investido",
+    "assets.currentValue": "Valor Atual",
+    "assets.gainLoss": "Ganho/Perda",
+    "assets.return": "Retorno",
+    "assets.purchaseDate": "Data de Compra",
+    "assets.deleteAsset": "Excluir Ativo",
+    "assets.confirmDelete": "Tem certeza que deseja excluir este ativo? Esta ação não pode ser desfeita.",
+
+    // Asset Radar
+    "radar.title": "Principais Ativos por Classe",
+    "radar.subtitle": "Descubra os 10 melhores ativos em cada categoria com base em múltiplas métricas",
+    "radar.disclaimer":
+      "Este é apenas conteúdo educacional. Não é aconselhamento financeiro. Sempre faça sua própria pesquisa antes de investir.",
+    "radar.score": "Pontuação",
+    "radar.dividendYield": "Dividend Yield",
+    "radar.priceToBook": "P/VP",
+    "radar.stability": "Estabilidade",
+    "radar.vacancy": "Vacância",
+    "radar.yield": "Rendimento",
+    "radar.expenseRatio": "Taxa de Administração",
+    "radar.marketCap": "Cap. de Mercado",
+    "radar.change24h": "Variação 24h",
+    "radar.peRatio": "P/L",
+    "radar.grahamNumber": "P/L x P/VP",
+    "radar.fairPrice": "Preço Justo",
+    "radar.roe": "ROE",
+    "radar.lastDividend": "Último Dividendo",
+    "radar.bookValue": "Patrimônio Líquido",
+    "radar.currentPrice": "Preço Atual",
+    "radar.grahamCheap": "Bom para compra",
+    "radar.grahamFair": "Preço justo",
+    "radar.grahamExpensive": "Caro",
+    "radar.loading": "Carregando dados das ações...",
+    "radar.error": "Falha ao carregar dados",
+    "radar.cachedData": "Dados atualizados há {{hours}}h",
+    "radar.noData": "Dados não disponíveis",
+    "radar.refresh": "Atualizar",
+    "radar.sector": "Setor",
+    "radar.previousClose": "Fech. Anterior",
+    "radar.open": "Abertura",
+    "radar.change": "Variação",
+    "radar.dayHigh": "Máx. Dia",
+    "radar.dayLow": "Mín. Dia",
+    "radar.weekHigh52": "Máx. 52 Sem.",
+    "radar.weekLow52": "Mín. 52 Sem.",
+    "radar.volume": "Volume",
+    "radar.eps": "LPA",
+    "radar.grahamButton": "Calculadora Graham",
+    "radar.grahamTitle": "Calculadora de Graham",
+    "radar.grahamDescription": "F\u00f3rmula simplificada de Benjamin Graham para estimar se uma a\u00e7\u00e3o pode estar subvalorizada.",
+    "radar.grahamFormula": "F\u00f3rmula: P/L \u00d7 P/VP \u2264 22,5",
+    "radar.grahamPE": "P/L (da API)",
+    "radar.grahamPB": "P/VP (input manual)",
+    "radar.grahamPBPlaceholder": "Digite o P/VP",
+    "radar.grahamResult": "Resultado",
+    "radar.grahamUndervalued": "A\u00e7\u00e3o pode estar subvalorizada (\u2264 22,5)",
+    "radar.grahamOvervalued": "A\u00e7\u00e3o pode estar sobrevalorizada (> 22,5)",
+    "radar.grahamNegativePE": "P/L negativo (empresa com preju\u00edzo). F\u00f3rmula de Graham n\u00e3o se aplica.",
+    "radar.grahamInvalidPB": "Digite um valor de P/VP v\u00e1lido maior que zero.",
+    "radar.grahamStatusInvest": "Consultar P/VP no StatusInvest",
+    "radar.grahamExplanation": "Se P/L \u00d7 P/VP \u2264 22,5, a a\u00e7\u00e3o pode estar sendo negociada abaixo do seu valor intr\u00ednseco segundo os crit\u00e9rios de Graham. Esta \u00e9 uma ferramenta de triagem simplificada, n\u00e3o uma recomenda\u00e7\u00e3o de compra.",
+
+    // ARCA Allocation
+    "arca.noInvestments": "Nenhum investimento ainda. Adicione ativos para ver sua alocação ARCA.",
+    "arca.strategy": "Estratégia ARCA por Thiago Nigro: 25% Renda Fixa, 25% Renda Variável, 25% ETFs, 25% Criptomoedas",
+    "arca.currentAllocation": "Alocação Atual",
+    "arca.arcaTarget": "Meta ARCA",
+    "arca.allocationDetails": "Detalhes da Alocação",
+    "arca.onTarget": "Na Meta",
+    "arca.below": "{{percent}}% Abaixo",
+    "arca.above": "{{percent}}% Acima",
+    "arca.current": "Atual",
+    "arca.target": "Meta",
+    "arca.recommendations": "Recomendações de Rebalanceamento",
+    "arca.isBelow": "está abaixo da meta em",
+    "arca.isAbove": "está acima da meta em",
+    "arca.considerInvesting": "Considere investir",
+    "arca.considerReducing": "Considere reduzir alocação em",
+    "arca.more": "a mais",
+    "arca.perfectBalance": "Seu portfólio está perfeitamente balanceado de acordo com a estratégia ARCA!",
+
+    // Profile page
+    "profile.title": "Perfil",
+    "profile.personalInfo": "Informações Pessoais",
+    "profile.personalInfoDesc": "Configure suas informações básicas",
+    "profile.name": "Nome",
+    "profile.namePlaceholder": "Digite seu nome",
+    "profile.nameRequired": "Nome é obrigatório",
+    "profile.saveChanges": "Salvar Alterações",
+    "profile.updateSuccess": "Perfil atualizado com sucesso!",
+    "profile.preferences": "Preferências",
+    "profile.preferencesDesc": "Personalize a exibição de valores",
+    "profile.currency": "Moeda",
+    "profile.language": "Idioma",
+    "profile.savePreferences": "Salvar Preferências",
+    "profile.data": "Dados",
+    "profile.dataDesc": "Gerencie seus dados armazenados",
+    "profile.storage": "Armazenamento",
+    "profile.dangerZone": "Zona de Perigo",
+    "profile.dangerDesc":
+      "Esta ação irá apagar todos os dados salvos no navegador, incluindo transações, categorias e perfil. Esta ação não pode ser desfeita.",
+    "profile.deleteAllData": "Excluir Todos os Dados",
+    "profile.deleteSuccess": "Todos os dados foram excluídos",
+    "profile.version": "Controle Financeiro Pessoal v1.0",
+    "profile.localStorage": "Todos os dados são armazenados localmente no seu navegador",
+
+    // Backup
+    "backup.title": "Backup e Restauração",
+    "backup.description": "Exporte seus dados ou restaure a partir de um arquivo de backup",
+    "backup.export": "Exportar Dados",
+    "backup.exportDesc": "Baixe todos os seus dados em um arquivo JSON",
+    "backup.downloadBackup": "Baixar Backup",
+    "backup.import": "Restaurar Dados",
+    "backup.importDesc": "Restaure dados de um arquivo de backup",
+    "backup.selectFile": "Selecionar Arquivo",
+    "backup.processing": "Processando...",
+    "backup.exportSuccess": "Backup baixado com sucesso!",
+    "backup.exportError": "Erro ao exportar backup",
+    "backup.invalidFileType": "Por favor, selecione um arquivo JSON",
+    "backup.invalidBackupFile": "Formato de arquivo de backup inválido",
+    "backup.readError": "Erro ao ler arquivo",
+    "backup.confirmImport": "Restaurar Backup",
+    "backup.exportedAt": "Exportado em",
+    "backup.version": "Versão",
+    "backup.transactions": "Transações",
+    "backup.categories": "Categorias",
+    "backup.goals": "Metas",
+    "backup.assets": "Ativos",
+    "backup.validFile": "Arquivo de backup válido",
+    "backup.importMode": "Modo de importação",
+    "backup.replaceAll": "Substituir tudo",
+    "backup.mergeData": "Mesclar dados",
+    "backup.replaceModeDesc": "Todos os dados atuais serão substituídos pelos dados do backup",
+    "backup.mergeModeDesc": "Novos itens serão adicionados sem remover os dados existentes",
+    "backup.confirmRestore": "Restaurar",
+    "backup.tip": "Dica: Faça backups regularmente para evitar perder seus dados. Guarde o arquivo de backup em um local seguro como armazenamento em nuvem.",
+
+    // Dialog
+    "dialog.confirmDelete": "Confirmar exclusão",
+    "dialog.confirmDeleteDesc": "Tem certeza que deseja excluir este {{item}}? Esta ação não pode ser desfeita.",
+    "dialog.confirmDeleteAllTitle": "Confirmar exclusão de todos os dados",
+    "dialog.confirmDeleteAllDesc":
+      "Tem certeza que deseja excluir TODOS os dados? Esta ação irá remover permanentemente todas as transações, categorias e configurações. Esta ação não pode ser desfeita.",
+    "dialog.yesDelete": "Sim, Excluir Tudo",
+
+    // Transaction types
+    "type.income": "Receita",
+    "type.expense": "Despesa",
+    "type.investment": "Investimento",
+    "type.unexpected": "Imprevisto",
+    "type.mixed": "Misto",
+
+    // Asset classes
+    "assetClass.stocks": "Ações",
+    "assetClass.fiis": "FIIs",
+    "assetClass.fixedIncome": "Renda Fixa",
+    "assetClass.etfs": "ETFs",
+    "assetClass.crypto": "Cripto",
+
+    // ARCA Categories
+    "arcaCategory.fixedIncome": "Renda Fixa",
+    "arcaCategory.variableIncome": "Renda Variável",
+    "arcaCategory.etfs": "ETFs",
+    "arcaCategory.crypto": "Criptomoedas",
+
+    // Data Validation
+    "validation.corruptedData": "Dados corrompidos encontrados",
+    "validation.corruptedDataDesc": "{{count}} item(ns) inválido(s) foram encontrados e removidos de {{type}}.",
+    "validation.transactions": "transações",
+    "validation.categories": "categorias",
+    "validation.goals": "metas",
+    "validation.assets": "ativos",
+    "validation.profile": "perfil",
+    "validation.profileReset": "Suas configurações de perfil foram redefinidas devido a dados corrompidos.",
+
+    // Market Data Errors
+    "marketData.fetchError": "Falha ao buscar dados de mercado",
+    "marketData.fetchErrorDesc": "Não foi possível obter cotações para {{symbols}}. Usando dados em cache se disponíveis.",
+    "marketData.partialError": "Algumas cotações falharam",
+    "marketData.partialErrorDesc": "Não foi possível atualizar {{count}} ativo(s). Mostrando últimos dados disponíveis.",
+    "marketData.noDataAvailable": "Sem dados de mercado",
+    "marketData.noDataAvailableDesc": "Cotação não disponível para {{symbol}}. Verifique se o ticker está correto.",
+    "marketData.usingCachedData": "Usando dados em cache",
+    "marketData.cacheExpired": "Dados de mercado podem estar desatualizados",
+    "marketData.fixedIncomeNoQuote": "Ativos de renda fixa não possuem cotação em tempo real",
+
+    // Investment Alerts
+    "alerts.arcaBelow": "{{category}} está abaixo da meta ARCA em {{percent}}%",
+    "alerts.arcaAbove": "{{category}} está acima da meta ARCA em {{percent}}%",
+    "alerts.highVolatility": "{{symbol}} tem alta volatilidade: {{change}}% hoje",
+    "alerts.concentration": "{{symbol}} representa {{percent}}% do seu portfólio",
+
+    // Auth
+    "auth.appName": "Controle Financeiro",
+    "auth.appDesc": "Gerencie suas finanças de forma simples e segura",
+    "auth.email": "Email",
+    "auth.emailPlaceholder": "Digite seu email",
+    "auth.sendMagicLink": "Enviar link de acesso",
+    "auth.sending": "Enviando...",
+    "auth.checkEmail": "Verifique seu email!",
+    "auth.checkEmailDesc": "Enviamos um link de acesso para {{email}}. Clique no link para entrar.",
+    "auth.tryAgain": "Enviar outro link",
+    "auth.signOut": "Sair",
+    "auth.verifying": "Verificando seu acesso...",
+    "auth.error": "Falha na autenticação",
+    "auth.errorDesc": "O link pode ter expirado. Tente novamente.",
+  },
+} as const
+
+export function useTranslation() {
+  const { profile } = require("@/hooks/use-finance-store").useFinanceStore()
+  const locale: Locale = (profile.language === "pt" ? "pt" : "en")
+
+  return (key: keyof (typeof translations)["en"], params?: Record<string, string>): string => {
+    let text: string = translations[locale][key] || translations["en"][key] || key
+
+    if (params) {
+      Object.entries(params).forEach(([paramKey, value]) => {
+        text = text.replace(`{{${paramKey}}}`, value)
+      })
+    }
+
+    return text
+  }
+}
+
+/**
+ * Get translation without React hook (for use in services)
+ * Reads language preference directly from localStorage
+ */
+export function getTranslation(key: keyof (typeof translations)["en"], params?: Record<string, string>): string {
+  let locale: Locale = "en"
+
+  if (typeof window !== "undefined") {
+    try {
+      const profileData = localStorage.getItem("finance_profile")
+      if (profileData) {
+        const profile = JSON.parse(profileData)
+        locale = profile.language === "pt" ? "pt" : "en"
+      }
+    } catch {
+      // Use default locale on error
+    }
+  }
+
+  let text: string = translations[locale][key] || translations["en"][key] || key
+
+  if (params) {
+    Object.entries(params).forEach(([paramKey, value]) => {
+      text = text.replace(`{{${paramKey}}}`, value)
+    })
+  }
+
+  return text
+}
