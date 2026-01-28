@@ -5,6 +5,7 @@ import { investmentsStorageService } from "@/services/investments-storage"
 import { marketDataService, type MarketDataResult } from "@/services/market-data"
 import { investmentsCalculationsService } from "@/services/investments-calculations"
 import { getTranslation } from "@/lib/i18n"
+import { syncService } from "@/services/sync"
 
 interface InvestmentsStore {
   assets: Asset[]
@@ -47,18 +48,25 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
       createdAt: Date.now(),
     }
     investmentsStorageService.addAsset(newAsset)
+    syncService.queueAsset('create', newAsset)
     set({ assets: investmentsStorageService.getAssets() })
     get().refreshMarketData()
   },
 
   updateAsset: (id, updates) => {
     investmentsStorageService.updateAsset(id, updates)
+    syncService.queueAsset('update', { id, ...updates })
     set({ assets: investmentsStorageService.getAssets() })
     get().refreshMarketData()
   },
 
   deleteAsset: (id) => {
+    const assets = investmentsStorageService.getAssets()
+    const asset = assets.find(a => a.id === id)
     investmentsStorageService.deleteAsset(id)
+    if (asset) {
+      syncService.queueAsset('delete', asset)
+    }
     set({ assets: investmentsStorageService.getAssets() })
     get().refreshMarketData()
   },
