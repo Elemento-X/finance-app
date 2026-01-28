@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase-admin"
+import { parseFinancialMessage } from "@/services/groq"
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN
 const telegramSecret = process.env.TELEGRAM_WEBHOOK_SECRET
@@ -24,6 +25,10 @@ type TelegramLinkToken = {
 type ProfileRow = {
   id: string
   telegram_chat_id: number | null
+}
+
+type CategoryRow = {
+  name: string
 }
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
@@ -161,10 +166,82 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  await sendTelegramMessage(
-    chatId,
-    "Use o botão do app para conectar o Telegram e começar a registrar transações."
-  )
+  // Handle transaction messages
+  const supabase = getSupabaseAdmin()
 
+  // Find user by telegram_chat_id
+  const { data: userProfile, error: userError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("telegram_chat_id", chatId)
+    .maybeSingle<Pick<ProfileRow, "id">>()
+
+  if (userError || !userProfile) {
+    await sendTelegramMessage(
+      chatId,
+      "Conta não vinculada. Use o botão no app para conectar o Telegram."
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  const userId = userProfile.id
+
+  // Get user's categories for better matching
+  const { data: categoriesData } = await supabase
+    .from("categories")
+    .select("name")
+    .eq("user_id", userId)
+
+  const userCategories = (categoriesData as CategoryRow[] | null)?.map((c) => c.name) ?? []
+
+  // Parse the message with Groq
+  const parseResult = await parseFinancialMessage(text, userCategories)
+
+  if (!parseResult.success || !parseResult.transaction) {
+    await sendTelegramMessage(chatId, parseResult.error ?? "Não entendi. Tente: gastei 50 no mercado")
+    return NextResponse.json({ ok: true })
+  }
+
+  const { transaction } = parseResult
+
+  // Generate unique ID
+  const transactionId = `tg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+
+  // Insert transaction into Supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: insertError } = await (supabase.from("transactions") as any).insert({
+    id: transactionId,
+    user_id: userId,
+    type: transaction.type,
+    amount: transaction.amount,
+    category: transaction.category,
+    date: transaction.date,
+    description: transaction.description ?? null,
+    is_future: false,
+    is_unexpected: false,
+    source: "telegram",
+  })
+
+  if (insertError) {
+    console.error("[Telegram] Failed to insert transaction:", insertError)
+    await sendTelegramMessage(chatId, "Erro ao salvar. Tente novamente.")
+    return NextResponse.json({ ok: true })
+  }
+
+  // Format confirmation message
+  const typeEmoji = transaction.type === "income" ? "💰" : transaction.type === "expense" ? "💸" : "📈"
+  const typeLabel = transaction.type === "income" ? "Receita" : transaction.type === "expense" ? "Despesa" : "Investimento"
+  const formattedAmount = transaction.amount.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  })
+  const formattedDate = new Date(transaction.date + "T12:00:00").toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+  })
+
+  const confirmation = `${typeEmoji} ${typeLabel} registrada!\n${formattedAmount} — ${transaction.category} — ${formattedDate}`
+
+  await sendTelegramMessage(chatId, confirmation)
   return NextResponse.json({ ok: true })
 }
