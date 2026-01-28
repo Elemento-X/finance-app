@@ -10,6 +10,15 @@ create table if not exists profiles (
   telegram_chat_id bigint
 );
 
+create table if not exists telegram_link_tokens (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  code text not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz default now()
+);
+
 create table if not exists categories (
   id text primary key,
   user_id uuid references auth.users not null,
@@ -58,9 +67,12 @@ create index if not exists idx_transactions_user_date on transactions (user_id, 
 create index if not exists idx_goals_user_created on goals (user_id, created_at);
 create index if not exists idx_assets_user_created on assets (user_id, created_at);
 create index if not exists idx_categories_user_name on categories (user_id, name);
+create index if not exists idx_telegram_tokens_code on telegram_link_tokens (code);
+create index if not exists idx_telegram_tokens_user on telegram_link_tokens (user_id);
 
 -- 3) RLS enable
 alter table profiles enable row level security;
+alter table telegram_link_tokens enable row level security;
 alter table categories enable row level security;
 alter table transactions enable row level security;
 alter table goals enable row level security;
@@ -69,6 +81,9 @@ alter table assets enable row level security;
 -- 4) RLS policies
 create policy "Profiles own data" on profiles
   for all using (auth.uid() = id) with check (auth.uid() = id);
+
+create policy "Telegram link tokens own data" on telegram_link_tokens
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Categories own data" on categories
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
