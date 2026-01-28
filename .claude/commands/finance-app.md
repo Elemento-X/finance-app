@@ -74,6 +74,7 @@ components/             → Componentes React
 ├── app-header.tsx      → Header global com navegação
 ├── period-filter.tsx   → Filtro de período (dia/semana/mês/ano)
 ├── backup-manager.tsx  → UI de backup/restore na página de perfil
+├── migration-tool.tsx  → UI de upload localStorage → Supabase
 └── *.tsx               → Componentes de negócio
 
 app/investments/components/ → Componentes de investimentos
@@ -89,8 +90,8 @@ hooks/                  → Estado global (Zustand)
 
 services/               → Lógica de negócio
 ├── storage.ts          → CRUD localStorage (finanças)
-├── supabase.ts         → CRUD Supabase (FUTURO — Etapa 3)
-├── sync.ts             → Sync Supabase ↔ localStorage (FUTURO — Etapa 4)
+├── supabase.ts         → CRUD Supabase (transactions, categories, goals, profile, assets)
+├── sync.ts             → Sync offline-first Supabase ↔ localStorage
 ├── calculations.ts     → Cálculos financeiros
 ├── migrations.ts       → Sistema de versionamento e migrações
 ├── backup.ts           → Export/Import de dados (JSON)
@@ -162,8 +163,8 @@ docs/                   → Documentação e scripts SQL
 
 **Persistência:**
 
-- localStorage — storage atual (será cache offline após Fase 5)
-- Supabase (PostgreSQL) — source of truth (CRUD pendente — Etapa 3)
+- localStorage — cache offline (sync automático com Supabase)
+- Supabase (PostgreSQL) — source of truth (CRUD + sync + stores integradas)
 - Sistema de migrações com versionamento
 
 **Bot / Integração (FUTURO — Fase 6):**
@@ -511,10 +512,11 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 ================================================================
 ⚠️ DECISÕES TÉCNICAS CONHECIDAS
 
-**1. Dados em localStorage → Supabase (migração em andamento — Fase 5)**
+**1. Dados em localStorage → Supabase (Fase 5 quase concluída)**
 
-- Estado atual: Auth Supabase ativo (Magic Link). Dados ainda em localStorage.
-- Próximo: CRUD Supabase (Etapa 3) + sync offline-first (Etapa 4)
+- Estado atual: Auth + CRUD + Sync + Stores integradas. Falta apenas testar em produção (Etapa 7).
+- Fluxo: localStorage como cache, Supabase como source of truth, sync automático online/offline
+- Ferramenta de migração disponível na página de perfil para upload inicial
 - Estratégia: offline-first — salva local, sincroniza com Supabase quando online
 - Conflitos: last-write-wins (4 usuários, conflitos improváveis)
 - Sync: no load + intervalos de 15 min
@@ -613,25 +615,25 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Proteger rotas — redirecionar para login se não autenticado
 - [x] Trigger SQL para auto-criar profile no Supabase (`docs/supabase-profile-trigger.sql`)
 
-**Etapa 3 — CRUD Supabase:**
-- [ ] Criar `services/supabase.ts` (CRUD Supabase — espelho do storage.ts)
-- [ ] Implementar: transactions, categories, goals, profile, assets
-- [ ] Manter mesma interface do storage.ts para facilitar substituição
+**Etapa 3 — CRUD Supabase:** ✅ CONCLUÍDA
+- [x] Criar `services/supabase.ts` (CRUD Supabase — espelho do storage.ts)
+- [x] Implementar: transactions, categories, goals, profile, assets
+- [x] Manter mesma interface do storage.ts para facilitar substituição
 
-**Etapa 4 — Camada de sync:**
-- [ ] Criar `services/sync.ts` (camada de sync Supabase ↔ localStorage)
-- [ ] Implementar fila offline no localStorage (`supabase_sync_queue`)
-- [ ] Sync no load: pull do Supabase → atualiza localStorage
-- [ ] Sync periódico: a cada 15 min se online
-- [ ] Flush da fila: ao reconectar, enviar operações pendentes (last-write-wins)
+**Etapa 4 — Camada de sync:** ✅ CONCLUÍDA
+- [x] Criar `services/sync.ts` (camada de sync Supabase ↔ localStorage)
+- [x] Implementar fila offline no localStorage (`supabase_sync_queue`)
+- [x] Sync no load: pull do Supabase → atualiza localStorage
+- [x] Sync periódico: a cada 15 min se online
+- [x] Flush da fila: ao reconectar, enviar operações pendentes (last-write-wins)
 
-**Etapa 5 — Migração das stores:**
-- [ ] Migrar `use-finance-store.ts` para ler/escrever via Supabase (com fallback localStorage)
-- [ ] Migrar `use-investments-store.ts` para ler/escrever via Supabase (com fallback localStorage)
+**Etapa 5 — Migração das stores:** ✅ CONCLUÍDA
+- [x] Migrar `use-finance-store.ts` para ler/escrever via Supabase (com fallback localStorage)
+- [x] Migrar `use-investments-store.ts` para ler/escrever via Supabase (com fallback localStorage)
 
-**Etapa 6 — Ferramenta de migração:**
-- [ ] Criar botão na página de perfil para upload único: localStorage → Supabase
-- [ ] Validar dados antes de enviar (reuso dos schemas Zod)
+**Etapa 6 — Ferramenta de migração:** ✅ CONCLUÍDA
+- [x] Criar botão na página de perfil para upload único: localStorage → Supabase
+- [x] Validar dados antes de enviar (reuso dos schemas Zod)
 
 **Etapa 7 — Validação:**
 - [ ] Testar fluxo offline-first: funciona sem internet, sincroniza quando volta
@@ -744,6 +746,8 @@ Finalize perguntando:
 | `services/backup.ts`             | Export/Import de dados JSON          |
 | `services/market-data.ts`        | APIs de cotação                      |
 | `services/brapi.ts`              | API Brapi.dev (Radar de Ativos)      |
+| `services/supabase.ts`           | CRUD Supabase (transactions, categories, goals, profile, assets) |
+| `services/sync.ts`               | Sync offline-first Supabase ↔ localStorage |
 | **Lib**                          |                                      |
 | `lib/types.ts`                   | Tipos de domínio                     |
 | `lib/investment-types.ts`        | Tipos de investimentos               |
@@ -754,6 +758,7 @@ Finalize perguntando:
 | `components/app-header.tsx`      | Header global com navegação          |
 | `components/period-filter.tsx`   | Filtro de período com skeleton       |
 | `components/backup-manager.tsx`  | UI de backup/restore                 |
+| `components/migration-tool.tsx`  | UI de upload localStorage → Supabase |
 | **Investimentos**                |                                      |
 | `app/investments/components/asset-radar.tsx` | Radar de Ativos (12 indicadores) |
 | `app/investments/components/portfolio-overview.tsx` | Resumo da carteira |
@@ -764,8 +769,6 @@ Finalize perguntando:
 | `docs/supabase-profile-trigger.sql` | Trigger auto-criar profile        |
 | `docs/HELP.md`                   | Pendências e passo a passo Fase 5    |
 | **FUTURO (ainda não existem)**   |                                      |
-| `services/supabase.ts`           | CRUD Supabase (Etapa 3)              |
-| `services/sync.ts`               | Sync Supabase ↔ localStorage (Etapa 4)|
 | `app/api/telegram/route.ts`      | Webhook handler Telegram (Fase 6)    |
 
 ================================================================
@@ -784,6 +787,18 @@ Finalize perguntando:
 - **Custo mensal total:** R$0
 - **Badge Barato/Justo/Caro removido e substituído:** P/L com thresholds fixos não era referência confiável. Substituído por Calculadora de Graham com input manual de P/VP (Fase 4.1 concluída)
 - **Limpeza de codebase:** 55 arquivos removidos (43 UI components, 2 hooks, 6 public files, CSS duplicado, pnpm-lock vazio) + 24 pacotes npm desinstalados
+
+**2026-01-28:**
+
+- **Deploy Vercel:** Projeto deployado em https://finance-oxygen.vercel.app/
+- **Redirect URLs configuradas:** Site URL e Redirect URLs configurados no Supabase Dashboard
+- **Auth testado em produção:** Magic Link funcionando corretamente
+- **Etapa 3 concluída:** `services/supabase.ts` criado com CRUD completo (transactions, categories, goals, profile, assets)
+- **Etapa 4 concluída:** `services/sync.ts` criado com sync offline-first (fila, flush, pull, listeners online/offline)
+- **Etapa 5 concluída:** Stores integradas com syncService (use-finance-store, use-investments-store)
+- **Etapa 6 concluída:** `components/migration-tool.tsx` criado para upload único localStorage → Supabase
+- **Traduções adicionadas:** 22 chaves de migration em PT/EN
+- **Próximo passo:** Etapa 7 — testar fluxo offline-first em produção com os 4 usuários
 
 **2026-01-27:**
 
@@ -838,5 +853,6 @@ Finalize perguntando:
 | 2026-01-26 | Fase 4.1 | Calculadora de Graham: modal com P/L×P/VP, link StatusInvest, traduções PT/EN |
 | 2026-01-27 | Fase 5 | Supabase criado, schema+RLS aplicados, decisões de sync definidas |
 | 2026-01-27 | Fase 5 (Etapa 1-2) | Client Supabase, Auth flow completo (Magic Link, guard, login, callback, traduções) |
+| 2026-01-28 | Fase 5 (Etapa 3-6) | Deploy Vercel, auth testado, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool |
 
 > Detalhes granulares de cada mudança estão no histórico git.

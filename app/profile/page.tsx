@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from "@/lib/constants"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { BackupManager } from "@/components/backup-manager"
+import { MigrationTool } from "@/components/migration-tool"
 import { useAuth } from "@/components/auth-provider"
 
 export default function ProfilePage() {
@@ -203,6 +204,8 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <MigrationTool />
 
         <BackupManager />
 
