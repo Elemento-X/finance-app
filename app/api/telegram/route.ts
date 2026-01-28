@@ -15,6 +15,17 @@ type TelegramUpdate = {
   edited_message?: TelegramMessage
 }
 
+type TelegramLinkToken = {
+  user_id: string
+  expires_at: string
+  used_at: string | null
+}
+
+type ProfileRow = {
+  id: string
+  telegram_chat_id: number | null
+}
+
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   if (!telegramToken) {
     console.error("[Telegram] Missing TELEGRAM_BOT_TOKEN")
@@ -72,7 +83,7 @@ export async function POST(req: Request) {
       .from("telegram_link_tokens")
       .select("user_id, expires_at, used_at")
       .eq("code", code)
-      .maybeSingle()
+      .maybeSingle<TelegramLinkToken>()
 
     if (tokenError || !tokenRow) {
       await sendTelegramMessage(chatId, "Código inválido. Gere um novo no app.")
@@ -93,7 +104,7 @@ export async function POST(req: Request) {
       .from("profiles")
       .select("telegram_chat_id")
       .eq("id", tokenRow.user_id)
-      .maybeSingle()
+      .maybeSingle<Pick<ProfileRow, "telegram_chat_id">>()
 
     if (profileError) {
       console.error("[Telegram] Failed to load profile:", profileError)
@@ -102,8 +113,8 @@ export async function POST(req: Request) {
     }
 
     if (profileRow?.telegram_chat_id) {
-      await supabase
-        .from("telegram_link_tokens")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from("telegram_link_tokens") as any)
         .update({ used_at: nowIso })
         .eq("code", code)
 
@@ -119,7 +130,7 @@ export async function POST(req: Request) {
       .select("id")
       .eq("telegram_chat_id", chatId)
       .neq("id", tokenRow.user_id)
-      .maybeSingle()
+      .maybeSingle<Pick<ProfileRow, "id">>()
 
     if (existingChat) {
       await sendTelegramMessage(
@@ -129,8 +140,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true })
     }
 
-    const { error: updateError } = await supabase
-      .from("profiles")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (supabase.from("profiles") as any)
       .update({ telegram_chat_id: chatId })
       .eq("id", tokenRow.user_id)
       .is("telegram_chat_id", null)
@@ -141,8 +152,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true })
     }
 
-    await supabase
-      .from("telegram_link_tokens")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from("telegram_link_tokens") as any)
       .update({ used_at: nowIso })
       .eq("code", code)
 
