@@ -17,23 +17,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Save, Trash2, User, DollarSign, Database, LogOut } from "lucide-react"
+import { Save, Trash2, User, DollarSign, Database, LogOut, MessageCircle, RefreshCw, Link2Off } from "lucide-react"
 import { toast } from "sonner"
 import { CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from "@/lib/constants"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { BackupManager } from "@/components/backup-manager"
 import { MigrationTool } from "@/components/migration-tool"
 import { useAuth } from "@/components/auth-provider"
+import { supabase } from "@/lib/supabase"
+import { supabaseService } from "@/services/supabase"
 
 export default function ProfilePage() {
   const { loadData, profile, updateProfile, transactions } = useFinanceStore()
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
   const t = useTranslation()
   const [name, setName] = useState("")
   const [currency, setCurrency] = useState("BRL")
   const [language, setLanguage] = useState<Locale>("en")
   const [showClearDialog, setShowClearDialog] = useState(false)
   const [storageSize, setStorageSize] = useState("0.00")
+  const [isLinking, setIsLinking] = useState(false)
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -81,6 +85,68 @@ export default function ProfilePage() {
         window.location.reload()
       }, 1000)
     }
+  }
+
+  const generateLinkCode = (length = 10) => {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    const values = new Uint32Array(length)
+    crypto.getRandomValues(values)
+    return Array.from(values, (value) => alphabet[value % alphabet.length]).join("")
+  }
+
+  const handleConnectTelegram = async () => {
+    if (!user) {
+      toast.error(t("telegram.authRequired"))
+      return
+    }
+
+    if (profile.telegramChatId) {
+      toast.info(t("telegram.alreadyLinked"))
+      return
+    }
+
+    const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
+    if (!botUsername) {
+      toast.error(t("telegram.botMissing"))
+      return
+    }
+
+    setIsLinking(true)
+    const code = generateLinkCode()
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+    const { error } = await supabase
+      .from("telegram_link_tokens")
+      .insert({ user_id: user.id, code, expires_at: expiresAt })
+
+    if (error) {
+      console.error("Failed to create telegram link token:", error)
+      toast.error(t("telegram.linkError"))
+      setIsLinking(false)
+      return
+    }
+
+    const link = `https://t.me/${botUsername}?start=${code}`
+    window.open(link, "_blank", "noopener")
+    toast.success(t("telegram.linkOpened"))
+    setIsLinking(false)
+  }
+
+  const handleRefreshTelegram = async () => {
+    await loadData()
+    toast.success(t("telegram.refreshed"))
+  }
+
+  const handleDisconnectTelegram = async () => {
+    setIsDisconnecting(true)
+    const result = await supabaseService.updateTelegramChatId(null)
+    if (result) {
+      updateProfile({ ...profile, telegramChatId: null })
+      toast.success(t("telegram.disconnectSuccess"))
+    } else {
+      toast.error(t("telegram.disconnectError"))
+    }
+    setIsDisconnecting(false)
   }
 
   return (
@@ -201,6 +267,49 @@ export default function ProfilePage() {
                 <Trash2 className="size-4 mr-2" />
                 {t("profile.deleteAllData")}
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <MessageCircle className="size-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>{t("profile.telegramTitle")}</CardTitle>
+                <CardDescription>{t("profile.telegramDesc")}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">
+                  {profile.telegramChatId ? t("profile.telegramConnected") : t("profile.telegramDisconnected")}
+                </p>
+                <p className="text-sm text-muted-foreground">{t("profile.telegramHint")}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {profile.telegramChatId ? (
+                  <Button variant="outline" onClick={handleDisconnectTelegram} disabled={isDisconnecting}>
+                    <Link2Off className="size-4 mr-2" />
+                    {isDisconnecting ? t("common.loading") : t("profile.telegramDisconnect")}
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={handleRefreshTelegram}>
+                      <RefreshCw className="size-4 mr-2" />
+                      {t("profile.telegramRefresh")}
+                    </Button>
+                    <Button onClick={handleConnectTelegram} disabled={isLinking}>
+                      <MessageCircle className="size-4 mr-2" />
+                      {isLinking ? t("common.loading") : t("profile.telegramConnect")}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
