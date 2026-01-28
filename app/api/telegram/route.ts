@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase-admin"
-import { parseFinancialMessage } from "@/services/groq"
+import { parseMessage, formatQueryResponse } from "@/services/groq"
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN
 const telegramSecret = process.env.TELEGRAM_WEBHOOK_SECRET
@@ -29,6 +29,13 @@ type ProfileRow = {
 
 type CategoryRow = {
   name: string
+}
+
+type TransactionRow = {
+  type: string
+  amount: number
+  category: string
+  date: string
 }
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
@@ -195,53 +202,142 @@ export async function POST(req: Request) {
   const userCategories = (categoriesData as CategoryRow[] | null)?.map((c) => c.name) ?? []
 
   // Parse the message with Groq
-  const parseResult = await parseFinancialMessage(text, userCategories)
+  const parseResult = await parseMessage(text, userCategories)
 
-  if (!parseResult.success || !parseResult.transaction) {
-    await sendTelegramMessage(chatId, parseResult.error ?? "Não entendi. Tente: gastei 50 no mercado")
+  if (!parseResult.success || !parseResult.response) {
+    await sendTelegramMessage(chatId, parseResult.error ?? "Erro ao processar. Tenta de novo? 🔄")
     return NextResponse.json({ ok: true })
   }
 
-  const { transaction } = parseResult
+  const { response } = parseResult
 
-  // Generate unique ID
-  const transactionId = `tg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-
-  // Insert transaction into Supabase
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: insertError } = await (supabase.from("transactions") as any).insert({
-    id: transactionId,
-    user_id: userId,
-    type: transaction.type,
-    amount: transaction.amount,
-    category: transaction.category,
-    date: transaction.date,
-    description: transaction.description ?? null,
-    is_future: false,
-    is_unexpected: false,
-    source: "telegram",
-  })
-
-  if (insertError) {
-    console.error("[Telegram] Failed to insert transaction:", insertError)
-    await sendTelegramMessage(chatId, "Erro ao salvar. Tente novamente.")
+  // Handle CONVERSATION intent
+  if (response.intent === "conversation") {
+    await sendTelegramMessage(chatId, response.message ?? "👋")
     return NextResponse.json({ ok: true })
   }
 
-  // Format confirmation message
-  const typeEmoji = transaction.type === "income" ? "💰" : transaction.type === "expense" ? "💸" : "📈"
-  const typeLabel = transaction.type === "income" ? "Receita" : transaction.type === "expense" ? "Despesa" : "Investimento"
-  const formattedAmount = transaction.amount.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })
-  const formattedDate = new Date(transaction.date + "T12:00:00").toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-  })
+  // Handle QUERY intent
+  if (response.intent === "query" && response.query) {
+    const financialData = await getFinancialData(supabase, userId)
+    const queryResponse = formatQueryResponse(response.query.queryType, financialData)
+    await sendTelegramMessage(chatId, queryResponse)
+    return NextResponse.json({ ok: true })
+  }
 
-  const confirmation = `${typeEmoji} ${typeLabel} registrada!\n${formattedAmount} — ${transaction.category} — ${formattedDate}`
+  // Handle TRANSACTION intent
+  if (response.intent === "transaction" && response.transaction) {
+    const { transaction } = response
 
-  await sendTelegramMessage(chatId, confirmation)
+    // Generate unique ID
+    const transactionId = `tg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+
+    // Insert transaction into Supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertError } = await (supabase.from("transactions") as any).insert({
+      id: transactionId,
+      user_id: userId,
+      type: transaction.type,
+      amount: transaction.amount,
+      category: transaction.category,
+      date: transaction.date,
+      description: transaction.description ?? null,
+      is_future: false,
+      is_unexpected: false,
+      source: "telegram",
+    })
+
+    if (insertError) {
+      console.error("[Telegram] Failed to insert transaction:", insertError)
+      await sendTelegramMessage(chatId, "Erro ao salvar. Tente novamente. 😕")
+      return NextResponse.json({ ok: true })
+    }
+
+    // Format confirmation message
+    const typeEmoji = transaction.type === "income" ? "💰" : transaction.type === "expense" ? "💸" : "📈"
+    const typeLabel = transaction.type === "income" ? "Receita" : transaction.type === "expense" ? "Despesa" : "Investimento"
+    const formattedAmount = transaction.amount.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
+    const formattedDate = new Date(transaction.date + "T12:00:00").toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    })
+
+    const confirmation = `${typeEmoji} ${typeLabel} registrada!\n${formattedAmount} — ${transaction.category} — ${formattedDate}`
+
+    await sendTelegramMessage(chatId, confirmation)
+    return NextResponse.json({ ok: true })
+  }
+
+  // Fallback
+  await sendTelegramMessage(chatId, "Não entendi. Tenta me contar um gasto ou receita? 🤔")
   return NextResponse.json({ ok: true })
+}
+
+// =============================================================================
+// Helper: Get Financial Data for Queries
+// =============================================================================
+
+async function getFinancialData(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+) {
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]
+
+  // Get all transactions for this month
+  const { data: transactions } = await supabase
+    .from("transactions")
+    .select("type, amount, category, date")
+    .eq("user_id", userId)
+    .gte("date", startOfMonth)
+    .lte("date", endOfMonth)
+    .order("date", { ascending: false })
+
+  const txns = (transactions as TransactionRow[] | null) ?? []
+
+  // Calculate totals
+  let monthIncome = 0
+  let monthExpenses = 0
+  let monthInvestments = 0
+  const categoryTotals: Record<string, number> = {}
+
+  for (const t of txns) {
+    const amount = Number(t.amount)
+    if (t.type === "income") {
+      monthIncome += amount
+    } else if (t.type === "expense") {
+      monthExpenses += amount
+      categoryTotals[t.category] = (categoryTotals[t.category] ?? 0) + amount
+    } else if (t.type === "investment") {
+      monthInvestments += amount
+    }
+  }
+
+  const balance = monthIncome - monthExpenses - monthInvestments
+
+  // Top categories by spending
+  const topCategories = Object.entries(categoryTotals)
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total)
+
+  // Recent transactions (last 10)
+  const recentTransactions = txns.slice(0, 10).map((t) => ({
+    type: t.type,
+    amount: Number(t.amount),
+    category: t.category,
+    date: t.date,
+  }))
+
+  return {
+    monthIncome,
+    monthExpenses,
+    monthInvestments,
+    balance,
+    topCategories,
+    recentTransactions,
+  }
 }
