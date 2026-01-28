@@ -105,6 +105,7 @@ function rowToProfile(row: ProfileRow): UserProfile {
     currency: row.currency || 'BRL',
     defaultMonth: row.default_month ?? new Date().toISOString().slice(0, 7),
     language: (row.language as 'en' | 'pt') || 'pt',
+    telegramChatId: row.telegram_chat_id ?? null,
   }
 }
 
@@ -371,6 +372,23 @@ export const supabaseService = {
 
     if (error) {
       console.error('Error saving profile:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateTelegramChatId(chatId: number | null): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ telegram_chat_id: chatId })
+      .eq('id', userId)
+
+    if (error) {
+      console.error('Error updating telegram chat id:', error)
       return false
     }
 

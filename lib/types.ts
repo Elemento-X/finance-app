@@ -24,6 +24,7 @@ export interface UserProfile {
   currency: string
   defaultMonth: string
   language: "en" | "pt" // Added language field
+  telegramChatId?: number | null
 }
 
 export interface FilterPeriod {

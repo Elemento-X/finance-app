@@ -51,7 +51,13 @@ interface FinanceStore {
 export const useFinanceStore = create<FinanceStore>((set, get) => ({
   transactions: [],
   categories: [],
-  profile: { name: "", currency: "BRL", defaultMonth: new Date().toISOString().slice(0, 7), language: "en" },
+  profile: {
+    name: "",
+    currency: "BRL",
+    defaultMonth: new Date().toISOString().slice(0, 7),
+    language: "en",
+    telegramChatId: null,
+  },
   filterPeriod: { type: "month", date: new Date() },
   goals: [],
   isHydrated: false,
