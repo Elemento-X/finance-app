@@ -81,7 +81,7 @@ export function validateArray<T>(
       valid.push(result.data)
     } else {
       invalidCount++
-      console.warn("[Finance App] Invalid item found:", result.error.issues)
+      console.warn("[ControleC] Invalid item found:", result.error.issues)
     }
   }
 
@@ -98,6 +98,6 @@ export function validateObject<T>(
   if (result.success) {
     return { value: result.data, isValid: true }
   }
-  console.warn("[Finance App] Invalid object found:", result.error.issues)
+  console.warn("[ControleC] Invalid object found:", result.error.issues)
   return { value: defaultValue, isValid: false }
 }
