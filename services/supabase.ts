@@ -1,6 +1,6 @@
 // Supabase CRUD Service - Mirrors storage.ts interface for cloud persistence
 import { supabase } from "@/lib/supabase"
-import type { Transaction, Category, UserProfile, Goal } from "@/lib/types"
+import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
 import type { Asset } from "@/lib/investment-types"
 
 // =============================================================================
@@ -175,6 +175,63 @@ function rowToAsset(row: AssetRow): Asset {
     totalInvested: row.total_invested,
     purchaseDate: row.purchase_date,
     createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
+// RecurringTransaction
+interface RecurringTransactionRow {
+  id: string
+  user_id: string
+  type: string
+  amount: number
+  category: string
+  description: string | null
+  frequency: string
+  day_of_month: number | null
+  day_of_week: number | null
+  month_of_year: number | null
+  start_date: string
+  end_date: string | null
+  last_generated_date: string | null
+  is_active: boolean
+  created_at: string
+}
+
+function recurringTransactionToRow(r: RecurringTransaction, userId: string): Omit<RecurringTransactionRow, 'created_at'> {
+  return {
+    id: r.id,
+    user_id: userId,
+    type: r.type,
+    amount: r.amount,
+    category: r.category,
+    description: r.description ?? null,
+    frequency: r.frequency,
+    day_of_month: r.dayOfMonth ?? null,
+    day_of_week: r.dayOfWeek ?? null,
+    month_of_year: r.monthOfYear ?? null,
+    start_date: r.startDate,
+    end_date: r.endDate ?? null,
+    last_generated_date: r.lastGeneratedDate ?? null,
+    is_active: r.isActive,
+  }
+}
+
+function rowToRecurringTransaction(row: RecurringTransactionRow): RecurringTransaction {
+  return {
+    id: row.id,
+    type: row.type as RecurringTransaction['type'],
+    amount: row.amount,
+    category: row.category,
+    description: row.description ?? undefined,
+    frequency: row.frequency as RecurringTransaction['frequency'],
+    dayOfMonth: row.day_of_month ?? undefined,
+    dayOfWeek: row.day_of_week ?? undefined,
+    monthOfYear: row.month_of_year ?? undefined,
+    startDate: row.start_date,
+    endDate: row.end_date ?? undefined,
+    lastGeneratedDate: row.last_generated_date ?? undefined,
+    isActive: row.is_active,
+    createdAt: row.created_at,
   }
 }
 
@@ -546,6 +603,117 @@ export const supabaseService = {
 
     if (error) {
       console.error('Error deleting asset:', error)
+      return false
+    }
+
+    return true
+  },
+
+  // ---------------------------------------------------------------------------
+  // Recurring Transactions
+  // ---------------------------------------------------------------------------
+  async getRecurringTransactions(): Promise<RecurringTransaction[]> {
+    const userId = await getCurrentUserId()
+    if (!userId) return []
+
+    const { data, error } = await supabase
+      .from('recurring_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching recurring transactions:', error)
+      return []
+    }
+
+    return (data as RecurringTransactionRow[]).map(rowToRecurringTransaction)
+  },
+
+  async getActiveRecurringTransactions(): Promise<RecurringTransaction[]> {
+    const userId = await getCurrentUserId()
+    if (!userId) return []
+
+    const { data, error } = await supabase
+      .from('recurring_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching active recurring transactions:', error)
+      return []
+    }
+
+    return (data as RecurringTransactionRow[]).map(rowToRecurringTransaction)
+  },
+
+  async addRecurringTransaction(recurringTransaction: RecurringTransaction): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .insert(recurringTransactionToRow(recurringTransaction, userId))
+
+    if (error) {
+      console.error('Error adding recurring transaction:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateRecurringTransaction(id: string, recurringTransaction: RecurringTransaction): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const row = recurringTransactionToRow(recurringTransaction, userId)
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .update(row)
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating recurring transaction:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateRecurringTransactionLastGenerated(id: string, lastGeneratedDate: string): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .update({ last_generated_date: lastGeneratedDate })
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating recurring transaction last generated date:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async deleteRecurringTransaction(id: string): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error deleting recurring transaction:', error)
       return false
     }
 
