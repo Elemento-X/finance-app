@@ -1,69 +1,66 @@
-# Pendências para continuar a Fase 5
+# Status do Projeto ControleC
 
-## Status atual
+## Fases Concluídas
 
-- Etapa 1 (Client Supabase): CONCLUÍDA
-- Etapa 2 (Auth flow): CONCLUÍDA (código pronto, falta configuração externa)
-- Etapa 3 (CRUD Supabase): pendente
-- Etapa 4 (Sync): pendente
-- Etapa 5 (Migração stores): pendente
-- Etapa 6 (Ferramenta migração): pendente
-- Etapa 7 (Validação): pendente
+### Fase 5 — Supabase (Fundação Cloud) ✅ CONCLUÍDA
 
-## Antes de testar o Auth (pré-requisitos)
+Todas as etapas concluídas:
+- Etapa 1: Client Supabase (`lib/supabase.ts`)
+- Etapa 2: Auth flow (Magic Link, guard, login, callback)
+- Etapa 3: CRUD Supabase (`services/supabase.ts`)
+- Etapa 4: Sync offline-first (`services/sync.ts`)
+- Etapa 5: Migração das stores (use-finance-store, use-investments-store)
+- Etapa 6: Ferramenta de migração (`components/migration-tool.tsx`)
+- Etapa 7: Validação (fluxo offline-first testado)
 
-### 1. Trigger SQL no Supabase
+### Fase 6 — Telegram Bot ✅ CONCLUÍDA
 
-Rodar `docs/supabase-profile-trigger.sql` no SQL Editor do Supabase.
+Todas as etapas concluídas:
+- Etapa 1: Schema e Tipos (telegram_link_tokens, telegram_chat_id)
+- Etapa 2: Infraestrutura Backend (`lib/supabase-admin.ts`, `app/api/telegram/route.ts`)
+- Etapa 3: UI de Vinculação (página de perfil)
+- Etapa 4: Configuração do Bot (BotFather, webhook, variáveis)
+- Etapa 5: Parsing de mensagens com IA (`services/groq.ts` — Llama 3.3-70b)
+- Etapa 6: Registro de transações via texto livre
+- Etapa 7: Consultas financeiras (saldo, resumo, categoria, recentes)
 
-**Status: FEITO**
+## Configuração Atual
 
-### 2. Deploy na Vercel
+### URLs
 
-O app precisa estar deployado para que o Magic Link funcione (o email redireciona para uma URL real).
+- **Produção:** https://controlec.vercel.app/
+- **Desenvolvimento:** http://localhost:3000
 
-**Como fazer:**
+### Variáveis de Ambiente (todas configuradas)
 
-1. Criar conta na Vercel (https://vercel.com) se ainda não tiver
-2. Conectar o repositório Git do projeto
-3. Na Vercel, ir em **Settings > Environment Variables** e adicionar:
-   - `NEXT_PUBLIC_SUPABASE_URL` = `https://ejfyrueskwyqjvlqptns.supabase.co`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (mesmo valor do `.env.local`)
-   - `NEXT_PUBLIC_BRAPI_API_KEY` = (mesmo valor do `.env.local`)
-4. Fazer deploy (a Vercel faz automaticamente ao pushar para o repositório)
-5. Anotar a URL gerada (ex: `https://seu-app.vercel.app`)
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+NEXT_PUBLIC_BRAPI_API_KEY
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
+TELEGRAM_BOT_TOKEN
+TELEGRAM_WEBHOOK_SECRET
+GROQ_API_KEY
+```
 
-### 3. Configurar URLs no Supabase
+### Comandos do Bot
 
-No dashboard do Supabase, ir em **Authentication > URL Configuration**:
+O bot responde a:
+- **Transações:** "gastei 50 no mercado", "recebi 3000 de salário"
+- **Consultas:** "quanto gastei esse mês?", "resumo do mês", "últimas transações"
+- **Conversa:** saudações e perguntas gerais
 
-- **Site URL**: colocar a URL da Vercel (ex: `https://seu-app.vercel.app`)
-- **Redirect URLs**: adicionar as duas URLs abaixo:
-  - `http://localhost:3000/auth/callback` (desenvolvimento local)
-  - `https://seu-app.vercel.app/auth/callback` (produção)
+## Próximos Passos (Fase 4 — Evolução de Features)
 
-### 4. Testar o fluxo
+A Fase 4 está congelada aguardando decisão de priorização:
+- [ ] Goals com valores alvo e prazos
+- [ ] Transações recorrentes
+- [ ] Relatórios exportáveis (PDF/CSV)
+- [ ] Gráficos comparativos
 
-1. Acessar a URL da Vercel
-2. Deve aparecer a tela de login
-3. Digitar um email e clicar "Enviar link de acesso"
-4. Verificar o email (pode cair no spam)
-5. Clicar no link do email
-6. Deve redirecionar para o dashboard do app
+## Evolução Futura do Bot (pós-MVP)
 
-**Para desenvolvimento local:**
-
-1. `npm run dev`
-2. Acessar `http://localhost:3000`
-3. Mesmo fluxo acima (o Magic Link redirecionará para localhost se configurado)
-
-### 5. Trocar a senha do banco
-
-A senha do PostgreSQL foi exposta no chat. Trocar em:
-**Supabase Dashboard > Settings > Database > Database Password**
-
-(Não afeta o funcionamento do app — o app usa a anon key, não a senha do banco.)
-
-## Próximo passo após testar o Auth
-
-Etapa 3: CRUD Supabase (`services/supabase.ts`) — espelhar as operações do `storage.ts` para funcionar com Supabase.
+- [ ] Resumos automáticos semanais/mensais
+- [ ] Alertas proativos de orçamento
+- [ ] Suporte a múltiplos idiomas (PT/EN baseado no perfil)
