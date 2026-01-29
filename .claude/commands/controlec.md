@@ -1079,6 +1079,7 @@ Finalize perguntando:
   - `components/ui/dialog.tsx`: Adicionado `max-h-[90vh] overflow-y-auto` — modais não vazam da tela
   - `components/ui/alert-dialog.tsx`: Mesma correção — consistência em todos os diálogos
   - `app/globals.css`: Scrollbar customizada com cores da aplicação (primary amarelo, track cinza escuro)
+  - `app/layout.tsx`: Toasts movidos para canto inferior direito
 
 **2026-01-26:**
 
@@ -1185,6 +1186,6 @@ Finalize perguntando:
 | 2026-01-29 | UX Refactor | Recurring: checkbox no modal + seção no Profile (removida página dedicada) |
 | 2026-01-29 | Bugfix | Sync: upsert em vez de insert, error logging detalhado, flush non-blocking |
 | 2026-01-29 | UI | Modais: max-h-[90vh] + overflow-y-auto — conteúdo não vaza da tela |
-| 2026-01-29 | UI | Scrollbar customizada: amarelo dourado (#ffcd00) com track cinza escuro |
+| 2026-01-29 | UI | Scrollbar customizada, toasts no canto inferior direito |
 
 > Detalhes granulares de cada mudança estão no histórico git.
