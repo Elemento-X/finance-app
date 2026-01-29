@@ -23,9 +23,15 @@ Trate esta conversa como uma discussão estratégica entre sócios que:
 - Priorizar decisões que reduzam custo futuro, retrabalho e complexidade.
 
 ================================================================
-📚 CONTEXTO DO FINANCE APP
+📚 CONTEXTO DO CONTROLEC
 
 **Nome do Sistema:** ControleC (Controle Financeiro Pessoal)
+
+**Identidade Visual:**
+- **Logo:** `public/controleclogo.png` (usado como favicon e no header)
+- **Cor primária:** `#ffcd00` (amarelo dourado)
+- **Cor de fundo:** `#2c2f38` (cinza escuro azulado)
+- **Modo:** Dark mode fixo (sem toggle)
 
 **Objetivo do sistema:**
 
@@ -118,7 +124,10 @@ lib/                    → Tipos, constantes, utilitários
 docs/                   → Documentação e scripts SQL
 ├── supabase-schema-rls.sql      → Schema + RLS do Supabase
 ├── supabase-profile-trigger.sql → Trigger auto-criar profile
-└── HELP.md             → Pendências e passo a passo da Fase 5
+└── HELP.md             → Status atual do projeto
+
+public/                 → Assets estáticos
+└── controleclogo.png   → Logo do projeto (favicon + header)
 ```
 
 ================================================================
@@ -317,6 +326,7 @@ docs/                   → Documentação e scripts SQL
 
 **Arquivos:**
 - `.env.local` - Variáveis reais (NÃO commitado)
+- `.env.example` - Template com todas as variáveis (commitado)
 
 **APIs públicas (sem key):**
 - **Yahoo Finance** - Cotações em tempo real
@@ -541,10 +551,12 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - Retenção (LGPD): hard delete com janela máxima de 2 anos para transactions e goals
 - Backup JSON continua como export manual mesmo após Supabase
 
-**2. Dark mode fixo**
+**2. Dark mode fixo com cores customizadas**
 
 - HTML tem `className="dark"` fixo
 - Decisão de produto: apenas dark mode, sem toggle
+- Cores definidas em `app/globals.css` usando OKLCH
+- Background: `#2c2f38` | Primary: `#ffcd00`
 
 **3. Vercel Analytics**
 
@@ -822,7 +834,7 @@ Finalize perguntando:
 | **Docs**                         |                                      |
 | `docs/supabase-schema-rls.sql`   | Schema SQL + RLS do Supabase         |
 | `docs/supabase-profile-trigger.sql` | Trigger auto-criar profile        |
-| `docs/HELP.md`                   | Pendências e passo a passo Fase 5    |
+| `docs/HELP.md`                   | Status atual do projeto              |
 | **API**                         |                                      |
 | `app/api/telegram/route.ts`      | Webhook handler Telegram (vinculação, transações, consultas) |
 
@@ -863,7 +875,15 @@ Finalize perguntando:
   - **Etapa 6:** Registro de transações via texto livre com confirmação formatada
   - **Etapa 7:** Consultas financeiras (saldo, resumo, gastos por categoria, últimas transações)
   - Todas as variáveis de ambiente configuradas na Vercel
-  - **Próximo passo:** Testes end-to-end e monitoramento em produção
+- **Branding e limpeza de código:**
+  - Logo `controleclogo.png` adicionada (favicon + header)
+  - Cores atualizadas: background `#2c2f38`, primary `#ffcd00`
+  - Ícones antigos removidos (apple-icon.png, icon-dark-32x32.png, icon.svg)
+  - Imports não utilizados removidos (Geist fonts em layout.tsx)
+  - Console logs atualizados de `[Finance App]` para `[ControleC]`
+  - `package.json` name atualizado para "controlec"
+  - Arquivo de contexto renomeado: `finance-app.md` → `controlec.md`
+  - `.env.example` criado com todas as variáveis documentadas
 
 **2026-01-27:**
 
@@ -920,5 +940,6 @@ Finalize perguntando:
 | 2026-01-27 | Fase 5 (Etapa 1-2) | Client Supabase, Auth flow completo (Magic Link, guard, login, callback, traduções) |
 | 2026-01-28 | Fase 5 ✅ | Deploy Vercel, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool, SMTP Resend, Validação completa |
 | 2026-01-28 | Fase 6 ✅ | Telegram Bot completo: vinculação, parsing IA (Groq), registro de transações, consultas financeiras |
+| 2026-01-28 | Branding | Logo, cores (#2c2f38 + #ffcd00), limpeza de código, .env.example, renomeação para ControleC |
 
 > Detalhes granulares de cada mudança estão no histórico git.
