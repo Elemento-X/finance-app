@@ -23,6 +23,7 @@ import { CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from "@/lib/constants"
 import { useTranslation, type Locale } from "@/lib/i18n"
 import { BackupManager } from "@/components/backup-manager"
 import { MigrationTool } from "@/components/migration-tool"
+import { RecurringManager } from "@/components/recurring-manager"
 import { useAuth } from "@/components/auth-provider"
 import { supabase } from "@/lib/supabase"
 import { supabaseService } from "@/services/supabase"
@@ -316,6 +317,8 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <RecurringManager />
 
         {/* Only show migration tool if user has no data in Supabase yet */}
         {transactions.length === 0 && <MigrationTool />}
