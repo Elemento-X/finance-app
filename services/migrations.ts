@@ -63,7 +63,7 @@ const migrations: Record<number, MigrationFn> = {
 
         if (transactionsModified) {
           localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(migratedTransactions))
-          console.log("[Finance App] Migrated unexpected transactions to isUnexpected flag")
+          console.log("[ControleC] Migrated unexpected transactions to isUnexpected flag")
         }
       }
 
@@ -83,11 +83,11 @@ const migrations: Record<number, MigrationFn> = {
 
         if (categoriesModified) {
           localStorage.setItem(CATEGORIES_KEY, JSON.stringify(migratedCategories))
-          console.log("[Finance App] Migrated unexpected categories to expense type")
+          console.log("[ControleC] Migrated unexpected categories to expense type")
         }
       }
     } catch (error) {
-      console.error("[Finance App] Migration v2 failed:", error)
+      console.error("[ControleC] Migration v2 failed:", error)
       throw error
     }
   },
@@ -123,17 +123,17 @@ export function runMigrations(): void {
     return // Already up to date
   }
 
-  console.log(`[Finance App] Running migrations from v${storedVersion} to v${CURRENT_VERSION}`)
+  console.log(`[ControleC] Running migrations from v${storedVersion} to v${CURRENT_VERSION}`)
 
   // Run each migration in order
   for (let version = storedVersion + 1; version <= CURRENT_VERSION; version++) {
     const migration = migrations[version]
     if (migration) {
       try {
-        console.log(`[Finance App] Running migration to v${version}`)
+        console.log(`[ControleC] Running migration to v${version}`)
         migration()
       } catch (error) {
-        console.error(`[Finance App] Migration to v${version} failed:`, error)
+        console.error(`[ControleC] Migration to v${version} failed:`, error)
         // Don't update version on failure - will retry next time
         return
       }
@@ -141,7 +141,7 @@ export function runMigrations(): void {
   }
 
   setStoredVersion(CURRENT_VERSION)
-  console.log(`[Finance App] Migrations complete. Now at v${CURRENT_VERSION}`)
+  console.log(`[ControleC] Migrations complete. Now at v${CURRENT_VERSION}`)
 }
 
 /**
@@ -168,7 +168,7 @@ export function safeGetItem<T>(key: string, defaultValue: T): T {
     if (!data) return defaultValue
     return JSON.parse(data) as T
   } catch (error) {
-    console.error(`[Finance App] Failed to parse ${key}:`, error)
+    console.error(`[ControleC] Failed to parse ${key}:`, error)
     return defaultValue
   }
 }
@@ -181,6 +181,6 @@ export function safeSetItem(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch (error) {
-    console.error(`[Finance App] Failed to save ${key}:`, error)
+    console.error(`[ControleC] Failed to save ${key}:`, error)
   }
 }
