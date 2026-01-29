@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useFinanceStore } from "@/hooks/use-finance-store"
 import { useTranslation } from "@/lib/i18n"
-import { Home, Target, FolderOpen, TrendingUp, User } from "lucide-react"
+import { Home, Target, FolderOpen, TrendingUp, User, Repeat } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function AppHeader() {
@@ -22,6 +22,7 @@ export function AppHeader() {
 
   const navItems = [
     { href: "/", label: t("nav.home"), icon: Home },
+    { href: "/recurring", label: t("nav.recurring"), icon: Repeat },
     { href: "/goals", label: t("nav.goals"), icon: Target },
     { href: "/categories", label: t("nav.categories"), icon: FolderOpen },
     { href: "/investments", label: t("nav.investments"), icon: TrendingUp },
@@ -32,13 +33,15 @@ export function AppHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <Image
-            src="/controleclogo.png"
-            alt="ControleC"
-            width={40}
-            height={40}
-            className="rounded-lg"
-          />
+          <Link href="/">
+            <Image
+              src="/controleclogo.png"
+              alt="ControleC"
+              width={40}
+              height={40}
+              className="rounded-lg cursor-pointer"
+            />
+          </Link>
           {!isHydrated ? (
             <div>
               <Skeleton className="h-6 w-32 mb-1" />
