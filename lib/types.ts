@@ -35,6 +35,9 @@ export interface FilterPeriod {
 export interface Goal {
   id: string
   title: string
+  targetAmount?: number      // Valor alvo (opcional)
+  currentAmount?: number     // Valor atual (manual)
+  deadline?: string          // Data limite YYYY-MM-DD (opcional)
   completed: boolean
   createdAt: string
 }

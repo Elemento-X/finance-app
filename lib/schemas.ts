@@ -40,6 +40,9 @@ export type ValidatedUserProfile = z.infer<typeof UserProfileSchema>
 export const GoalSchema = z.object({
   id: z.string(),
   title: z.string(),
+  targetAmount: z.number().positive().optional(),
+  currentAmount: z.number().min(0).optional(),
+  deadline: z.string().optional(),
   completed: z.boolean(),
   createdAt: z.string(),
 })

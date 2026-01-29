@@ -114,6 +114,9 @@ interface GoalRow {
   id: string
   user_id: string
   title: string
+  target_amount: number | null
+  current_amount: number | null
+  deadline: string | null
   completed: boolean
   created_at: string
 }
@@ -123,6 +126,9 @@ function goalToRow(g: Goal, userId: string): Omit<GoalRow, 'created_at'> {
     id: g.id,
     user_id: userId,
     title: g.title,
+    target_amount: g.targetAmount ?? null,
+    current_amount: g.currentAmount ?? null,
+    deadline: g.deadline ?? null,
     completed: g.completed,
   }
 }
@@ -131,6 +137,9 @@ function rowToGoal(row: GoalRow): Goal {
   return {
     id: row.id,
     title: row.title,
+    targetAmount: row.target_amount ?? undefined,
+    currentAmount: row.current_amount ?? undefined,
+    deadline: row.deadline ?? undefined,
     completed: row.completed,
     createdAt: row.created_at,
   }
