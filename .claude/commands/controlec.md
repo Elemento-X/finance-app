@@ -92,6 +92,7 @@ services/               → Lógica de negócio
 ├── storage.ts          → CRUD localStorage (finanças)
 ├── supabase.ts         → CRUD Supabase (transactions, categories, goals, profile, assets)
 ├── sync.ts             → Sync offline-first Supabase ↔ localStorage
+├── groq.ts             → Parsing de mensagens com IA (Groq Llama 3.3-70b)
 ├── calculations.ts     → Cálculos financeiros
 ├── migrations.ts       → Sistema de versionamento e migrações
 ├── backup.ts           → Export/Import de dados (JSON)
@@ -168,10 +169,10 @@ docs/                   → Documentação e scripts SQL
 - Supabase (PostgreSQL) — source of truth (CRUD + sync + stores integradas)
 - Sistema de migrações com versionamento
 
-**Bot / Integração (Fase 6 — em andamento):**
+**Bot / Integração (Fase 6 ✅ CONCLUÍDA):**
 
 - Telegram Bot API (registro de transações via chat)
-- Groq API (Llama 3) ou Google Gemini (parsing de linguagem natural) — pendente
+- Groq API (Llama 3.3-70b) para parsing de linguagem natural
 
 **Backend Serverless:**
 
@@ -309,10 +310,10 @@ docs/                   → Documentação e scripts SQL
 | `NEXT_PUBLIC_SUPABASE_URL`    | URL do projeto Supabase                  | ✅ Ativo |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anônima do Supabase              | ✅ Ativo |
 | `SUPABASE_SERVICE_ROLE_KEY`   | Chave service role do Supabase (webhook) | ✅ Ativo |
-| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Username do bot (deep link)      | ⏳ Pendente |
-| `TELEGRAM_BOT_TOKEN`          | Token do bot Telegram (via BotFather)    | ⏳ Pendente |
-| `TELEGRAM_WEBHOOK_SECRET`     | Secret para validar webhooks do Telegram | ⏳ Pendente |
-| `GROQ_API_KEY`                | API key Groq (parsing de mensagens)      | FUTURO   |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Username do bot (deep link)      | ✅ Ativo |
+| `TELEGRAM_BOT_TOKEN`          | Token do bot Telegram (via BotFather)    | ✅ Ativo |
+| `TELEGRAM_WEBHOOK_SECRET`     | Secret para validar webhooks do Telegram | ✅ Ativo |
+| `GROQ_API_KEY`                | API key Groq (Llama 3.3-70b)             | ✅ Ativo |
 
 **Arquivos:**
 - `.env.local` - Variáveis reais (NÃO commitado)
@@ -387,7 +388,7 @@ getTranslation('validation.corruptedData')
 interface BackupData {
   version: number // Versão do schema
   exportedAt: string // Data ISO do export
-  appName: string // "Finance App"
+  appName: string // "ControleC"
   data: {
     transactions: Transaction[]
     categories: Category[]
@@ -405,7 +406,7 @@ interface BackupData {
 - Escolha entre substituir ou mesclar dados
 
 ================================================================
-🤖 ARQUITETURA TELEGRAM BOT (FUTURO — Fase 6)
+🤖 ARQUITETURA TELEGRAM BOT (✅ IMPLEMENTADA)
 
 **Visão geral:**
 
@@ -415,14 +416,14 @@ interface BackupData {
 │  (usuário)   │                      │  /api/telegram       │
 │              │ ←──────────────────  │                      │
 │  "gastei 50  │    resposta          │  1. Recebe msg       │
-│   no mercado"│                      │  2. Chama Groq/Gemini│
+│   no mercado"│                      │  2. Chama Groq API   │
 └──────────────┘                      │  3. Parseia intent   │
                                       │  4. Insere Supabase  │
                                       │  5. Responde user    │
                                       └──────────┬──────────┘
                                                   │
        ┌──────────────┐              ┌────────────▼─────────┐
-       │ Finance App  │ ←──────────→ │  Supabase            │
+       │ ControleC    │ ←──────────→ │  Supabase            │
        │ (browser)    │  real-time   │  PostgreSQL + Auth   │
        │              │  + offline   │  + Real-time + REST  │
        └──────────────┘  sync        └──────────────────────┘
@@ -432,11 +433,22 @@ interface BackupData {
 
 1. Usuário no Telegram: "gastei 150 de luz"
 2. Telegram envia webhook POST para `https://controlec.vercel.app/api/telegram`
-3. API Route: chama Groq/Gemini com prompt estruturado
-4. IA retorna: `{ type: "expense", amount: 150, category: "Luz", date: "2026-01-26" }`
-5. API Route: INSERT na tabela `transactions` do Supabase
-6. API Route: responde no Telegram: "✓ Despesa R$150 — Luz — 26/01"
-7. Finance App (se aberto): real-time subscription atualiza a UI
+3. API Route: chama Groq API (Llama 3.3-70b) com prompt estruturado
+4. IA retorna: `{ intent: "transaction", transaction: { type: "expense", amount: 150, category: "Luz", date: "2026-01-28" } }`
+5. API Route: INSERT na tabela `transactions` do Supabase (source: "telegram")
+6. API Route: responde no Telegram: "💸 Despesa R$150,00 — Luz — 28/01"
+7. ControleC (se aberto): sync automático atualiza a UI
+
+**Intents suportados:**
+
+| Intent | Exemplo | Resposta |
+|--------|---------|----------|
+| `transaction` | "gastei 50 no mercado" | 💸 Despesa R$50,00 — Mercado — 28/01 |
+| `query` (balance) | "quanto gastei esse mês?" | 📊 Saldo do mês: R$X |
+| `query` (summary) | "resumo do mês" | Receitas, despesas, top categorias |
+| `query` (category) | "gastos em alimentação" | Total gasto na categoria |
+| `query` (recent) | "últimas transações" | Lista 10 mais recentes |
+| `conversation` | "oi", "obrigado" | Resposta amigável |
 
 **Custos (free tier):**
 
@@ -504,7 +516,7 @@ interface BackupData {
 
 **Arquivo:** `lib/i18n.ts`
 
-**Cobertura:** 380+ chaves de tradução (190+ por idioma)
+**Cobertura:** 400+ chaves de tradução (200+ por idioma, incluindo Telegram)
 
 **Uso:**
 
@@ -645,11 +657,11 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Dados persistem no Supabase após reconexão
 - [ ] Testar multi-dispositivo (prioridade menor — pendente)
 
-### FASE 6 — Telegram Bot (Chat Interface) ⬅️ EM ANDAMENTO
+### FASE 6 — Telegram Bot (Chat Interface) ✅ CONCLUÍDA
 
 **Objetivo:** Permitir registro de transações via Telegram usando linguagem natural.
 
-**Stack:** Telegram Bot API (grátis) + Vercel API Routes (grátis) + Groq/Gemini (grátis)
+**Stack:** Telegram Bot API (grátis) + Vercel API Routes (grátis) + Groq API (grátis)
 
 **Schema SQL:** `docs/supabase-schema-rls.sql` (inclui `telegram_link_tokens` e `telegram_chat_id` em profiles)
 
@@ -686,21 +698,25 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Adicionar variáveis de ambiente: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`, `SUPABASE_SERVICE_ROLE_KEY`
 - [x] Testar fluxo de vinculação end-to-end
 
-**Etapa 5 — Parsing de mensagens (IA):** ⏳ PENDENTE ⬅️ PRÓXIMO
-- [ ] Integrar Groq API (Llama 3) ou Google Gemini para parsing
-- [ ] Criar prompt estruturado para extrair: tipo, valor, categoria, data, descrição
-- [ ] Mapear categorias do usuário (consultar Supabase) para matching inteligente
-- [ ] Tratar variações de linguagem natural em PT-BR ("gastei", "paguei", "entrou", "recebi")
+**Etapa 5 — Parsing de mensagens (IA):** ✅ CONCLUÍDA
+- [x] Integrar Groq API (Llama 3.3-70b, free tier 30 req/min)
+- [x] Criar `services/groq.ts` (319 linhas) com prompt estruturado
+- [x] Detectar 3 intents: TRANSACTION, QUERY, CONVERSATION
+- [x] Mapear categorias do usuário (consulta Supabase) para matching inteligente
+- [x] Tratar variações de linguagem natural em PT-BR ("gastei", "paguei", "entrou", "recebi")
+- [x] Validar valores, datas e categorias com fallback para defaults
 
-**Etapa 6 — Registro de Transações:** ⏳ PENDENTE
-- [ ] Registro de transações por texto livre ("gastei 50 no mercado")
-- [ ] Confirmação no chat ("✓ Despesa R$50,00 — Mercado — 26/01")
-- [ ] Comandos rápidos: `/gasto 50 mercado`, `/receita 3000 salário`
-- [ ] Inserção via Supabase Admin (bypass RLS com service role)
+**Etapa 6 — Registro de Transações:** ✅ CONCLUÍDA
+- [x] Registro de transações por texto livre ("gastei 50 no mercado")
+- [x] Confirmação no chat ("💸 Despesa R$50,00 — Mercado — 26/01")
+- [x] Inserção via Supabase Admin (bypass RLS com service role)
+- [x] Campo `source: "telegram"` para identificar origem
 
-**Etapa 7 — Consultas (MVP+):** ⏳ PENDENTE
-- [ ] Consulta de saldo: "quanto gastei esse mês?"
-- [ ] Resumo sob demanda: "resumo da semana"
+**Etapa 7 — Consultas Financeiras:** ✅ CONCLUÍDA
+- [x] Consulta de saldo: "quanto gastei esse mês?" → retorna balanço
+- [x] Resumo sob demanda: "resumo do mês" → receitas, despesas, investimentos, top categorias
+- [x] Gastos por categoria: "quanto gastei em alimentação?"
+- [x] Últimas transações: "últimas transações" → lista 10 mais recentes
 
 **Evolução futura (pós-MVP):**
 - [ ] Resumos automáticos semanais/mensais enviados pelo bot
@@ -786,6 +802,7 @@ Finalize perguntando:
 | `services/brapi.ts`              | API Brapi.dev (Radar de Ativos)      |
 | `services/supabase.ts`           | CRUD Supabase (transactions, categories, goals, profile, assets, telegram) |
 | `services/sync.ts`               | Sync offline-first Supabase ↔ localStorage |
+| `services/groq.ts`               | Parsing de mensagens com IA (Groq Llama 3.3-70b) |
 | **Lib**                          |                                      |
 | `lib/types.ts`                   | Tipos de domínio                     |
 | `lib/investment-types.ts`        | Tipos de investimentos               |
@@ -807,7 +824,7 @@ Finalize perguntando:
 | `docs/supabase-profile-trigger.sql` | Trigger auto-criar profile        |
 | `docs/HELP.md`                   | Pendências e passo a passo Fase 5    |
 | **API**                         |                                      |
-| `app/api/telegram/route.ts`      | Webhook handler Telegram (vinculação + mensagens) |
+| `app/api/telegram/route.ts`      | Webhook handler Telegram (vinculação, transações, consultas) |
 
 ================================================================
 🗣️ NOTAS DE ALINHAMENTO (Decisões entre sócios)
@@ -840,16 +857,13 @@ Finalize perguntando:
 - **SMTP Resend configurado:** Rate limit de emails resolvido com SMTP customizado (onboarding@resend.dev temporário)
 - **Fase 5 concluída:** Supabase totalmente integrado como source of truth
 - **Renomeação:** App renomeado para "ControleC", domínio alterado para https://controlec.vercel.app/
-- **Fase 6 (Etapas 1-4) concluídas:**
-  - Tabela `telegram_link_tokens` + coluna `telegram_chat_id` em profiles + coluna `source` em transactions
-  - `lib/supabase-admin.ts` (client service role)
-  - `app/api/telegram/route.ts` (webhook handler com /start, validação, vinculação completa)
-  - UI na página de perfil: conectar, desconectar
-  - Auto-refresh do status quando aba ganha foco (visibilitychange)
-  - MigrationTool oculto se já tem dados no Supabase
-  - Bot criado no BotFather, webhook configurado, variáveis na Vercel
-  - Vinculação testada end-to-end e funcionando
-  - **Próximo passo:** Etapa 5 — Parsing de mensagens com IA (Groq/Gemini)
+- **Fase 6 COMPLETA:**
+  - **Etapas 1-4:** Schema, backend, UI, bot configurado, vinculação funcionando
+  - **Etapa 5:** `services/groq.ts` (319 linhas) — parsing com Llama 3.3-70b, 3 intents (transaction, query, conversation)
+  - **Etapa 6:** Registro de transações via texto livre com confirmação formatada
+  - **Etapa 7:** Consultas financeiras (saldo, resumo, gastos por categoria, últimas transações)
+  - Todas as variáveis de ambiente configuradas na Vercel
+  - **Próximo passo:** Testes end-to-end e monitoramento em produção
 
 **2026-01-27:**
 
@@ -905,6 +919,6 @@ Finalize perguntando:
 | 2026-01-27 | Fase 5 | Supabase criado, schema+RLS aplicados, decisões de sync definidas |
 | 2026-01-27 | Fase 5 (Etapa 1-2) | Client Supabase, Auth flow completo (Magic Link, guard, login, callback, traduções) |
 | 2026-01-28 | Fase 5 ✅ | Deploy Vercel, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool, SMTP Resend, Validação completa |
-| 2026-01-28 | Fase 6 (Etapa 1-4) ✅ | Telegram: schema, backend, UI, bot criado, webhook configurado, vinculação funcionando, auto-refresh |
+| 2026-01-28 | Fase 6 ✅ | Telegram Bot completo: vinculação, parsing IA (Groq), registro de transações, consultas financeiras |
 
 > Detalhes granulares de cada mudança estão no histórico git.
