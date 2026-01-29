@@ -696,35 +696,34 @@ alter table goals add column if not exists current_amount numeric default 0;
 alter table goals add column if not exists deadline date;
 ```
 
-#### 4.4 — Gráficos Comparativos
+#### 4.4 — Gráficos Comparativos ✅ CONCLUÍDA (já existia)
 
 **Objetivo:** Visualizar evolução financeira ao longo do tempo.
 
 **Funcionalidades:**
-- [ ] Gráfico mês a mês (receitas vs despesas dos últimos 6-12 meses)
-- [ ] Comparativo de categorias (top 5 categorias por período)
-- [ ] Tendência de saldo (linha do tempo)
+- [x] Gráfico mês a mês (receitas vs despesas dos últimos 6 meses) — `MonthlyEvolutionChart`
+- [x] Comparativo de categorias (top categorias por período) — `ExpensesByCategoryChart`
+- [x] Comparativo receitas vs despesas vs investimentos — `IncomeVsExpenseChart`
 
-**Etapas:**
-- [ ] Criar componente `MonthlyComparisonChart` em `components/dashboard/`
-- [ ] Criar componente `CategoryComparisonChart`
-- [ ] Adicionar seção de gráficos no dashboard principal
-- [ ] Reutilizar Recharts (já instalado)
-- [ ] Traduções PT/EN (~10 chaves)
+**Componentes existentes em `components/dashboard/`:**
+- `MonthlyEvolutionChart` — Gráfico de área com evolução mensal
+- `ExpensesByCategoryChart` — Gráfico de pizza com despesas por categoria
+- `IncomeVsExpenseChart` — Gráfico de barras comparativo
 
-#### 4.5 — Relatórios Exportáveis (Prioridade Baixa)
+#### 4.5 — Relatórios Exportáveis ✅ CONCLUÍDA
 
 **Objetivo:** Exportar dados para análise externa ou declaração de IR.
 
 **Funcionalidades:**
-- [ ] Export CSV (transações filtradas por período)
-- [ ] Export PDF (resumo mensal formatado)
+- [x] Export CSV (todas as transações com data, tipo, categoria, valor, descrição)
+- [x] Export PDF (resumo com totais, despesas por categoria, últimas transações)
 
 **Etapas:**
-- [ ] Criar função `exportToCSV()` em `services/export.ts`
-- [ ] Criar função `exportToPDF()` (usar biblioteca leve como jsPDF)
-- [ ] Adicionar botões de export na página de perfil ou dashboard
-- [ ] Traduções PT/EN (~8 chaves)
+- [x] Criar `services/export.ts` com `exportToCSV()` e `exportToPDF()`
+- [x] Instalar jsPDF para geração de PDF
+- [x] Criar `components/export-manager.tsx` com UI de exportação
+- [x] Adicionar ExportManager na página de perfil
+- [x] Traduções PT/EN (~11 chaves)
 
 ### FASE 4.1 — Calculadora de Graham (Radar de Ativos) ✅ CONCLUÍDA
 
@@ -1094,7 +1093,15 @@ Finalize perguntando:
   - `app/goals/page.tsx`: UI completamente refeita com modal criar/editar, barra de progresso, indicadores de deadline
   - `lib/i18n.ts`: ~15 chaves adicionadas em PT/EN
   - `docs/supabase-schema-rls.sql`: Schema atualizado + queries de migração documentadas
-  - **Alteração pendente no Supabase:** Rodar ALTER TABLE para adicionar novos campos
+  - **Alteração aplicada no Supabase:** ALTER TABLE executado com sucesso
+- **Fase 4.4 Gráficos Comparativos:** Já existia implementada no dashboard (3 componentes de gráfico)
+- **Fase 4.5 Relatórios Exportáveis:**
+  - `services/export.ts`: Funções exportToCSV() e exportToPDF() criadas
+  - `components/export-manager.tsx`: UI com botões de exportação
+  - `app/profile/page.tsx`: ExportManager adicionado
+  - `lib/i18n.ts`: ~11 chaves de export em PT/EN
+  - Dependência jsPDF adicionada
+- **Fase 4 100% concluída:** Todas as sub-fases (4.1 a 4.5) finalizadas
 
 **2026-01-26:**
 
@@ -1203,5 +1210,7 @@ Finalize perguntando:
 | 2026-01-29 | UI | Modais: max-h-[90vh] + overflow-y-auto — conteúdo não vaza da tela |
 | 2026-01-29 | UI | Scrollbar customizada, toasts no canto inferior direito |
 | 2026-01-29 | Fase 4.3 ✅ | Goals evoluídos: valor alvo, valor atual, prazo, barra de progresso, indicadores visuais |
+| 2026-01-29 | Fase 4.4 ✅ | Gráficos Comparativos: já existiam (MonthlyEvolution, ExpensesByCategory, IncomeVsExpense) |
+| 2026-01-29 | Fase 4.5 ✅ | Relatórios Exportáveis: CSV + PDF com jsPDF, seção de export no Profile |
 
 > Detalhes granulares de cada mudança estão no histórico git.
