@@ -62,6 +62,24 @@ create table if not exists assets (
   created_at timestamptz default now()
 );
 
+create table if not exists recurring_transactions (
+  id text primary key,
+  user_id uuid references auth.users not null,
+  type text not null,                    -- 'income' | 'expense' | 'investment'
+  amount numeric not null,
+  category text not null,
+  description text,
+  frequency text not null,               -- 'weekly' | 'monthly' | 'yearly'
+  day_of_month smallint,                 -- 1-28 (para monthly)
+  day_of_week smallint,                  -- 0-6 (para weekly, 0=domingo)
+  month_of_year smallint,                -- 1-12 (para yearly)
+  start_date date not null,
+  end_date date,                         -- null = indefinido
+  last_generated_date date,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
 -- 2) Indexes
 create index if not exists idx_transactions_user_date on transactions (user_id, date);
 create index if not exists idx_goals_user_created on goals (user_id, created_at);
@@ -69,6 +87,7 @@ create index if not exists idx_assets_user_created on assets (user_id, created_a
 create index if not exists idx_categories_user_name on categories (user_id, name);
 create index if not exists idx_telegram_tokens_code on telegram_link_tokens (code);
 create index if not exists idx_telegram_tokens_user on telegram_link_tokens (user_id);
+create index if not exists idx_recurring_user_active on recurring_transactions (user_id, is_active);
 
 -- 3) RLS enable
 alter table profiles enable row level security;
@@ -77,6 +96,7 @@ alter table categories enable row level security;
 alter table transactions enable row level security;
 alter table goals enable row level security;
 alter table assets enable row level security;
+alter table recurring_transactions enable row level security;
 
 -- 4) RLS policies
 create policy "Profiles own data" on profiles
@@ -95,4 +115,7 @@ create policy "Goals own data" on goals
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Assets own data" on assets
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "Recurring transactions own data" on recurring_transactions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

@@ -61,6 +61,26 @@ export const AssetSchema = z.object({
 
 export type ValidatedAsset = z.infer<typeof AssetSchema>
 
+// RecurringTransaction Schema
+export const RecurringTransactionSchema = z.object({
+  id: z.string(),
+  type: z.enum(["income", "expense", "investment"]),
+  amount: z.number().positive(),
+  category: z.string(),
+  description: z.string().optional(),
+  frequency: z.enum(["weekly", "monthly", "yearly"]),
+  dayOfMonth: z.number().min(1).max(28).optional(),
+  dayOfWeek: z.number().min(0).max(6).optional(),
+  monthOfYear: z.number().min(1).max(12).optional(),
+  startDate: z.string(),
+  endDate: z.string().nullable().optional(),
+  lastGeneratedDate: z.string().optional(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+})
+
+export type ValidatedRecurringTransaction = z.infer<typeof RecurringTransactionSchema>
+
 // Validation result type
 export interface ValidationResult<T> {
   valid: T[]

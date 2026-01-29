@@ -38,3 +38,22 @@ export interface Goal {
   completed: boolean
   createdAt: string
 }
+
+export type RecurringFrequency = "weekly" | "monthly" | "yearly"
+
+export interface RecurringTransaction {
+  id: string
+  type: TransactionType
+  amount: number
+  category: string
+  description?: string
+  frequency: RecurringFrequency
+  dayOfMonth?: number      // 1-28 (para monthly)
+  dayOfWeek?: number       // 0-6 (para weekly, 0=domingo)
+  monthOfYear?: number     // 1-12 (para yearly)
+  startDate: string        // YYYY-MM-DD
+  endDate?: string | null  // null = indefinido
+  lastGeneratedDate?: string
+  isActive: boolean
+  createdAt: string
+}
