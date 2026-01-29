@@ -324,7 +324,7 @@ public/                 → Assets estáticos
 | `TELEGRAM_BOT_TOKEN`          | Token do bot Telegram (via BotFather)    | ✅ Ativo |
 | `TELEGRAM_WEBHOOK_SECRET`     | Secret para validar webhooks do Telegram | ✅ Ativo |
 | `GROQ_API_KEY`                | API key Groq (Llama 3.3-70b)             | ✅ Ativo |
-| `CRON_SECRET`                 | Secret para autenticação do cron job     | ⏳ Configurar |
+| `CRON_SECRET`                 | Secret para autenticação do cron job     | ✅ Ativo |
 
 **Arquivos:**
 - `.env.local` - Variáveis reais (NÃO commitado)
@@ -662,7 +662,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 **Etapa 7 — Traduções e Polish:** ✅ CONCLUÍDA
 - [x] Adicionar traduções PT/EN (~35 chaves)
 - [x] Toasts de feedback
-- [ ] Skeleton loading na página (opcional - pode adicionar depois)
+- [~] ~~Skeleton loading na página~~ (N/A - página dedicada removida, Profile já tem skeleton)
 
 #### 4.3 — Goals com Valores e Prazos
 
@@ -1069,6 +1069,16 @@ Finalize perguntando:
   - Supabase: tabela `recurring_transactions` (Fase 4.2, Etapa 1)
   - Vercel: cron jobs no `vercel.json` (Fase 4.2 Etapa 4, Fase 7.1)
 - **Custo adicional:** R$0 (tudo no free tier)
+- **CRON_SECRET configurado:** Variável adicionada na Vercel
+- **Correções de estabilidade:**
+  - `services/supabase.ts`: Mudado `insert` para `upsert` (evita erro de duplicate key)
+  - `services/supabase.ts`: Error logging melhorado com código, mensagem, detalhes
+  - `services/supabase.ts`: Tratamento especial para violação de RLS (código 42501)
+  - `services/sync.ts`: Flush da fila agora é non-blocking (`setTimeout`) — evita travar UI
+- **Correções de UI:**
+  - `components/ui/dialog.tsx`: Adicionado `max-h-[90vh] overflow-y-auto` — modais não vazam da tela
+  - `components/ui/alert-dialog.tsx`: Mesma correção — consistência em todos os diálogos
+  - `app/globals.css`: Scrollbar customizada com cores da aplicação (primary amarelo, track cinza escuro)
 
 **2026-01-26:**
 
@@ -1173,5 +1183,8 @@ Finalize perguntando:
 | 2026-01-29 | Planejamento | Fase 4 descongelada, Fase 7 criada, roadmap completo com checkboxes |
 | 2026-01-29 | Fase 4.2 ✅ | Transações Recorrentes: schema, tipos, CRUD, cron job, UI, store, traduções |
 | 2026-01-29 | UX Refactor | Recurring: checkbox no modal + seção no Profile (removida página dedicada) |
+| 2026-01-29 | Bugfix | Sync: upsert em vez de insert, error logging detalhado, flush non-blocking |
+| 2026-01-29 | UI | Modais: max-h-[90vh] + overflow-y-auto — conteúdo não vaza da tela |
+| 2026-01-29 | UI | Scrollbar customizada: amarelo dourado (#ffcd00) com track cinza escuro |
 
 > Detalhes granulares de cada mudança estão no histórico git.
