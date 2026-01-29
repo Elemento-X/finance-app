@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Transaction, TransactionType } from "@/lib/types"
+import type { Transaction, TransactionType, RecurringTransaction, RecurringFrequency } from "@/lib/types"
 import { useFinanceStore } from "@/hooks/use-finance-store"
 import { formatCurrencyInput } from "@/utils/formatters"
 import { useTranslation } from "@/lib/i18n"
@@ -24,7 +24,7 @@ interface TransactionFormProps {
 }
 
 export function TransactionForm({ open, onOpenChange, transaction, mode = "create" }: TransactionFormProps) {
-  const { addTransaction, updateTransaction, categories, profile } = useFinanceStore()
+  const { addTransaction, updateTransaction, addRecurringTransaction, categories, profile } = useFinanceStore()
   const t = useTranslation()
 
   const [type, setType] = useState<TransactionType>("income")
@@ -34,6 +34,11 @@ export function TransactionForm({ open, onOpenChange, transaction, mode = "creat
   const [description, setDescription] = useState("")
   const [isFuture, setIsFuture] = useState(false)
   const [isUnexpected, setIsUnexpected] = useState(false)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [frequency, setFrequency] = useState<RecurringFrequency>("monthly")
+  const [dayOfWeek, setDayOfWeek] = useState(1)
+  const [dayOfMonth, setDayOfMonth] = useState(1)
+  const [monthOfYear, setMonthOfYear] = useState(1)
 
   useEffect(() => {
     if (transaction && mode === "edit") {
@@ -52,6 +57,11 @@ export function TransactionForm({ open, onOpenChange, transaction, mode = "creat
       setDescription("")
       setIsFuture(false)
       setIsUnexpected(false)
+      setIsRecurring(false)
+      setFrequency("monthly")
+      setDayOfWeek(1)
+      setDayOfMonth(1)
+      setMonthOfYear(1)
     }
   }, [transaction, mode, open])
 
@@ -93,7 +103,29 @@ export function TransactionForm({ open, onOpenChange, transaction, mode = "creat
       toast.success(t("transaction.updated"))
     } else {
       addTransaction(transactionData)
-      toast.success(t("transaction.created"))
+
+      // Create recurring transaction if checkbox is checked
+      if (isRecurring) {
+        const categoryName = categories.find(c => c.id === category)?.name || category
+        const recurringData: RecurringTransaction = {
+          id: `recurring-${Date.now()}`,
+          type,
+          amount: parsedAmount,
+          category: categoryName,
+          description: description || undefined,
+          frequency,
+          dayOfWeek: frequency === "weekly" ? dayOfWeek : undefined,
+          dayOfMonth: frequency === "monthly" || frequency === "yearly" ? dayOfMonth : undefined,
+          monthOfYear: frequency === "yearly" ? monthOfYear : undefined,
+          startDate: date,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }
+        addRecurringTransaction(recurringData)
+        toast.success(t("recurring.addSuccess"))
+      } else {
+        toast.success(t("transaction.created"))
+      }
     }
 
     onOpenChange(false)
@@ -179,6 +211,109 @@ export function TransactionForm({ open, onOpenChange, transaction, mode = "creat
               {t("transaction.unexpected")}
             </Label>
           </div>
+
+          {/* Recurring transaction option - only show in create mode */}
+          {mode === "create" && (
+            <>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isRecurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+                />
+                <Label htmlFor="isRecurring" className="text-sm font-normal cursor-pointer">
+                  {t("recurring.repeatAutomatically")}
+                </Label>
+              </div>
+
+              {isRecurring && (
+                <div className="space-y-3 pl-6 border-l-2 border-primary/20">
+                  <div className="space-y-2">
+                    <Label>{t("recurring.frequency")}</Label>
+                    <Select value={frequency} onValueChange={(v) => setFrequency(v as RecurringFrequency)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">{t("recurring.frequencyWeekly")}</SelectItem>
+                        <SelectItem value="monthly">{t("recurring.frequencyMonthly")}</SelectItem>
+                        <SelectItem value="yearly">{t("recurring.frequencyYearly")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {frequency === "weekly" && (
+                    <div className="space-y-2">
+                      <Label>{t("recurring.dayOfWeek")}</Label>
+                      <Select value={dayOfWeek.toString()} onValueChange={(v) => setDayOfWeek(parseInt(v))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">{t("recurring.sunday")}</SelectItem>
+                          <SelectItem value="1">{t("recurring.monday")}</SelectItem>
+                          <SelectItem value="2">{t("recurring.tuesday")}</SelectItem>
+                          <SelectItem value="3">{t("recurring.wednesday")}</SelectItem>
+                          <SelectItem value="4">{t("recurring.thursday")}</SelectItem>
+                          <SelectItem value="5">{t("recurring.friday")}</SelectItem>
+                          <SelectItem value="6">{t("recurring.saturday")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {(frequency === "monthly" || frequency === "yearly") && (
+                    <div className="space-y-2">
+                      <Label>{t("recurring.dayOfMonth")}</Label>
+                      <Select value={dayOfMonth.toString()} onValueChange={(v) => setDayOfMonth(parseInt(v))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                            <SelectItem key={day} value={day.toString()}>
+                              {day}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {frequency === "yearly" && (
+                    <div className="space-y-2">
+                      <Label>{t("recurring.monthOfYear")}</Label>
+                      <Select value={monthOfYear.toString()} onValueChange={(v) => setMonthOfYear(parseInt(v))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            { value: "1", label: "Janeiro" },
+                            { value: "2", label: "Fevereiro" },
+                            { value: "3", label: "Março" },
+                            { value: "4", label: "Abril" },
+                            { value: "5", label: "Maio" },
+                            { value: "6", label: "Junho" },
+                            { value: "7", label: "Julho" },
+                            { value: "8", label: "Agosto" },
+                            { value: "9", label: "Setembro" },
+                            { value: "10", label: "Outubro" },
+                            { value: "11", label: "Novembro" },
+                            { value: "12", label: "Dezembro" },
+                          ].map((month) => (
+                            <SelectItem key={month.value} value={month.value}>
+                              {month.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="description">{t("transaction.description")}</Label>
