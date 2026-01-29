@@ -77,6 +77,17 @@ export const translations = {
     "goals.optional": "optional",
     "goals.reached": "Goal reached!",
 
+    // Export
+    "export.title": "Export Data",
+    "export.description": "Download your financial data",
+    "export.csv": "Export CSV",
+    "export.csvDesc": "Spreadsheet with all transactions",
+    "export.pdf": "Export PDF",
+    "export.pdfDesc": "Formatted summary report",
+    "export.csvSuccess": "CSV exported successfully!",
+    "export.pdfSuccess": "PDF exported successfully!",
+    "export.noData": "No transactions to export",
+
     // Recurring Transactions page
     "recurring.title": "Recurring Transactions",
     "recurring.repeatAutomatically": "Repeat automatically",
@@ -525,6 +536,17 @@ export const translations = {
     "goals.today": "Hoje!",
     "goals.optional": "opcional",
     "goals.reached": "Objetivo alcançado!",
+
+    // Export
+    "export.title": "Exportar Dados",
+    "export.description": "Baixe seus dados financeiros",
+    "export.csv": "Exportar CSV",
+    "export.csvDesc": "Planilha com todas as transações",
+    "export.pdf": "Exportar PDF",
+    "export.pdfDesc": "Relatório resumido formatado",
+    "export.csvSuccess": "CSV exportado com sucesso!",
+    "export.pdfSuccess": "PDF exportado com sucesso!",
+    "export.noData": "Nenhuma transação para exportar",
 
     // Recurring Transactions page
     "recurring.title": "Transações Recorrentes",
