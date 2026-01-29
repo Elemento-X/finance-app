@@ -307,6 +307,7 @@ public/                 → Assets estáticos
 | `market_data_cache`          | Cache de cotações (5 min TTL)               |
 | `finance_data_version`       | Número da versão dos dados (para migrações) |
 | `brapi_stocks_cache`         | Cache do Radar de Ativos (24h TTL)          |
+| `finance_recurring_transactions` | RecurringTransaction[]                   |
 | `supabase_sync_queue`        | Fila de operações pendentes offline         |
 | `supabase_last_sync`         | Timestamp da última sincronização           |
 
@@ -323,6 +324,7 @@ public/                 → Assets estáticos
 | `TELEGRAM_BOT_TOKEN`          | Token do bot Telegram (via BotFather)    | ✅ Ativo |
 | `TELEGRAM_WEBHOOK_SECRET`     | Secret para validar webhooks do Telegram | ✅ Ativo |
 | `GROQ_API_KEY`                | API key Groq (Llama 3.3-70b)             | ✅ Ativo |
+| `CRON_SECRET`                 | Secret para autenticação do cron job     | ⏳ Configurar |
 
 **Arquivos:**
 - `.env.local` - Variáveis reais (NÃO commitado)
@@ -593,12 +595,128 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Adicionar retry logic em market-data.ts
 - [~] ~~Implementar PWA para uso offline no celular~~ (descartado - custo-benefício não justifica)
 
-### FASE 4 — Evolução de Features (CONGELADA — aguardando Fases 5-6)
+### FASE 4 — Evolução de Features (DESCONGELADA)
 
-- [ ] Goals com valores alvo e prazos
-- [ ] Transações recorrentes
-- [ ] Relatórios exportáveis (PDF/CSV)
-- [ ] Gráficos comparativos (mês a mês, categoria a categoria)
+#### 4.2 — Transações Recorrentes (Escopo Mínimo Viável)
+
+**Objetivo:** Automatizar registro de despesas/receitas fixas (aluguel, luz, salário, streaming, etc.)
+
+**Modelo de dados (nova tabela `recurring_transactions`):**
+
+```typescript
+{
+  id: string
+  user_id: string
+  type: "income" | "expense" | "investment"
+  amount: number
+  category: string
+  description?: string
+  frequency: "weekly" | "monthly" | "yearly"
+  dayOfMonth?: number      // Para monthly (1-28, evitar 29-31)
+  dayOfWeek?: number       // Para weekly (0=domingo, 6=sábado)
+  monthOfYear?: number     // Para yearly (1-12)
+  startDate: string        // YYYY-MM-DD
+  endDate?: string | null  // null = indefinido
+  lastGeneratedDate?: string
+  isActive: boolean
+  createdAt: string
+}
+```
+
+**Etapa 1 — Schema Supabase:** ✅ CONCLUÍDA
+- [x] Criar tabela `recurring_transactions` no Supabase
+- [x] Adicionar RLS policies (usuário só vê/edita seus próprios)
+- [x] Criar indexes necessários
+- [x] Documentar em `docs/supabase-schema-rls.sql`
+
+**Etapa 2 — Tipos e Validação:** ✅ CONCLUÍDA
+- [x] Criar `RecurringTransaction` em `lib/types.ts`
+- [x] Criar `RecurringTransactionSchema` em `lib/schemas.ts`
+- [x] Adicionar chave localStorage `finance_recurring_transactions`
+- [x] CRUD em `services/storage.ts` (cache local)
+- [x] Traduções de validação PT/EN
+
+**Etapa 3 — CRUD Services:** ✅ CONCLUÍDA
+- [x] Adicionar CRUD em `services/supabase.ts` (recurring transactions)
+- [x] Adicionar CRUD em `services/storage.ts` (localStorage cache)
+- [x] Integrar com `services/sync.ts` (offline-first)
+
+**Etapa 4 — Cron Job (Vercel):** ✅ CONCLUÍDA
+- [x] Criar API Route `app/api/cron/generate-recurring/route.ts`
+- [x] Configurar cron no `vercel.json` (execução diária às 03:05 UTC / 00:05 BRT)
+- [x] Lógica: buscar recorrentes ativas → verificar se deve gerar → criar transação → atualizar lastGeneratedDate
+- [x] Adicionar variável `CRON_SECRET` para autenticação
+
+**Etapa 5 — UI de Gerenciamento:** ✅ CONCLUÍDA
+- [x] Criar página `app/recurring/page.tsx`
+- [x] Listar transações recorrentes (ativas/inativas)
+- [x] Modal para criar/editar recorrente
+- [x] Botão para pausar/reativar
+- [x] Adicionar link no menu global
+
+**Etapa 6 — Integração com Store:** ✅ CONCLUÍDA
+- [x] Adicionar state `recurringTransactions` em `use-finance-store.ts`
+- [x] Implementar actions: loadRecurring, addRecurring, updateRecurring, deleteRecurring, toggleRecurring
+
+**Etapa 7 — Traduções e Polish:** ✅ CONCLUÍDA
+- [x] Adicionar traduções PT/EN (~35 chaves)
+- [x] Toasts de feedback
+- [ ] Skeleton loading na página (opcional - pode adicionar depois)
+
+#### 4.3 — Goals com Valores e Prazos
+
+**Objetivo:** Evoluir metas de to-do simples para tracking de progresso financeiro.
+
+**Modelo de dados (evolução de `goals`):**
+
+```typescript
+{
+  id: string
+  title: string
+  targetAmount?: number    // Valor alvo (opcional)
+  currentAmount?: number   // Valor atual (manual ou calculado)
+  deadline?: string        // Data limite YYYY-MM-DD (opcional)
+  completed: boolean
+  createdAt: string
+}
+```
+
+**Etapas:**
+- [ ] Adicionar campos opcionais na tabela `goals` (Supabase)
+- [ ] Atualizar `GoalSchema` em `lib/schemas.ts`
+- [ ] Atualizar UI da página goals (barra de progresso, deadline)
+- [ ] Adicionar input de valor alvo e prazo no form
+- [ ] Traduções PT/EN (~15 chaves)
+
+#### 4.4 — Gráficos Comparativos
+
+**Objetivo:** Visualizar evolução financeira ao longo do tempo.
+
+**Funcionalidades:**
+- [ ] Gráfico mês a mês (receitas vs despesas dos últimos 6-12 meses)
+- [ ] Comparativo de categorias (top 5 categorias por período)
+- [ ] Tendência de saldo (linha do tempo)
+
+**Etapas:**
+- [ ] Criar componente `MonthlyComparisonChart` em `components/dashboard/`
+- [ ] Criar componente `CategoryComparisonChart`
+- [ ] Adicionar seção de gráficos no dashboard principal
+- [ ] Reutilizar Recharts (já instalado)
+- [ ] Traduções PT/EN (~10 chaves)
+
+#### 4.5 — Relatórios Exportáveis (Prioridade Baixa)
+
+**Objetivo:** Exportar dados para análise externa ou declaração de IR.
+
+**Funcionalidades:**
+- [ ] Export CSV (transações filtradas por período)
+- [ ] Export PDF (resumo mensal formatado)
+
+**Etapas:**
+- [ ] Criar função `exportToCSV()` em `services/export.ts`
+- [ ] Criar função `exportToPDF()` (usar biblioteca leve como jsPDF)
+- [ ] Adicionar botões de export na página de perfil ou dashboard
+- [ ] Traduções PT/EN (~8 chaves)
 
 ### FASE 4.1 — Calculadora de Graham (Radar de Ativos) ✅ CONCLUÍDA
 
@@ -730,10 +848,104 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Gastos por categoria: "quanto gastei em alimentação?"
 - [x] Últimas transações: "últimas transações" → lista 10 mais recentes
 
-**Evolução futura (pós-MVP):**
-- [ ] Resumos automáticos semanais/mensais enviados pelo bot
-- [ ] Alertas proativos: "Você já gastou 80% do orçamento de alimentação"
-- [ ] Suporte a múltiplos idiomas no bot (PT/EN, baseado no perfil do usuário)
+**Evolução futura (movido para Fase 7):**
+- Resumos automáticos → Fase 7.1
+- Alertas proativos → Fase 7.2
+- Suporte a múltiplos idiomas no bot → Fase 7.4
+
+### FASE 7 — Inteligência e Automação
+
+**Objetivo:** Adicionar funcionalidades proativas que agregam valor sem interação manual.
+
+#### 7.1 — Resumos Automáticos via Telegram
+
+**Objetivo:** Bot envia resumo financeiro semanal/mensal automaticamente.
+
+**Funcionalidades:**
+- [ ] Resumo semanal (toda segunda-feira às 9h): gastos da semana, comparativo com semana anterior
+- [ ] Resumo mensal (dia 1 às 9h): receitas, despesas, saldo, top categorias, comparativo mês anterior
+
+**Etapas:**
+- [ ] Criar API Route `app/api/cron/telegram-summary/route.ts`
+- [ ] Configurar cron no `vercel.json` (semanal + mensal)
+- [ ] Buscar todos os usuários com `telegram_chat_id` vinculado
+- [ ] Gerar resumo personalizado por usuário
+- [ ] Enviar via Telegram Bot API
+- [ ] Adicionar toggle no perfil: "Receber resumos automáticos" (opt-in)
+- [ ] Traduções PT/EN (~12 chaves)
+
+#### 7.2 — Alertas de Orçamento
+
+**Objetivo:** Notificar usuário quando gastos em categoria atingem threshold.
+
+**Modelo de dados (nova tabela `budget_alerts`):**
+
+```typescript
+{
+  id: string
+  user_id: string
+  category: string
+  monthlyLimit: number     // Limite mensal em R$
+  alertThreshold: number   // % para alertar (ex: 80)
+  isActive: boolean
+  createdAt: string
+}
+```
+
+**Funcionalidades:**
+- [ ] Configurar limite mensal por categoria
+- [ ] Alerta quando atinge X% do limite (ex: 80%)
+- [ ] Alerta quando ultrapassa 100%
+- [ ] Envio via Telegram (se vinculado) ou toast no app
+
+**Etapas:**
+- [ ] Criar tabela `budget_alerts` no Supabase + RLS
+- [ ] Criar UI para configurar limites (página de categorias ou perfil)
+- [ ] Verificar limites ao registrar transação (webhook Telegram + app)
+- [ ] Enviar alerta se threshold atingido
+- [ ] Traduções PT/EN (~15 chaves)
+
+#### 7.3 — Categorização Automática via IA
+
+**Objetivo:** Sugerir categoria baseado na descrição da transação.
+
+**Funcionalidades:**
+- [ ] Ao digitar descrição, sugerir categoria (autocomplete)
+- [ ] Usar histórico do usuário para matching (descrições similares)
+- [ ] Fallback para Groq se não encontrar match local
+
+**Etapas:**
+- [ ] Criar função `suggestCategory(description, userCategories, history)` em `services/groq.ts`
+- [ ] Implementar matching local primeiro (Levenshtein distance ou similar)
+- [ ] Chamar IA apenas se confiança local < threshold
+- [ ] Integrar no form de transação (autocomplete)
+- [ ] Cache de sugestões para economizar requests
+
+#### 7.4 — Suporte Multilíngue no Bot Telegram
+
+**Objetivo:** Bot responde no idioma configurado no perfil do usuário.
+
+**Etapas:**
+- [ ] Carregar `language` do perfil do usuário ao processar mensagem
+- [ ] Criar templates de resposta em PT e EN no `services/groq.ts`
+- [ ] Passar idioma no prompt para a IA
+- [ ] Formatar respostas (datas, moedas) conforme locale
+
+#### 7.5 — Dashboard com Tendências
+
+**Objetivo:** Mostrar evolução e previsões no dashboard principal.
+
+**Funcionalidades:**
+- [ ] Gráfico de tendência: saldo dos últimos 6 meses
+- [ ] Previsão simples: "Se continuar assim, você terminará o mês com R$X"
+- [ ] Indicadores visuais: ↑ melhorando, ↓ piorando, → estável
+
+**Etapas:**
+- [ ] Criar componente `TrendIndicator` em `components/dashboard/`
+- [ ] Criar componente `BalanceForecast`
+- [ ] Calcular média móvel e tendência em `services/calculations.ts`
+- [ ] Integrar no dashboard principal
+- [ ] Traduções PT/EN (~10 chaves)
 
 ================================================================
 🧪 ESTADO ATUAL DE TESTES
@@ -837,9 +1049,25 @@ Finalize perguntando:
 | `docs/HELP.md`                   | Status atual do projeto              |
 | **API**                         |                                      |
 | `app/api/telegram/route.ts`      | Webhook handler Telegram (vinculação, transações, consultas) |
+| `app/api/cron/generate-recurring/route.ts` | Cron job para gerar transações recorrentes |
+| **Recurring Transactions**       |                                      |
+| `app/recurring/page.tsx`         | Página de gerenciamento de recorrentes |
+| `app/recurring/recurring-form.tsx` | Formulário de criar/editar recorrente |
+| `vercel.json`                    | Configuração de cron jobs            |
 
 ================================================================
 🗣️ NOTAS DE ALINHAMENTO (Decisões entre sócios)
+
+**2026-01-29:**
+
+- **Fase 4 descongelada:** Features de evolução liberadas para implementação
+- **Prioridade definida:** Transações Recorrentes (4.2) primeiro — maior valor prático para uso diário
+- **Escopo mínimo viável escolhido:** Cron job + tabela dedicada (não templates manuais)
+- **Fase 7 criada:** Inteligência e Automação — resumos automáticos, alertas de orçamento, categorização IA, tendências
+- **Alterações externas necessárias:**
+  - Supabase: tabela `recurring_transactions` (Fase 4.2, Etapa 1)
+  - Vercel: cron jobs no `vercel.json` (Fase 4.2 Etapa 4, Fase 7.1)
+- **Custo adicional:** R$0 (tudo no free tier)
 
 **2026-01-26:**
 
@@ -941,5 +1169,7 @@ Finalize perguntando:
 | 2026-01-28 | Fase 5 ✅ | Deploy Vercel, CRUD Supabase, Sync offline-first, Stores integradas, Migration tool, SMTP Resend, Validação completa |
 | 2026-01-28 | Fase 6 ✅ | Telegram Bot completo: vinculação, parsing IA (Groq), registro de transações, consultas financeiras |
 | 2026-01-28 | Branding | Logo, cores (#2c2f38 + #ffcd00), limpeza de código, .env.example, renomeação para ControleC |
+| 2026-01-29 | Planejamento | Fase 4 descongelada, Fase 7 criada, roadmap completo com checkboxes |
+| 2026-01-29 | Fase 4.2 ✅ | Transações Recorrentes: schema, tipos, CRUD, cron job, UI, store, traduções |
 
 > Detalhes granulares de cada mudança estão no histórico git.
