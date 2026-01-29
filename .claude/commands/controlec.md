@@ -647,12 +647,13 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Lógica: buscar recorrentes ativas → verificar se deve gerar → criar transação → atualizar lastGeneratedDate
 - [x] Adicionar variável `CRON_SECRET` para autenticação
 
-**Etapa 5 — UI de Gerenciamento:** ✅ CONCLUÍDA
-- [x] Criar página `app/recurring/page.tsx`
-- [x] Listar transações recorrentes (ativas/inativas)
-- [x] Modal para criar/editar recorrente
-- [x] Botão para pausar/reativar
-- [x] Adicionar link no menu global
+**Etapa 5 — UI de Gerenciamento:** ✅ CONCLUÍDA (REFATORADA)
+- [x] ~~Criar página `app/recurring/page.tsx`~~ → Movido para seção no Profile
+- [x] Listar transações recorrentes (ativas/inativas) no Profile
+- [x] Checkbox "Repetir automaticamente" no modal de nova transação
+- [x] Campos condicionais de frequência no modal
+- [x] Botão para pausar/reativar no Profile
+- [x] ~~Adicionar link no menu global~~ → Removido (UX simplificada)
 
 **Etapa 6 — Integração com Store:** ✅ CONCLUÍDA
 - [x] Adicionar state `recurringTransactions` em `use-finance-store.ts`
@@ -1051,8 +1052,8 @@ Finalize perguntando:
 | `app/api/telegram/route.ts`      | Webhook handler Telegram (vinculação, transações, consultas) |
 | `app/api/cron/generate-recurring/route.ts` | Cron job para gerar transações recorrentes |
 | **Recurring Transactions**       |                                      |
-| `app/recurring/page.tsx`         | Página de gerenciamento de recorrentes |
-| `app/recurring/recurring-form.tsx` | Formulário de criar/editar recorrente |
+| `components/recurring-manager.tsx` | Seção de gerenciamento no Profile   |
+| `components/transaction-form.tsx` | Modal com checkbox de recorrência    |
 | `vercel.json`                    | Configuração de cron jobs            |
 
 ================================================================
@@ -1171,5 +1172,6 @@ Finalize perguntando:
 | 2026-01-28 | Branding | Logo, cores (#2c2f38 + #ffcd00), limpeza de código, .env.example, renomeação para ControleC |
 | 2026-01-29 | Planejamento | Fase 4 descongelada, Fase 7 criada, roadmap completo com checkboxes |
 | 2026-01-29 | Fase 4.2 ✅ | Transações Recorrentes: schema, tipos, CRUD, cron job, UI, store, traduções |
+| 2026-01-29 | UX Refactor | Recurring: checkbox no modal + seção no Profile (removida página dedicada) |
 
 > Detalhes granulares de cada mudança estão no histórico git.
