@@ -103,14 +103,6 @@ export function PeriodFilter() {
           <ChevronRight className="size-4" />
         </Button>
       </div>
-
-      <Button
-        variant="outline"
-        onClick={() => setFilterPeriod({ ...filterPeriod, date: new Date() })}
-        className="w-full sm:w-auto"
-      >
-        {t("common.today")}
-      </Button>
     </div>
   )
 }
