@@ -24,6 +24,7 @@ import { useTranslation, type Locale } from "@/lib/i18n"
 import { BackupManager } from "@/components/backup-manager"
 import { MigrationTool } from "@/components/migration-tool"
 import { RecurringManager } from "@/components/recurring-manager"
+import { ExportManager } from "@/components/export-manager"
 import { useAuth } from "@/components/auth-provider"
 import { supabase } from "@/lib/supabase"
 import { supabaseService } from "@/services/supabase"
@@ -324,6 +325,8 @@ export default function ProfilePage() {
         {transactions.length === 0 && <MigrationTool />}
 
         <BackupManager />
+
+        <ExportManager />
 
         <div className="flex justify-center">
           <Button variant="outline" onClick={signOut}>
