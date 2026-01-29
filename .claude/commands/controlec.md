@@ -664,7 +664,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Toasts de feedback
 - [~] ~~Skeleton loading na página~~ (N/A - página dedicada removida, Profile já tem skeleton)
 
-#### 4.3 — Goals com Valores e Prazos
+#### 4.3 — Goals com Valores e Prazos ✅ CONCLUÍDA
 
 **Objetivo:** Evoluir metas de to-do simples para tracking de progresso financeiro.
 
@@ -683,11 +683,18 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 ```
 
 **Etapas:**
-- [ ] Adicionar campos opcionais na tabela `goals` (Supabase)
-- [ ] Atualizar `GoalSchema` em `lib/schemas.ts`
-- [ ] Atualizar UI da página goals (barra de progresso, deadline)
-- [ ] Adicionar input de valor alvo e prazo no form
-- [ ] Traduções PT/EN (~15 chaves)
+- [x] Adicionar campos opcionais na tabela `goals` (Supabase) — schema atualizado em `docs/supabase-schema-rls.sql`
+- [x] Atualizar `GoalSchema` em `lib/schemas.ts`
+- [x] Atualizar UI da página goals (barra de progresso, deadline, indicadores visuais)
+- [x] Adicionar input de valor alvo e prazo no form (modal criar/editar)
+- [x] Traduções PT/EN (~15 chaves adicionadas)
+
+**Alteração necessária no Supabase (rodar manualmente):**
+```sql
+alter table goals add column if not exists target_amount numeric;
+alter table goals add column if not exists current_amount numeric default 0;
+alter table goals add column if not exists deadline date;
+```
 
 #### 4.4 — Gráficos Comparativos
 
@@ -1080,6 +1087,14 @@ Finalize perguntando:
   - `components/ui/alert-dialog.tsx`: Mesma correção — consistência em todos os diálogos
   - `app/globals.css`: Scrollbar customizada com cores da aplicação (primary amarelo, track cinza escuro)
   - `app/layout.tsx`: Toasts movidos para canto inferior direito
+- **Fase 4.3 Goals com Valores e Prazos:**
+  - `lib/types.ts`: Goal agora tem targetAmount, currentAmount, deadline (todos opcionais)
+  - `lib/schemas.ts`: GoalSchema atualizado com novos campos
+  - `services/supabase.ts`: GoalRow e funções de conversão atualizadas
+  - `app/goals/page.tsx`: UI completamente refeita com modal criar/editar, barra de progresso, indicadores de deadline
+  - `lib/i18n.ts`: ~15 chaves adicionadas em PT/EN
+  - `docs/supabase-schema-rls.sql`: Schema atualizado + queries de migração documentadas
+  - **Alteração pendente no Supabase:** Rodar ALTER TABLE para adicionar novos campos
 
 **2026-01-26:**
 
@@ -1187,5 +1202,6 @@ Finalize perguntando:
 | 2026-01-29 | Bugfix | Sync: upsert em vez de insert, error logging detalhado, flush non-blocking |
 | 2026-01-29 | UI | Modais: max-h-[90vh] + overflow-y-auto — conteúdo não vaza da tela |
 | 2026-01-29 | UI | Scrollbar customizada, toasts no canto inferior direito |
+| 2026-01-29 | Fase 4.3 ✅ | Goals evoluídos: valor alvo, valor atual, prazo, barra de progresso, indicadores visuais |
 
 > Detalhes granulares de cada mudança estão no histórico git.

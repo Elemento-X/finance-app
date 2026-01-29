@@ -45,9 +45,17 @@ create table if not exists goals (
   id text primary key,
   user_id uuid references auth.users not null,
   title text not null,
+  target_amount numeric,
+  current_amount numeric default 0,
+  deadline date,
   completed boolean default false,
   created_at timestamptz default now()
 );
+
+-- Migration para adicionar novos campos (rodar se tabela já existe):
+-- alter table goals add column if not exists target_amount numeric;
+-- alter table goals add column if not exists current_amount numeric default 0;
+-- alter table goals add column if not exists deadline date;
 
 create table if not exists assets (
   id text primary key,
