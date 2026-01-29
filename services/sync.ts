@@ -411,9 +411,9 @@ function queueTransaction(type: OperationType, transaction: Transaction): void {
     data: type === 'delete' ? null : transaction,
   })
 
-  // If online, try to flush immediately
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -425,8 +425,9 @@ function queueCategory(type: OperationType, category: Category): void {
     data: type === 'delete' ? null : category,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -438,8 +439,9 @@ function queueGoal(type: OperationType, goal: Goal): void {
     data: type === 'delete' ? null : goal,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -451,8 +453,9 @@ function queueProfile(profile: UserProfile): void {
     data: profile,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -464,8 +467,9 @@ function queueAsset(type: OperationType, asset: Asset | Partial<Asset> & { id: s
     data: type === 'delete' ? null : asset,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -477,8 +481,9 @@ function queueRecurringTransaction(type: OperationType, recurringTransaction: Re
     data: type === 'delete' ? null : recurringTransaction,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 

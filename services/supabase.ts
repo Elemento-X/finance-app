@@ -272,14 +272,32 @@ export const supabaseService = {
 
   async addTransaction(transaction: Transaction): Promise<boolean> {
     const userId = await getCurrentUserId()
-    if (!userId) return false
+    if (!userId) {
+      console.warn('[Supabase] No user ID, skipping transaction sync')
+      return false
+    }
 
+    const row = transactionToRow(transaction, userId)
+
+    // Use upsert to handle potential duplicate key conflicts gracefully
     const { error } = await supabase
       .from('transactions')
-      .insert(transactionToRow(transaction, userId))
+      .upsert(row, { onConflict: 'id' })
 
     if (error) {
-      console.error('Error adding transaction:', error)
+      // Only log as error if it's not a known recoverable issue
+      if (error.code === '42501') {
+        // RLS policy violation - likely auth issue
+        console.warn('[Supabase] Transaction sync failed (auth):', error.message)
+      } else {
+        console.error('[Supabase] Error adding transaction:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          transaction: { id: transaction.id, type: transaction.type, category: transaction.category },
+        })
+      }
       return false
     }
 
@@ -651,14 +669,30 @@ export const supabaseService = {
 
   async addRecurringTransaction(recurringTransaction: RecurringTransaction): Promise<boolean> {
     const userId = await getCurrentUserId()
-    if (!userId) return false
+    if (!userId) {
+      console.warn('[Supabase] No user ID, skipping recurring transaction sync')
+      return false
+    }
 
+    const row = recurringTransactionToRow(recurringTransaction, userId)
+
+    // Use upsert to handle potential duplicate key conflicts gracefully
     const { error } = await supabase
       .from('recurring_transactions')
-      .insert(recurringTransactionToRow(recurringTransaction, userId))
+      .upsert(row, { onConflict: 'id' })
 
     if (error) {
-      console.error('Error adding recurring transaction:', error)
+      if (error.code === '42501') {
+        console.warn('[Supabase] Recurring transaction sync failed (auth):', error.message)
+      } else {
+        console.error('[Supabase] Error adding recurring transaction:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          recurringTransaction: { id: recurringTransaction.id, type: recurringTransaction.type, frequency: recurringTransaction.frequency },
+        })
+      }
       return false
     }
 
