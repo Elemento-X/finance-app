@@ -64,10 +64,12 @@ export const translations = {
 
     // Recurring Transactions page
     "recurring.title": "Recurring Transactions",
+    "recurring.repeatAutomatically": "Repeat automatically",
     "recurring.new": "New Recurring",
     "recurring.edit": "Edit Recurring",
     "recurring.empty": "No recurring transactions",
     "recurring.emptyDesc": "Set up automatic transactions for bills, salaries, etc.",
+    "recurring.manageDesc": "Manage your recurring transactions",
     "recurring.active": "Active",
     "recurring.paused": "Paused",
     "recurring.addSuccess": "Recurring transaction added!",
@@ -496,10 +498,12 @@ export const translations = {
 
     // Recurring Transactions page
     "recurring.title": "Transações Recorrentes",
+    "recurring.repeatAutomatically": "Repetir automaticamente",
     "recurring.new": "Nova Recorrente",
     "recurring.edit": "Editar Recorrente",
     "recurring.empty": "Nenhuma transação recorrente",
     "recurring.emptyDesc": "Configure transações automáticas para contas, salários, etc.",
+    "recurring.manageDesc": "Gerencie suas transações recorrentes",
     "recurring.active": "Ativas",
     "recurring.paused": "Pausadas",
     "recurring.addSuccess": "Transação recorrente adicionada!",
