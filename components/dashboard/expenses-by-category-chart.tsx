@@ -1,14 +1,29 @@
-"use client"
+'use client'
 
-import { useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip, Legend } from "recharts"
-import { formatCurrency } from "@/utils/formatters"
-import { useTranslation } from "@/lib/i18n"
+import { useMemo } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from 'recharts'
+import { formatCurrency } from '@/utils/formatters'
+import { useTranslation } from '@/lib/i18n'
 
-const COLORS = ["#8b5cf6", "#06b6d4", "#f59e0b", "#ec4899", "#10b981", "#6366f1", "#ef4444"]
+const COLORS = [
+  '#8b5cf6',
+  '#06b6d4',
+  '#f59e0b',
+  '#ec4899',
+  '#10b981',
+  '#6366f1',
+  '#ef4444',
+]
 
 function ExpensesByCategoryChartSkeleton() {
   return (
@@ -29,13 +44,23 @@ function ExpensesByCategoryChartSkeleton() {
 }
 
 export function ExpensesByCategoryChart() {
-  const { getExpensesByCategory, categories, profile, isHydrated, transactions, filterPeriod } = useFinanceStore()
+  const {
+    getExpensesByCategory,
+    categories,
+    profile,
+    isHydrated,
+    transactions,
+    filterPeriod,
+  } = useFinanceStore()
   const t = useTranslation()
 
   // Memoize expensive calculations
-  const { data, total } = useMemo(() => {
+  const { data } = useMemo(() => {
     const expensesByCategory = getExpensesByCategory()
-    const totalAmount = Object.values(expensesByCategory).reduce((sum, value) => sum + value, 0)
+    const totalAmount = Object.values(expensesByCategory).reduce(
+      (sum, value) => sum + value,
+      0,
+    )
 
     const chartData = Object.entries(expensesByCategory)
       .map(([categoryId, value]) => {
@@ -61,31 +86,60 @@ export function ExpensesByCategoryChart() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("chart.expensesByCategory")}</CardTitle>
+          <CardTitle className="text-base">
+            {t('chart.expensesByCategory')}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[300px]">
-          <p className="text-sm text-muted-foreground">{t("chart.noExpenses")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t('chart.noExpenses')}
+          </p>
         </CardContent>
       </Card>
     )
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload?: any[]
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium">
             {payload[0].payload.icon} {payload[0].name}
           </p>
-          <p className="text-sm text-muted-foreground">{formatCurrency(payload[0].value, profile.currency)}</p>
-          <p className="text-sm font-semibold text-primary">{payload[0].payload.percentage.toFixed(1)}%</p>
+          <p className="text-sm text-muted-foreground">
+            {formatCurrency(payload[0].value, profile.currency)}
+          </p>
+          <p className="text-sm font-semibold text-primary">
+            {payload[0].payload.percentage.toFixed(1)}%
+          </p>
         </div>
       )
     }
     return null
   }
 
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percentage }: any) => {
+  const renderCustomLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percentage,
+  }: {
+    cx: number
+    cy: number
+    midAngle: number
+    innerRadius: number
+    outerRadius: number
+    percentage: number
+  }) => {
     const RADIAN = Math.PI / 180
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5
     const x = cx + radius * Math.cos(-midAngle * RADIAN)
@@ -98,7 +152,7 @@ export function ExpensesByCategoryChart() {
         x={x}
         y={y}
         fill="white"
-        textAnchor={x > cx ? "start" : "end"}
+        textAnchor={x > cx ? 'start' : 'end'}
         dominantBaseline="central"
         className="text-xs font-bold"
       >
@@ -110,7 +164,9 @@ export function ExpensesByCategoryChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("chart.expensesByCategory")}</CardTitle>
+        <CardTitle className="text-base">
+          {t('chart.expensesByCategory')}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
@@ -126,15 +182,19 @@ export function ExpensesByCategoryChart() {
               dataKey="value"
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
             <Legend
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value, entry: any) =>
                 `${entry.payload.icon} ${value} (${entry.payload.percentage.toFixed(1)}%)`
               }
-              wrapperStyle={{ fontSize: "12px" }}
+              wrapperStyle={{ fontSize: '12px' }}
             />
           </PieChart>
         </ResponsiveContainer>

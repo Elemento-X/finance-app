@@ -1,11 +1,19 @@
-"use client"
+'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
-import { formatCurrency } from "@/utils/formatters"
-import { useTranslation } from "@/lib/i18n"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from 'recharts'
+import { formatCurrency } from '@/utils/formatters'
+import { useTranslation } from '@/lib/i18n'
 
 function IncomeVsExpenseChartSkeleton() {
   return (
@@ -32,7 +40,13 @@ function IncomeVsExpenseChartSkeleton() {
 }
 
 export function IncomeVsExpenseChart() {
-  const { getTotalIncome, getTotalExpense, getTotalInvestment, profile, isHydrated } = useFinanceStore()
+  const {
+    getTotalIncome,
+    getTotalExpense,
+    getTotalInvestment,
+    profile,
+    isHydrated,
+  } = useFinanceStore()
   const t = useTranslation()
 
   if (!isHydrated) {
@@ -45,28 +59,37 @@ export function IncomeVsExpenseChart() {
 
   const data = [
     {
-      name: t("summary.income"),
+      name: t('summary.income'),
       valor: income,
-      fill: "var(--income)",
+      fill: 'var(--income)',
     },
     {
-      name: t("summary.expenses"),
+      name: t('summary.expenses'),
       valor: expense,
-      fill: "var(--expense)",
+      fill: 'var(--expense)',
     },
     {
-      name: t("summary.investments"),
+      name: t('summary.investments'),
       valor: investment,
-      fill: "var(--investment)",
+      fill: 'var(--investment)',
     },
   ]
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload?: any[]
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="font-medium">{payload[0].payload.name}</p>
-          <p className="text-sm text-muted-foreground">{formatCurrency(payload[0].value, profile.currency)}</p>
+          <p className="text-sm text-muted-foreground">
+            {formatCurrency(payload[0].value, profile.currency)}
+          </p>
         </div>
       )
     }
@@ -76,14 +99,23 @@ export function IncomeVsExpenseChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("chart.incomeVsExpenses")}</CardTitle>
+        <CardTitle className="text-base">
+          {t('chart.incomeVsExpenses')}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="name" stroke="var(--muted-foreground)" style={{ fontSize: "12px" }} />
-            <YAxis stroke="var(--muted-foreground)" style={{ fontSize: "12px" }} />
+            <XAxis
+              dataKey="name"
+              stroke="var(--muted-foreground)"
+              style={{ fontSize: '12px' }}
+            />
+            <YAxis
+              stroke="var(--muted-foreground)"
+              style={{ fontSize: '12px' }}
+            />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="valor" radius={[8, 8, 0, 0]} />
           </BarChart>

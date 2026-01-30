@@ -1,11 +1,19 @@
-import { create } from "zustand"
-import { toast } from "sonner"
-import type { Asset, AssetWithMarket, PortfolioSummary, Alert } from "@/lib/investment-types"
-import { investmentsStorageService } from "@/services/investments-storage"
-import { marketDataService, type MarketDataResult } from "@/services/market-data"
-import { investmentsCalculationsService } from "@/services/investments-calculations"
-import { getTranslation } from "@/lib/i18n"
-import { syncService } from "@/services/sync"
+import { create } from 'zustand'
+import { toast } from 'sonner'
+import type {
+  Asset,
+  AssetWithMarket,
+  PortfolioSummary,
+  Alert,
+} from '@/lib/investment-types'
+import { investmentsStorageService } from '@/services/investments-storage'
+import {
+  marketDataService,
+  type MarketDataResult,
+} from '@/services/market-data'
+import { investmentsCalculationsService } from '@/services/investments-calculations'
+import { getTranslation } from '@/lib/i18n'
+import { syncService } from '@/services/sync'
 
 interface InvestmentsStore {
   assets: Asset[]
@@ -18,7 +26,7 @@ interface InvestmentsStore {
 
   // Actions
   loadAssets: () => void
-  addAsset: (asset: Omit<Asset, "id" | "createdAt">) => void
+  addAsset: (asset: Omit<Asset, 'id' | 'createdAt'>) => void
   updateAsset: (id: string, updates: Partial<Asset>) => void
   deleteAsset: (id: string) => void
   refreshMarketData: () => Promise<void>
@@ -49,32 +57,32 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
     }
     investmentsStorageService.addAsset(newAsset)
     syncService.queueAsset('create', newAsset)
-    set(state => ({ assets: [...state.assets, newAsset] }))
+    set((state) => ({ assets: [...state.assets, newAsset] }))
     get().refreshMarketData()
   },
 
   updateAsset: (id, updates) => {
     const { assets } = get()
-    const existingAsset = assets.find(a => a.id === id)
+    const existingAsset = assets.find((a) => a.id === id)
     if (!existingAsset) return
 
     const updatedAsset = { ...existingAsset, ...updates }
     investmentsStorageService.updateAsset(id, updates)
     syncService.queueAsset('update', { id, ...updates })
-    set(state => ({
-      assets: state.assets.map(a => a.id === id ? updatedAsset : a)
+    set((state) => ({
+      assets: state.assets.map((a) => (a.id === id ? updatedAsset : a)),
     }))
     get().refreshMarketData()
   },
 
   deleteAsset: (id) => {
     const { assets } = get()
-    const asset = assets.find(a => a.id === id)
+    const asset = assets.find((a) => a.id === id)
     investmentsStorageService.deleteAsset(id)
     if (asset) {
       syncService.queueAsset('delete', asset)
     }
-    set(state => ({ assets: state.assets.filter(a => a.id !== id) }))
+    set((state) => ({ assets: state.assets.filter((a) => a.id !== id) }))
     get().refreshMarketData()
   },
 
@@ -99,13 +107,20 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
 
       // Fetch market data for all assets
       const assetsWithMarketPromises = assets.map(async (asset) => {
-        const result: MarketDataResult = await marketDataService.fetchMarketData(asset.symbol, asset.assetClass)
+        const result: MarketDataResult =
+          await marketDataService.fetchMarketData(
+            asset.symbol,
+            asset.assetClass,
+          )
 
         // Track errors by type
         if (result.error) {
           if (result.error.type === 'not_found') {
             notFoundSymbols.push(asset.symbol)
-          } else if (result.error.type === 'network' || result.error.type === 'invalid_response') {
+          } else if (
+            result.error.type === 'network' ||
+            result.error.type === 'invalid_response'
+          ) {
             failedSymbols.push(asset.symbol)
           }
           // fixed_income is not an error - just no data available
@@ -114,9 +129,10 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
         const currentPrice = result.data?.currentPrice || asset.averagePrice
         const currentValue = asset.quantity * currentPrice
         const capitalGain = currentValue - asset.totalInvested
-        const returnPercentage = asset.totalInvested > 0
-          ? (capitalGain / asset.totalInvested) * 100
-          : 0
+        const returnPercentage =
+          asset.totalInvested > 0
+            ? (capitalGain / asset.totalInvested) * 100
+            : 0
 
         return {
           ...asset,
@@ -128,23 +144,29 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
       })
 
       const assetsWithMarket = await Promise.all(assetsWithMarketPromises)
-      const portfolioSummary = investmentsCalculationsService.calculatePortfolioSummary(assetsWithMarket)
-      const alerts = investmentsCalculationsService.generateAlerts(assetsWithMarket, portfolioSummary)
+      const portfolioSummary =
+        investmentsCalculationsService.calculatePortfolioSummary(
+          assetsWithMarket,
+        )
+      const alerts = investmentsCalculationsService.generateAlerts(
+        assetsWithMarket,
+        portfolioSummary,
+      )
 
       // Show error notifications
       if (notFoundSymbols.length > 0) {
-        toast.error(getTranslation("marketData.noDataAvailable"), {
-          description: getTranslation("marketData.noDataAvailableDesc", {
-            symbol: notFoundSymbols.join(", ")
+        toast.error(getTranslation('marketData.noDataAvailable'), {
+          description: getTranslation('marketData.noDataAvailableDesc', {
+            symbol: notFoundSymbols.join(', '),
           }),
           duration: 5000,
         })
       }
 
       if (failedSymbols.length > 0) {
-        toast.warning(getTranslation("marketData.partialError"), {
-          description: getTranslation("marketData.partialErrorDesc", {
-            count: failedSymbols.length.toString()
+        toast.warning(getTranslation('marketData.partialError'), {
+          description: getTranslation('marketData.partialErrorDesc', {
+            count: failedSymbols.length.toString(),
           }),
           duration: 4000,
         })
@@ -159,18 +181,18 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
         failedAssets: [...failedSymbols, ...notFoundSymbols],
       })
     } catch (error) {
-      console.error("[Investments] Failed to refresh market data:", error)
+      console.error('[Investments] Failed to refresh market data:', error)
 
-      toast.error(getTranslation("marketData.fetchError"), {
-        description: getTranslation("marketData.fetchErrorDesc", {
-          symbols: "all assets"
+      toast.error(getTranslation('marketData.fetchError'), {
+        description: getTranslation('marketData.fetchErrorDesc', {
+          symbols: 'all assets',
         }),
         duration: 5000,
       })
 
       set({
         isLoading: false,
-        failedAssets: assets.map(a => a.symbol)
+        failedAssets: assets.map((a) => a.symbol),
       })
     }
   },

@@ -60,12 +60,14 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | `app/api/telegram/route.ts` | Webhook Telegram |
 | `app/api/cron/generate-recurring/route.ts` | Cron: transações recorrentes |
 | `app/api/cron/telegram-summary/route.ts` | Cron: resumos semanais/mensais |
-| `services/supabase.ts` | CRUD Supabase |
-| `services/sync.ts` | Sync offline-first |
-| `services/groq.ts` | Parsing de mensagens com IA |
+| `services/supabase.ts` | CRUD Supabase (usa `logger.supabase`) |
+| `services/sync.ts` | Sync offline-first (usa `logger.sync`) |
+| `services/groq.ts` | Parsing de mensagens com IA (usa `logger.telegram`) |
+| `services/migrations.ts` | Migrações de dados (usa `logger.migrations`) |
 | `services/bcb.ts` | API Banco Central (Selic, IPCA) |
 | `lib/supabase.ts` | Client Supabase (browser) |
 | `lib/supabase-admin.ts` | Client Supabase (service role) |
+| `lib/security.ts` | Rate limiting, sanitização, validação |
 
 ## 2. API Routes
 
@@ -303,7 +305,69 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 2. Selecione a função (ex: `api/cron/generate-recurring`)
 3. Aba "Logs"
 
-## 11. Troubleshooting
+## 11. Segurança
+
+### 11.1 Rate Limiting (`lib/security.ts`)
+
+O webhook do Telegram implementa rate limiting para evitar abuso:
+
+```typescript
+import { checkRateLimit, TELEGRAM_RATE_LIMIT } from "@/lib/security"
+
+// 10 mensagens por minuto por chat
+const result = checkRateLimit(`telegram:${chatId}`, TELEGRAM_RATE_LIMIT)
+if (!result.allowed) {
+  // Retorna mensagem de "aguarde X segundos"
+}
+```
+
+**Configuração:**
+- `maxRequests`: 10 mensagens
+- `windowMs`: 60.000ms (1 minuto)
+- Storage: in-memory (reset em cold start)
+
+### 11.2 Sanitização de Input
+
+Todas as mensagens do Telegram são sanitizadas antes do processamento:
+
+```typescript
+import { sanitizeInput, validateInput, MAX_MESSAGE_LENGTH } from "@/lib/security"
+
+const text = sanitizeInput(rawText, { maxLength: MAX_MESSAGE_LENGTH })
+const validation = validateInput(text)
+```
+
+**Proteções:**
+- Remoção de caracteres de controle
+- Remoção de tags HTML
+- Limite de 1000 caracteres
+- Detecção de padrões de prompt injection
+
+### 11.3 RLS (Row Level Security)
+
+Todas as tabelas do Supabase têm RLS habilitado:
+
+| Tabela | Política |
+|--------|----------|
+| profiles | `auth.uid() = id` |
+| transactions | `auth.uid() = user_id` |
+| categories | `auth.uid() = user_id` |
+| goals | `auth.uid() = user_id` |
+| assets | `auth.uid() = user_id` |
+| recurring_transactions | `auth.uid() = user_id` |
+| budget_alerts | `auth.uid() = user_id` |
+| telegram_link_tokens | `auth.uid() = user_id` |
+
+**Importante:** API Routes usam `service_role` (bypass RLS) apenas para operações do bot Telegram.
+
+### 11.4 Variáveis de Ambiente
+
+| Tipo | Variáveis | Exposição |
+|------|-----------|-----------|
+| Públicas | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`, `NEXT_PUBLIC_BRAPI_API_KEY` | Bundle frontend |
+| Secretas | `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `GROQ_API_KEY`, `CRON_SECRET` | Server only |
+
+## 12. Troubleshooting
 
 | Problema | Causa Provável | Como Verificar |
 |----------|----------------|----------------|

@@ -1,9 +1,9 @@
-import { z } from "zod"
+import { z } from 'zod'
 
 // Transaction Schema
 export const TransactionSchema = z.object({
   id: z.string(),
-  type: z.enum(["income", "expense", "investment"]),
+  type: z.enum(['income', 'expense', 'investment']),
   amount: z.number().positive(),
   category: z.string(),
   date: z.string(),
@@ -19,7 +19,7 @@ export type ValidatedTransaction = z.infer<typeof TransactionSchema>
 export const CategorySchema = z.object({
   id: z.string(),
   name: z.string(),
-  type: z.enum(["mixed", "income", "expense", "investment"]),
+  type: z.enum(['mixed', 'income', 'expense', 'investment']),
   icon: z.string().optional(),
 })
 
@@ -30,7 +30,7 @@ export const UserProfileSchema = z.object({
   name: z.string(),
   currency: z.string(),
   defaultMonth: z.string(),
-  language: z.enum(["en", "pt"]).optional(),
+  language: z.enum(['en', 'pt']).optional(),
   telegramChatId: z.number().nullable().optional(),
   telegramSummaryEnabled: z.boolean().optional(),
 })
@@ -55,7 +55,7 @@ export const AssetSchema = z.object({
   id: z.string(),
   symbol: z.string(),
   name: z.string(),
-  assetClass: z.enum(["stocks", "fiis", "fixed-income", "etfs", "crypto"]),
+  assetClass: z.enum(['stocks', 'fiis', 'fixed-income', 'etfs', 'crypto']),
   quantity: z.number().positive(),
   averagePrice: z.number().positive(),
   totalInvested: z.number(),
@@ -68,11 +68,11 @@ export type ValidatedAsset = z.infer<typeof AssetSchema>
 // RecurringTransaction Schema
 export const RecurringTransactionSchema = z.object({
   id: z.string(),
-  type: z.enum(["income", "expense", "investment"]),
+  type: z.enum(['income', 'expense', 'investment']),
   amount: z.number().positive(),
   category: z.string(),
   description: z.string().optional(),
-  frequency: z.enum(["weekly", "monthly", "yearly"]),
+  frequency: z.enum(['weekly', 'monthly', 'yearly']),
   dayOfMonth: z.number().min(1).max(28).optional(),
   dayOfWeek: z.number().min(0).max(6).optional(),
   monthOfYear: z.number().min(1).max(12).optional(),
@@ -83,7 +83,9 @@ export const RecurringTransactionSchema = z.object({
   createdAt: z.string(),
 })
 
-export type ValidatedRecurringTransaction = z.infer<typeof RecurringTransactionSchema>
+export type ValidatedRecurringTransaction = z.infer<
+  typeof RecurringTransactionSchema
+>
 
 // BudgetAlert Schema
 export const BudgetAlertSchema = z.object({
@@ -106,7 +108,7 @@ export interface ValidationResult<T> {
 // Generic validation function
 export function validateArray<T>(
   data: unknown[],
-  schema: z.ZodType<T>
+  schema: z.ZodType<T>,
 ): ValidationResult<T> {
   const valid: T[] = []
   let invalidCount = 0
@@ -117,7 +119,7 @@ export function validateArray<T>(
       valid.push(result.data)
     } else {
       invalidCount++
-      console.warn("[ControleC] Invalid item found:", result.error.issues)
+      console.warn('[ControleC] Invalid item found:', result.error.issues)
     }
   }
 
@@ -128,12 +130,12 @@ export function validateArray<T>(
 export function validateObject<T>(
   data: unknown,
   schema: z.ZodType<T>,
-  defaultValue: T
+  defaultValue: T,
 ): { value: T; isValid: boolean } {
   const result = schema.safeParse(data)
   if (result.success) {
     return { value: result.data, isValid: true }
   }
-  console.warn("[ControleC] Invalid object found:", result.error.issues)
+  console.warn('[ControleC] Invalid object found:', result.error.issues)
   return { value: defaultValue, isValid: false }
 }

@@ -2,17 +2,17 @@
 // Free, reliable, no authentication required
 // Docs: https://dadosabertos.bcb.gov.br/
 
-import { logger } from "@/lib/logger"
+import { logger } from '@/lib/logger'
 
-const BASE_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs"
+const BASE_URL = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs'
 
 // Series codes
 const SELIC_SERIES = 432 // Taxa Selic Meta
-const IPCA_SERIES = 433  // IPCA - Variação mensal
+const IPCA_SERIES = 433 // IPCA - Variação mensal
 
 // Cache keys and TTL
-const CACHE_KEY_SELIC = "bcb_selic_cache"
-const CACHE_KEY_IPCA = "bcb_ipca_cache"
+const CACHE_KEY_SELIC = 'bcb_selic_cache'
+const CACHE_KEY_IPCA = 'bcb_ipca_cache'
 const SELIC_CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
 const IPCA_CACHE_TTL = 7 * 24 * 60 * 60 * 1000 // 7 days (IPCA updates monthly)
 
@@ -43,7 +43,7 @@ interface CacheEntry<T> {
  * Load from localStorage cache
  */
 function loadCache<T>(key: string, ttl: number): T | null {
-  if (typeof window === "undefined") return null
+  if (typeof window === 'undefined') return null
 
   try {
     const cached = localStorage.getItem(key)
@@ -64,7 +64,7 @@ function loadCache<T>(key: string, ttl: number): T | null {
  * Save to localStorage cache
  */
 function saveCache<T>(key: string, data: T): void {
-  if (typeof window === "undefined") return
+  if (typeof window === 'undefined') return
 
   try {
     const entry: CacheEntry<T> = {
@@ -73,27 +73,27 @@ function saveCache<T>(key: string, data: T): void {
     }
     localStorage.setItem(key, JSON.stringify(entry))
   } catch (error) {
-    logger.app.error("Failed to save BCB cache:", error)
+    logger.app.error('Failed to save BCB cache:', error)
   }
 }
 
 /**
  * Fetch Selic rate from BCB
  */
-async function fetchSelic(): Promise<MacroData["selic"]> {
+async function fetchSelic(): Promise<MacroData['selic']> {
   // Check cache first
-  const cached = loadCache<MacroData["selic"]>(CACHE_KEY_SELIC, SELIC_CACHE_TTL)
+  const cached = loadCache<MacroData['selic']>(CACHE_KEY_SELIC, SELIC_CACHE_TTL)
   if (cached) {
     return cached
   }
 
   try {
     const response = await fetch(
-      `${BASE_URL}.${SELIC_SERIES}/dados/ultimos/1?formato=json`
+      `${BASE_URL}.${SELIC_SERIES}/dados/ultimos/1?formato=json`,
     )
 
     if (!response.ok) {
-      logger.app.error("BCB Selic API error:", response.status)
+      logger.app.error('BCB Selic API error:', response.status)
       return null
     }
 
@@ -112,7 +112,7 @@ async function fetchSelic(): Promise<MacroData["selic"]> {
     saveCache(CACHE_KEY_SELIC, result)
     return result
   } catch (error) {
-    logger.app.error("Failed to fetch Selic:", error)
+    logger.app.error('Failed to fetch Selic:', error)
     return null
   }
 }
@@ -120,20 +120,20 @@ async function fetchSelic(): Promise<MacroData["selic"]> {
 /**
  * Fetch IPCA from BCB (last 12 months for accumulated calculation)
  */
-async function fetchIPCA(): Promise<MacroData["ipca"]> {
+async function fetchIPCA(): Promise<MacroData['ipca']> {
   // Check cache first
-  const cached = loadCache<MacroData["ipca"]>(CACHE_KEY_IPCA, IPCA_CACHE_TTL)
+  const cached = loadCache<MacroData['ipca']>(CACHE_KEY_IPCA, IPCA_CACHE_TTL)
   if (cached) {
     return cached
   }
 
   try {
     const response = await fetch(
-      `${BASE_URL}.${IPCA_SERIES}/dados/ultimos/12?formato=json`
+      `${BASE_URL}.${IPCA_SERIES}/dados/ultimos/12?formato=json`,
     )
 
     if (!response.ok) {
-      logger.app.error("BCB IPCA API error:", response.status)
+      logger.app.error('BCB IPCA API error:', response.status)
       return null
     }
 
@@ -163,7 +163,7 @@ async function fetchIPCA(): Promise<MacroData["ipca"]> {
     saveCache(CACHE_KEY_IPCA, result)
     return result
   } catch (error) {
-    logger.app.error("Failed to fetch IPCA:", error)
+    logger.app.error('Failed to fetch IPCA:', error)
     return null
   }
 }
@@ -185,7 +185,7 @@ export async function fetchMacroData(): Promise<MacroData> {
  * Clear macro data cache
  */
 export function clearMacroCache(): void {
-  if (typeof window === "undefined") return
+  if (typeof window === 'undefined') return
   localStorage.removeItem(CACHE_KEY_SELIC)
   localStorage.removeItem(CACHE_KEY_IPCA)
 }
