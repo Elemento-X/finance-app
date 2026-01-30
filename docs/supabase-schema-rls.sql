@@ -7,7 +7,8 @@ create table if not exists profiles (
   currency text default 'BRL',
   language text default 'pt',
   default_month text,
-  telegram_chat_id bigint
+  telegram_chat_id bigint,
+  telegram_summary_enabled boolean default false
 );
 
 create table if not exists telegram_link_tokens (
@@ -56,6 +57,9 @@ create table if not exists goals (
 -- alter table goals add column if not exists target_amount numeric;
 -- alter table goals add column if not exists current_amount numeric default 0;
 -- alter table goals add column if not exists deadline date;
+
+-- Migration para Fase 7.1 - Resumos Automáticos (rodar se tabela já existe):
+-- alter table profiles add column if not exists telegram_summary_enabled boolean default false;
 
 create table if not exists assets (
   id text primary key,
