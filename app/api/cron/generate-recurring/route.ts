@@ -83,7 +83,7 @@ function shouldGenerateToday(recurring: RecurringTransactionRow, today: Date): b
 }
 
 function generateTransactionId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+  return crypto.randomUUID()
 }
 
 // =============================================================================

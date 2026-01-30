@@ -1,272 +1,316 @@
-﻿# Backend (stack serverless) - ControleC
+# Backend Serverless - ControleC
 
-Este documento explica, de forma direta e "mastigada", como o backend do ControleC funciona hoje. Nao temos um servidor tradicional: usamos Next.js (API Routes) + Supabase + serviços externos (Telegram, Groq, Resend SMTP).
+Este documento explica como o backend do ControleC funciona. Não há servidor tradicional: usamos Next.js API Routes + Supabase + serviços externos.
 
-## 1) Visao geral (quem faz o que)
+## 1. Visão Geral
 
-- Next.js (Vercel): hospeda o frontend e expõe rotas serverless para webhook e cron.
-- Supabase: banco, auth (Magic Link), RLS e dados como source of truth.
-- localStorage: cache offline no browser, sincronizado com o Supabase.
-- Telegram Bot API: entrada de transacoes/consultas por chat.
-- Groq: IA para parsing das mensagens do Telegram.
-- Resend SMTP: entrega de email do Magic Link (configurado no Supabase Auth).
+| Componente | Responsabilidade |
+|------------|------------------|
+| Next.js (Vercel) | Hospeda frontend e expõe API Routes serverless |
+| Supabase | Banco PostgreSQL, Auth (Magic Link), RLS |
+| localStorage | Cache offline no browser |
+| Telegram Bot API | Entrada de transações/consultas por chat |
+| Groq API | IA para parsing de mensagens (Llama 3.3-70b) |
+| Resend SMTP | Entrega de emails do Magic Link |
 
-### 1.1 Diagrama visual (fluxo de dados)
+### Diagrama de Fluxo
 
-```mermaid
-flowchart LR
-  A[Browser / App
-(Next.js UI)] -->|Auth + CRUD (RLS)| B[Supabase
-DB + Auth + RLS]
-  A -->|offline cache| C[localStorage]
-  D[Telegram User
-(chat)] --> E[/api/telegram
-Webhook]
-  E -->|Groq parse| F[Groq API
-(Llama 3.3-70b)]
-  E --> B
-  G[/api/cron/*
-(Next.js)] --> B
-  G --> H[Telegram Bot API]
-  H --> D
-  C -->|sync| B
+```
+┌─────────────────┐         ┌─────────────────┐
+│  Browser / App  │◄───────►│    Supabase     │
+│   (Next.js)     │ Auth+   │  DB + Auth +    │
+└────────┬────────┘ CRUD    │      RLS        │
+         │                  └────────▲────────┘
+         │ cache                     │
+         ▼                           │
+┌─────────────────┐                  │
+│  localStorage   │──────────────────┘
+│  (offline)      │      sync
+└─────────────────┘
+
+┌─────────────────┐         ┌─────────────────┐
+│ Telegram User   │◄───────►│  /api/telegram  │
+│    (chat)       │         │   (webhook)     │
+└─────────────────┘         └────────┬────────┘
+                                     │
+                     ┌───────────────┼───────────────┐
+                     │               │               │
+                     ▼               ▼               ▼
+              ┌───────────┐  ┌───────────┐  ┌───────────┐
+              │ Groq API  │  │ Supabase  │  │  Budget   │
+              │  (parse)  │  │  (save)   │  │  Alerts   │
+              └───────────┘  └───────────┘  └───────────┘
+
+┌─────────────────┐         ┌─────────────────┐
+│  /api/cron/*    │────────►│    Supabase     │
+│ (Vercel crons)  │         │                 │
+└────────┬────────┘         └─────────────────┘
+         │
+         ▼
+┌─────────────────┐         ┌─────────────────┐
+│ Telegram Bot    │────────►│  Telegram User  │
+│     API         │ resumos │    (chat)       │
+└─────────────────┘         └─────────────────┘
 ```
 
-+---------------------+        +-----------------------+
-|  Browser / App      |        |  Telegram User        |
-|  (Next.js UI)       |        |  (chat no Telegram)   |
-+----------+----------+        +-----------+-----------+
-           |                               |
-           | Auth + CRUD (RLS)             | mensagem
-           v                               v
-+---------------------+        +-----------------------+
-|     Supabase        |<-------|  /api/telegram        |
-|  DB + Auth + RLS    |        |  (Webhook)            |
-+----------+----------+        +-----------+-----------+
-           ^                               |
-           | sync                          | Groq parse
-           |                               v
-+----------+----------+        +-----------------------+
-|  localStorage       |        |  Groq API             |
-|  (offline cache)    |        |  (Llama 3.3-70b)       |
-+----------+----------+        +-----------------------+
-           ^
-           | cron (Vercel)
-           v
-+---------------------+
-|  /api/cron/*         |
-|  (Next.js)           |
-+----------+----------+
-           |
-           v
-+---------------------+
-|  Telegram Bot API    |
-+---------------------+
+### Arquivos-Chave
 
-Arquivos-chave:
-- app/api/telegram/route.ts
-- app/api/cron/generate-recurring/route.ts
-- app/api/cron/telegram-summary/route.ts
-- services/supabase.ts
-- services/sync.ts
-- services/groq.ts
-- lib/supabase.ts
-- lib/supabase-admin.ts
-- docs/supabase-schema-rls.sql
-- vercel.json
-- .env.example
+| Arquivo | Descrição |
+|---------|-----------|
+| `app/api/telegram/route.ts` | Webhook Telegram |
+| `app/api/cron/generate-recurring/route.ts` | Cron: transações recorrentes |
+| `app/api/cron/telegram-summary/route.ts` | Cron: resumos semanais/mensais |
+| `services/supabase.ts` | CRUD Supabase |
+| `services/sync.ts` | Sync offline-first |
+| `services/groq.ts` | Parsing de mensagens com IA |
+| `services/bcb.ts` | API Banco Central (Selic, IPCA) |
+| `lib/supabase.ts` | Client Supabase (browser) |
+| `lib/supabase-admin.ts` | Client Supabase (service role) |
 
-## 2) API serverless (Next.js)
+## 2. API Routes
 
 ### 2.1 Webhook Telegram
-Arquivo: app/api/telegram/route.ts
 
-Fluxo simplificado:
-1) Telegram envia webhook para /api/telegram.
-2) Valida cabecalho x-telegram-bot-api-secret-token (TELEGRAM_WEBHOOK_SECRET).
-3) Se mensagem for /start <codigo>, vincula o chat ao usuario via tabela telegram_link_tokens e profiles.
-4) Para mensagens normais:
-   - identifica usuario pelo telegram_chat_id no profiles
-   - carrega categorias para ajudar o parser
-   - chama Groq (parseMessage)
-   - se transacao: salva em transactions
-   - se query: calcula resumo do mes e responde
-   - se conversa: responde texto
-   - se despesa: checa budget_alerts e envia alerta se estourou
+**Arquivo:** `app/api/telegram/route.ts`
 
-Observacoes importantes:
-- Sempre responde 200 para o Telegram nao reenviar a mesma mensagem.
-- Os inserts feitos aqui usam service role (getSupabaseAdmin), entao bypassam RLS.
+**Fluxo:**
+1. Telegram envia POST para `/api/telegram`
+2. Valida header `x-telegram-bot-api-secret-token`
+3. Se `/start <código>`: vincula chat ao usuário via `telegram_link_tokens`
+4. Para mensagens normais:
+   - Identifica usuário pelo `telegram_chat_id`
+   - Carrega categorias do usuário
+   - Chama Groq para parsing
+   - Se transação: salva em `transactions`, checa `budget_alerts`
+   - Se query: calcula resumo e responde
+   - Se conversa: responde texto amigável
 
-### 2.2 Cron: transacoes recorrentes
-Arquivo: app/api/cron/generate-recurring/route.ts
+**Observações:**
+- Sempre retorna 200 para evitar reenvios do Telegram
+- Usa service role (bypass RLS)
 
-Fluxo:
-1) Vercel chama /api/cron/generate-recurring todo dia (03:05 UTC).
-2) Valida Authorization: Bearer <CRON_SECRET>.
-3) Busca recurring_transactions ativas.
-4) Se deve gerar hoje, cria transacao em transactions e atualiza last_generated_date.
+### 2.2 Cron: Transações Recorrentes
 
-### 2.3 Cron: resumos Telegram (semanal/mensal)
-Arquivo: app/api/cron/telegram-summary/route.ts
+**Arquivo:** `app/api/cron/generate-recurring/route.ts`
+**Schedule:** Diário às 03:05 UTC (00:05 BRT)
 
-Fluxo:
-1) Vercel chama /api/cron/telegram-summary?type=weekly (segunda 12:00 UTC)
-   e /api/cron/telegram-summary?type=monthly (dia 1, 12:00 UTC).
-2) Valida Authorization: Bearer <CRON_SECRET>.
-3) Busca usuarios com telegram_chat_id e telegram_summary_enabled = true.
-4) Calcula resumo (semana anterior ou mes anterior) e envia via Telegram.
+**Fluxo:**
+1. Valida `Authorization: Bearer <CRON_SECRET>`
+2. Busca `recurring_transactions` ativas
+3. Para cada recorrência que deve gerar hoje: cria transação e atualiza `last_generated_date`
 
-## 3) Supabase (dados e auth)
+### 2.3 Cron: Resumos Telegram
 
-### 3.1 Cliente publico (frontend)
-Arquivo: lib/supabase.ts
-- Usa NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY.
-- RLS garante que cada usuario so acessa seus dados.
+**Arquivo:** `app/api/cron/telegram-summary/route.ts`
+**Schedule:**
+- Semanal: segunda 12:00 UTC
+- Mensal: dia 1 às 12:00 UTC
 
-### 3.2 Cliente admin (serverless)
-Arquivo: lib/supabase-admin.ts
-- Usa SUPABASE_SERVICE_ROLE_KEY.
-- Usado apenas em API Routes (Telegram + crons).
-- Nao persiste sessao e nao usa refresh token.
+**Fluxo:**
+1. Valida `Authorization: Bearer <CRON_SECRET>`
+2. Busca usuários com `telegram_chat_id` e `telegram_summary_enabled = true`
+3. Calcula resumo (semana/mês anterior)
+4. Envia via Telegram Bot API
 
-### 3.3 Tabelas principais
-Arquivo: docs/supabase-schema-rls.sql
+## 3. Supabase
 
-Tabelas:
-- profiles
-- telegram_link_tokens
-- categories
-- transactions
-- goals
-- assets
-- recurring_transactions
-- budget_alerts
+### 3.1 Client Público (Browser)
 
-RLS:
-- Todas as tabelas tem policy auth.uid() = user_id/id.
-- API Routes com service role ignoram RLS (server-only).
+**Arquivo:** `lib/supabase.ts`
 
-## 4) Sincronizacao offline-first
-Arquivo: services/sync.ts
+Usa `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`. RLS garante acesso apenas aos dados do próprio usuário.
 
-Ideia:
-- Supabase = source of truth.
-- localStorage = cache offline.
-- Uma fila (supabase_sync_queue) guarda operacoes offline.
+### 3.2 Client Admin (Server)
 
-Como funciona:
-1) A cada mudanca no app, a store salva no localStorage e enfileira operacao.
-2) Se online, tenta flush (non-blocking) imediatamente.
-3) A cada 15 min, roda sync periodico:
-   - flush da fila
-   - pull de dados do Supabase (atualiza cache local)
+**Arquivo:** `lib/supabase-admin.ts`
 
-Chaves no localStorage:
-- supabase_sync_queue
-- supabase_last_sync
+Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 
-## 5) Groq (IA para parsing)
-Arquivo: services/groq.ts
+### 3.3 Tabelas
 
-- Endpoint: https://api.groq.com/openai/v1/chat/completions
-- Modelo: llama-3.3-70b-versatile
-- Prompt garante resposta em JSON com intent:
-  - transaction
-  - query
-  - conversation
+| Tabela | Descrição |
+|--------|-----------|
+| `profiles` | Dados do usuário + Telegram |
+| `telegram_link_tokens` | Códigos de vinculação |
+| `categories` | Categorias do usuário |
+| `transactions` | Transações financeiras |
+| `goals` | Metas com progresso |
+| `assets` | Ativos de investimento |
+| `recurring_transactions` | Transações recorrentes |
+| `budget_alerts` | Limites de orçamento por categoria |
 
-Fallbacks importantes:
-- Se JSON invalido, vira conversation com resposta generica.
-- Valida amount, category e date.
+**RLS:** Todas as tabelas usam `auth.uid() = user_id`. API Routes com service role ignoram RLS.
 
-## 6) Variaveis de ambiente
-Arquivo: .env.example
+**Schema completo:** `docs/supabase-schema-rls.sql`
 
-Obrigatorias:
-- NEXT_PUBLIC_SUPABASE_URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY
-- SUPABASE_SERVICE_ROLE_KEY
-- NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
-- TELEGRAM_BOT_TOKEN
-- TELEGRAM_WEBHOOK_SECRET
-- GROQ_API_KEY
-- NEXT_PUBLIC_BRAPI_API_KEY
-- CRON_SECRET
+## 4. Sincronização Offline-First
 
-### 6.1 Onde configurar as variaveis
+**Arquivo:** `services/sync.ts`
 
-Sim, voce esta correto:
-- Desenvolvimento local: configurar em .env.local (na raiz do projeto).
-- Producao (Vercel): configurar em Project Settings > Environment Variables.
-- .env.example serve apenas como template/documentacao.
+**Conceito:**
+- Supabase = source of truth
+- localStorage = cache offline
+- Fila `supabase_sync_queue` guarda operações offline
 
-Observacao:
-- Variaveis NEXT_PUBLIC_* ficam expostas no bundle do frontend.
-- Variaveis sem NEXT_PUBLIC_* so devem existir no server (API Routes e cron).
+**Funcionamento:**
+1. Cada mudança salva no localStorage e enfileira operação
+2. Se online: flush imediato (non-blocking)
+3. A cada 15 min: sync periódico (flush + pull)
 
-### 6.2 Acessos (contas)
+**Chaves localStorage:**
+- `supabase_sync_queue` - Operações pendentes
+- `supabase_last_sync` - Timestamp da última sync
 
-Logins das ferramentas/plataformas via gmail LM
+## 5. BCB (Banco Central)
 
-## 7) Operacao e deploy
+**Arquivo:** `services/bcb.ts`
 
-- Deploy na Vercel.
-- Cron jobs definidos em vercel.json.
-- Webhook Telegram aponta para /api/telegram e exige TELEGRAM_WEBHOOK_SECRET.
-- Supabase Auth usa SMTP Resend (configurado no painel do Supabase).
+**Endpoint base:** `https://api.bcb.gov.br/dados/serie/bcdata.sgs`
 
-### 7.1 Resend (SMTP no Supabase) - passos praticos
+**Séries utilizadas:**
+| Série | Código | Descrição |
+|-------|--------|-----------|
+| Selic | 432 | Taxa Selic Meta (% a.a.) |
+| IPCA | 433 | IPCA variação mensal (%) |
 
-1) No painel do Supabase: Authentication > Settings > SMTP.
-2) Preencha host/porta/usuario/senha do Resend.
-3) Configure o "From" (ex: onboarding@resend.dev ou dominio proprio).
-4) Envie um Magic Link de teste para validar entrega.
+**Dados retornados:**
+- Selic atual
+- IPCA mensal
+- IPCA acumulado 12 meses (calculado localmente)
+- Taxa real (Selic - IPCA 12m)
 
-### 7.2 Checklist rapido de operacao (ponto 2)
+**Cache:**
+- Selic: 24 horas
+- IPCA: 7 dias
 
-Antes de deploy ou apos mexer em integrações:
-1) Vercel: env vars configuradas e crons ativos.
-2) Supabase: schema + RLS aplicados.
-3) Telegram: webhook apontando para /api/telegram com secret.
-4) Groq: GROQ_API_KEY valida.
-5) Resend SMTP: teste de Magic Link enviado e entregue.
+**Componente:** `MacroBar` (exibido no dashboard e investimentos)
 
-## 8) Teste rapido (sanity checks)
+## 6. Groq (IA)
 
-1) Auth:
-   - Login com Magic Link envia email (Resend via Supabase).
-2) Telegram:
-   - /start <codigo> vincula usuario.
-   - "gastei 50 no mercado" cria transacao.
-3) Cron:
-   - Chame /api/cron/generate-recurring com Authorization: Bearer <CRON_SECRET>.
-   - Chame /api/cron/telegram-summary?type=weekly com Authorization: Bearer <CRON_SECRET>.
+**Arquivo:** `services/groq.ts`
 
-## 9) Troubleshooting comum
+**Endpoint:** `https://api.groq.com/openai/v1/chat/completions`
+**Modelo:** `llama-3.3-70b-versatile`
 
-- 401 no /api/telegram: webhook secret errado.
-- 500 no /api/telegram: TELEGRAM_BOT_TOKEN ausente.
-- Cron retornando 401: Authorization nao bate com CRON_SECRET.
-- Dados nao sincronizando: offline queue pendente ou usuario nao autenticado.
-- Telegram sem resposta: usuario nao vinculado (telegram_chat_id nulo no profile).
+**Intents detectados:**
+- `transaction` - Criar transação
+- `query` - Consultar dados
+- `conversation` - Conversa geral
 
-## 10) Onde detalhar mais (se precisar)
+**Fallbacks:**
+- JSON inválido → conversation
+- Validação de amount, category, date
 
-- Esquema completo: docs/supabase-schema-rls.sql
-- Fluxos detalhados: app/api/telegram/route.ts, app/api/cron/*
-- Sync offline: services/sync.ts
-- CRUD Supabase: services/supabase.ts
+## 7. Variáveis de Ambiente
 
-## 11) Como configurar o webhook do Telegram
+| Variável | Onde Usar |
+|----------|-----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Browser + Server |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser + Server |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only |
+| `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` | Browser |
+| `TELEGRAM_BOT_TOKEN` | Server only |
+| `TELEGRAM_WEBHOOK_SECRET` | Server only |
+| `GROQ_API_KEY` | Server only |
+| `NEXT_PUBLIC_BRAPI_API_KEY` | Browser |
+| `CRON_SECRET` | Server only |
 
-1) Crie o bot no BotFather e pegue o TELEGRAM_BOT_TOKEN.
-2) Defina o TELEGRAM_WEBHOOK_SECRET (qualquer valor forte).
-3) Configure o webhook com o token e o secret. Exemplo (substitua os valores):
-   https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/setWebhook?url=https://controlec.vercel.app/api/telegram&secret_token=<TELEGRAM_WEBHOOK_SECRET>
-4) Verifique com getWebhookInfo:
-   https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getWebhookInfo
+**Onde configurar:**
+- Dev: `.env.local`
+- Prod: Vercel Project Settings > Environment Variables
 
-Observacao:
-- O header esperado pela API eh x-telegram-bot-api-secret-token.
-- Se o secret nao bater, a rota retorna 401.
+**Importante:** Variáveis `NEXT_PUBLIC_*` são expostas no bundle do frontend.
+
+### 6.1 Acessos (Contas)
+
+| Serviço | Login | Notas |
+|---------|-------|-------|
+| Vercel | Gmail LM | Projeto: controlec |
+| Supabase | Gmail LM | Projeto: controlec, região Brasil |
+| Telegram BotFather | Telegram LM | Bot: @ControleCBot |
+| Groq | Gmail LM | Free tier |
+| Resend | Gmail LM | SMTP para Magic Link |
+| Brapi.dev | Gmail LM | Free tier, 15k req/mês |
+
+> **Gmail LM** = conta Gmail principal do projeto
+
+## 8. Operação
+
+### Deploy
+- Hospedado na Vercel
+- Cron jobs definidos em `vercel.json`
+
+### Webhook Telegram
+```bash
+# Configurar webhook
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://controlec.vercel.app/api/telegram&secret_token=<SECRET>"
+
+# Verificar
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+```
+
+### SMTP (Supabase)
+1. Supabase Dashboard > Authentication > Settings > SMTP
+2. Configurar host/porta/usuário/senha do Resend
+3. Definir "From" (ex: `noreply@seudominio.com`)
+
+## 9. Checklist de Deploy
+
+- [ ] Variáveis de ambiente configuradas na Vercel
+- [ ] Schema + RLS aplicados no Supabase
+- [ ] Webhook Telegram apontando para `/api/telegram`
+- [ ] SMTP Resend configurado no Supabase
+- [ ] Crons ativos (verificar `vercel.json`)
+
+## 10. Logging e Monitoramento
+
+### 9.1 Logger (`lib/logger.ts`)
+
+Logger centralizado com níveis de log:
+
+```typescript
+import { logger } from "@/lib/logger"
+
+logger.sync.info('Mensagem informativa')   // Dev only
+logger.sync.warn('Aviso')                  // Dev only
+logger.sync.error('Erro crítico')          // Sempre (prod + dev)
+```
+
+**Loggers disponíveis:**
+- `logger.sync` - Sincronização offline
+- `logger.brapi` - API Brapi.dev
+- `logger.marketData` - Cotações (Yahoo, CoinGecko)
+- `logger.supabase` - Operações Supabase
+- `logger.telegram` - Bot Telegram
+- `logger.cron` - Jobs agendados
+- `logger.migrations` - Migrações de dados
+- `logger.app` - Geral
+
+**Comportamento:**
+- Em `development`: todos os níveis aparecem no console
+- Em `production`: apenas `error` aparece
+
+### 9.2 Monitoramento em Produção
+
+| Ferramenta | O que monitora |
+|------------|----------------|
+| Vercel Analytics | Page views, Core Web Vitals |
+| Vercel Logs | Output de API Routes e crons |
+| Supabase Dashboard | Queries, Auth, RLS errors |
+
+**Ver logs de cron na Vercel:**
+1. Dashboard > Project > Functions
+2. Selecione a função (ex: `api/cron/generate-recurring`)
+3. Aba "Logs"
+
+## 11. Troubleshooting
+
+| Problema | Causa Provável | Como Verificar |
+|----------|----------------|----------------|
+| 401 no `/api/telegram` | `TELEGRAM_WEBHOOK_SECRET` errado | Vercel Logs |
+| 500 no `/api/telegram` | `TELEGRAM_BOT_TOKEN` ausente | Vercel Logs |
+| Cron retorna 401 | `CRON_SECRET` não bate | Vercel Functions > Logs |
+| Dados não sincronizam | Fila offline ou usuário não autenticado | DevTools > localStorage |
+| Telegram sem resposta | `telegram_chat_id` nulo no profile | Supabase > profiles |
+| Magic Link não chega | SMTP não configurado no Supabase | Supabase > Auth > Logs |
+| Logs não aparecem | `NODE_ENV !== 'development'` | Verifique `.env.local` |

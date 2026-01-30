@@ -12,6 +12,7 @@ import { AssetForm } from "./components/asset-form"
 import { AssetRadar } from "./components/asset-radar"
 import { ARCAAllocationView } from "./components/arca-allocation-view"
 import { AlertsList } from "./components/alerts-list"
+import { MacroBar } from "@/components/macro-bar"
 import type { AssetClass } from "@/lib/investment-types"
 import { useTranslation } from "@/lib/i18n"
 
@@ -43,8 +44,10 @@ export default function InvestmentsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="p-4 md:p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+        <MacroBar />
+
+        <div className="flex items-center justify-between">
           <div>
             {lastUpdate && (
               <p className="text-sm text-muted-foreground mt-1">

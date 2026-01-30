@@ -2,6 +2,7 @@
 import { supabaseService } from "./supabase"
 import { storageService } from "./storage"
 import { investmentsStorageService } from "./investments-storage"
+import { logger } from "@/lib/logger"
 import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
 import type { Asset } from "@/lib/investment-types"
 
@@ -72,7 +73,7 @@ function addToQueue(operation: Omit<SyncOperation, 'id' | 'timestamp'>): void {
   // Generate unique ID for the operation
   const op: SyncOperation = {
     ...operation,
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: crypto.randomUUID(),
     timestamp: Date.now(),
   }
 
@@ -105,7 +106,7 @@ function updateOnlineStatus(): void {
 
   // If we just came back online, flush the queue
   if (wasOffline && syncState.isOnline) {
-    console.log('[Sync] Back online, flushing queue...')
+    logger.sync.info('Back online, flushing queue...')
     flushQueue()
   }
 }
@@ -133,11 +134,11 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
   if (queue.length === 0) return { success: 0, failed: 0 }
 
   if (!syncState.isOnline) {
-    console.log('[Sync] Offline, skipping flush')
+    logger.sync.info('Offline, queue has', queue.length, 'pending operations')
     return { success: 0, failed: queue.length }
   }
 
-  console.log(`[Sync] Flushing ${queue.length} operations...`)
+  logger.sync.info(`Flushing ${queue.length} operations...`)
 
   let success = 0
   let failed = 0
@@ -155,12 +156,17 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
         failed++
       }
     } catch (error) {
-      console.error(`[Sync] Failed to execute operation:`, op, error)
+      logger.sync.error(`Failed to execute operation:`, op, error)
       failed++
     }
   }
 
-  console.log(`[Sync] Flush complete: ${success} success, ${failed} failed`)
+  if (failed > 0) {
+    logger.sync.warn(`Flush complete: ${success} success, ${failed} failed`)
+  } else {
+    logger.sync.info(`Flush complete: ${success} synced`)
+  }
+
   return { success, failed }
 }
 
@@ -179,7 +185,7 @@ async function executeOperation(op: SyncOperation): Promise<boolean> {
     case 'recurringTransactions':
       return executeRecurringTransactionOp(op)
     default:
-      console.warn(`[Sync] Unknown entity type: ${op.entity}`)
+      logger.sync.warn(`Unknown entity type: ${op.entity}`)
       return false
   }
 }
@@ -262,11 +268,8 @@ async function executeRecurringTransactionOp(op: SyncOperation): Promise<boolean
 
 async function pullFromSupabase(): Promise<boolean> {
   if (!syncState.isOnline) {
-    console.log('[Sync] Offline, skipping pull')
     return false
   }
-
-  console.log('[Sync] Pulling data from Supabase...')
 
   try {
     // Pull all entities in parallel
@@ -312,10 +315,10 @@ async function pullFromSupabase(): Promise<boolean> {
       localStorage.setItem(LAST_SYNC_KEY, now.toString())
     }
 
-    console.log('[Sync] Pull complete')
+    logger.sync.info('Pull from Supabase complete')
     return true
   } catch (error) {
-    console.error('[Sync] Pull failed:', error)
+    logger.sync.error('Pull failed:', error)
     return false
   }
 }
@@ -331,12 +334,10 @@ async function pullFromSupabase(): Promise<boolean> {
  */
 async function syncOnLoad(): Promise<void> {
   if (syncState.isSyncing) {
-    console.log('[Sync] Already syncing, skipping...')
     return
   }
 
   syncState.isSyncing = true
-  console.log('[Sync] Starting initial sync...')
 
   try {
     // First, flush any pending operations
@@ -354,11 +355,9 @@ async function syncOnLoad(): Promise<void> {
  */
 async function syncPeriodic(): Promise<void> {
   if (syncState.isSyncing) {
-    console.log('[Sync] Already syncing, skipping periodic sync...')
     return
   }
 
-  console.log('[Sync] Starting periodic sync...')
   await syncOnLoad()
 }
 
@@ -381,8 +380,6 @@ function startSync(): void {
   if (syncIntervalId === null) {
     syncIntervalId = setInterval(syncPeriodic, SYNC_INTERVAL_MS)
   }
-
-  console.log('[Sync] Sync service started')
 }
 
 /**
@@ -395,8 +392,6 @@ function stopSync(): void {
     clearInterval(syncIntervalId)
     syncIntervalId = null
   }
-
-  console.log('[Sync] Sync service stopped')
 }
 
 // =============================================================================

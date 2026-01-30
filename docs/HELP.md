@@ -1,66 +1,89 @@
-# Status do Projeto ControleC
+# ControleC - Guia Rápido
 
-## Fases Concluídas
+## Status Atual
 
-### Fase 5 — Supabase (Fundação Cloud) ✅ CONCLUÍDA
+**Produção:** https://controlec.vercel.app/
 
-Todas as etapas concluídas:
-- Etapa 1: Client Supabase (`lib/supabase.ts`)
-- Etapa 2: Auth flow (Magic Link, guard, login, callback)
-- Etapa 3: CRUD Supabase (`services/supabase.ts`)
-- Etapa 4: Sync offline-first (`services/sync.ts`)
-- Etapa 5: Migração das stores (use-finance-store, use-investments-store)
-- Etapa 6: Ferramenta de migração (`components/migration-tool.tsx`)
-- Etapa 7: Validação (fluxo offline-first testado)
+### Fases Concluídas ✅
 
-### Fase 6 — Telegram Bot ✅ CONCLUÍDA
+| Fase | Descrição |
+|------|-----------|
+| 1-3 | Estabilização, modelo de dados, UX |
+| 4 | Features: transações recorrentes, goals com progresso, exports |
+| 5 | Supabase: auth, CRUD, sync offline-first |
+| 6 | Telegram Bot: vinculação, parsing IA, transações |
+| 7.1-7.2 | Resumos automáticos, alertas de orçamento |
 
-Todas as etapas concluídas:
-- Etapa 1: Schema e Tipos (telegram_link_tokens, telegram_chat_id)
-- Etapa 2: Infraestrutura Backend (`lib/supabase-admin.ts`, `app/api/telegram/route.ts`)
-- Etapa 3: UI de Vinculação (página de perfil)
-- Etapa 4: Configuração do Bot (BotFather, webhook, variáveis)
-- Etapa 5: Parsing de mensagens com IA (`services/groq.ts` — Llama 3.3-70b)
-- Etapa 6: Registro de transações via texto livre
-- Etapa 7: Consultas financeiras (saldo, resumo, categoria, recentes)
+### Em Andamento
 
-## Configuração Atual
+- 7.3: Categorização automática via IA
+- 7.4: Bot multilíngue
+- 7.5: Dashboard com tendências
 
-### URLs
+## Documentação
 
-- **Produção:** https://controlec.vercel.app/
-- **Desenvolvimento:** http://localhost:3000
+| Documento | Conteúdo |
+|-----------|----------|
+| `.claude/commands/controlec.md` | Contexto completo do projeto |
+| `docs/backend.md` | Arquitetura do backend serverless |
+| `docs/supabase-schema-rls.sql` | Schema do banco de dados |
 
-### Variáveis de Ambiente (todas configuradas)
+## Comandos Úteis
+
+```bash
+# Desenvolvimento
+npm run dev
+
+# Build
+npm run build
+
+# Testes
+npm test
+npm run test:run
+
+# Deploy
+git push  # Vercel deploya automaticamente
+```
+
+## Variáveis de Ambiente
+
+Copie `.env.example` para `.env.local` e preencha:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-NEXT_PUBLIC_BRAPI_API_KEY
-NEXT_PUBLIC_TELEGRAM_BOT_USERNAME
-TELEGRAM_BOT_TOKEN
-TELEGRAM_WEBHOOK_SECRET
-GROQ_API_KEY
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_SECRET=
+GROQ_API_KEY=
+NEXT_PUBLIC_BRAPI_API_KEY=
+CRON_SECRET=
 ```
 
-### Comandos do Bot
+## Telegram Bot
 
-O bot responde a:
-- **Transações:** "gastei 50 no mercado", "recebi 3000 de salário"
-- **Consultas:** "quanto gastei esse mês?", "resumo do mês", "últimas transações"
-- **Conversa:** saudações e perguntas gerais
+```bash
+# Configurar webhook
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://controlec.vercel.app/api/telegram&secret_token=<SECRET>"
+```
 
-## Próximos Passos (Fase 4 — Evolução de Features)
+## Logging
 
-A Fase 4 está congelada aguardando decisão de priorização:
-- [ ] Goals com valores alvo e prazos
-- [ ] Transações recorrentes
-- [ ] Relatórios exportáveis (PDF/CSV)
-- [ ] Gráficos comparativos
+```typescript
+// Em dev: todos os níveis aparecem
+// Em prod: apenas errors
+import { logger } from "@/lib/logger"
 
-## Evolução Futura do Bot (pós-MVP)
+logger.sync.info('Sync iniciado')
+logger.sync.error('Falha crítica')  // Sempre aparece
+```
 
-- [ ] Resumos automáticos semanais/mensais
-- [ ] Alertas proativos de orçamento
-- [ ] Suporte a múltiplos idiomas (PT/EN baseado no perfil)
+**Ver logs em produção:** Vercel > Functions > Logs
+
+## Links Úteis
+
+- [Vercel Dashboard](https://vercel.com/)
+- [Supabase Dashboard](https://supabase.com/dashboard)
+- [Telegram BotFather](https://t.me/BotFather)
+- [Groq Console](https://console.groq.com/)

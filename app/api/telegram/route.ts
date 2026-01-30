@@ -47,17 +47,28 @@ type BudgetAlertRow = {
   is_active: boolean
 }
 
-async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
+async function sendTelegramMessage(chatId: number, text: string): Promise<boolean> {
   if (!telegramToken) {
     console.error("[Telegram] Missing TELEGRAM_BOT_TOKEN")
-    return
+    return false
   }
 
-  await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  })
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    })
+
+    if (!response.ok) {
+      console.error("[Telegram] Failed to send message:", response.status)
+      return false
+    }
+    return true
+  } catch (error) {
+    console.error("[Telegram] Error sending message:", error)
+    return false
+  }
 }
 
 export async function POST(req: Request) {
@@ -239,7 +250,7 @@ export async function POST(req: Request) {
     const { transaction } = response
 
     // Generate unique ID
-    const transactionId = `tg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+    const transactionId = `tg_${crypto.randomUUID()}`
 
     // Insert transaction into Supabase
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

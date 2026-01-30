@@ -1,5 +1,6 @@
 // Market Data Service - Fetches real-time market data from external APIs
 import type { AssetClass, MarketData } from "@/lib/investment-types"
+import { logger } from "@/lib/logger"
 
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 const CACHE_KEY = "market_data_cache"
@@ -33,12 +34,11 @@ async function fetchWithRetry(
       return response
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
-      console.warn(`[MarketData] Fetch attempt ${attempt}/${maxRetries} failed:`, lastError.message)
+      logger.marketData.warn(`Fetch attempt ${attempt}/${maxRetries} failed:`, lastError.message)
 
       // Don't sleep after the last attempt
       if (attempt < maxRetries) {
         const delay = INITIAL_RETRY_DELAY * attempt // 1s, 2s, 3s
-        console.log(`[MarketData] Retrying in ${delay}ms...`)
         await sleep(delay)
       }
     }
@@ -124,7 +124,7 @@ class MarketDataService {
         this.cache = JSON.parse(cached)
       }
     } catch (error) {
-      console.error("[MarketData] Failed to load cache:", error)
+      logger.marketData.error("Failed to load cache:", error)
     }
   }
 
@@ -133,7 +133,7 @@ class MarketDataService {
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(this.cache))
     } catch (error) {
-      console.error("[MarketData] Failed to save cache:", error)
+      logger.marketData.error("Failed to save cache:", error)
     }
   }
 
@@ -216,7 +216,7 @@ class MarketDataService {
 
       return { data: marketData }
     } catch (error) {
-      console.error(`[MarketData] Failed to fetch ${symbol}:`, error)
+      logger.marketData.error(`Failed to fetch ${symbol}:`, error)
       const cachedData = this.getCachedData(cacheKey)
       this.failedSymbols.add(symbol)
       return {
@@ -280,7 +280,7 @@ class MarketDataService {
 
       return { data: marketData }
     } catch (error) {
-      console.error(`[MarketData] Failed to fetch crypto ${symbol}:`, error)
+      logger.marketData.error(`Failed to fetch crypto ${symbol}:`, error)
       const cachedData = this.getCachedData(cacheKey)
       this.failedSymbols.add(symbol)
       return {

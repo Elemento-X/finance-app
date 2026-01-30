@@ -246,7 +246,8 @@ function BrazilianStocksTab() {
 
   useEffect(() => {
     loadStocks()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Intentionally run only on mount
 
   const [grahamModal, setGrahamModal] = useState<{ open: boolean; stock: StockData | null }>({
     open: false,
