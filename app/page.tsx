@@ -7,6 +7,7 @@ import { FinancialSummary } from "@/components/dashboard/financial-summary"
 import { ExpensesByCategoryChart } from "@/components/dashboard/expenses-by-category-chart"
 import { MonthlyEvolutionChart } from "@/components/dashboard/monthly-evolution-chart"
 import { IncomeVsExpenseChart } from "@/components/dashboard/income-vs-expense-chart"
+import { MacroBar } from "@/components/macro-bar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, List } from "lucide-react"
 import { useTranslation } from "@/lib/i18n"
@@ -17,6 +18,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <main className="px-4 py-6 space-y-6 pb-24">
+        <MacroBar />
         <PeriodFilter />
 
         <Tabs defaultValue="dashboard" className="w-full">
