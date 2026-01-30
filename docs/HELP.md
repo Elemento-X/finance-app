@@ -113,6 +113,12 @@ logger.sync.error('Falha crítica')  // Sempre aparece
 
 **Ver logs em produção:** Vercel > Functions > Logs
 
+## Health Check (feito por codex)
+
+```bash
+curl "https://controlec.vercel.app/api/health"
+```
+
 ## Links Úteis
 
 - [Vercel Dashboard](https://vercel.com/)

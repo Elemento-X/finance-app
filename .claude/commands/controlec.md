@@ -75,6 +75,7 @@ app/                    → Páginas (Next.js App Router)
 
 app/api/                → API Routes serverless (Vercel)
 ├── telegram/route.ts   → Webhook handler do Telegram Bot
+├── health/route.ts     → Health check (Supabase + serviços externos)
 └── cron/
     ├── generate-recurring/route.ts → Gera transações recorrentes (diário 03:05 UTC)
     └── telegram-summary/route.ts   → Resumos semanais/mensais (segunda 12h, dia 1 12h)
@@ -442,8 +443,9 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 ### Fase 11 — Observabilidade (Prioridade Média)
 
 #### 11.1 — Health Check
-- [ ] Endpoint `/api/health` retornando status do Supabase
-- [ ] Verificação de conectividade com serviços externos
+#### 11.1 — Health Check (feito por codex)
+- [x] Endpoint `/api/health` retornando status do Supabase — feito por codex
+- [x] Verificação de conectividade com serviços externos — feito por codex
 
 #### 11.2 — Métricas de Uso
 - [ ] Contador de mensagens/transações por dia no Supabase
@@ -567,5 +569,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-29:** Fase 4 descongelada e concluída. Fase 7.1 e 7.2 implementadas.
 - **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA), 7.4 (Bot multilíngue) e 7.5 (Dashboard com tendências — feito por codex) implementadas.
 - **2026-01-30:** Fase 10.2 (Cache Agressivo — feito por codex): cache de cotações em 1h + persistência da última cotação válida offline.
+- **2026-01-30:** Fase 11.1 (Health Check — feito por codex): `/api/health` com status do Supabase e conectividade de serviços externos.
 
 > Histórico detalhado disponível no git.

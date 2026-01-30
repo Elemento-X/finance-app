@@ -58,6 +58,7 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | Arquivo | Descrição |
 |---------|-----------|
 | `app/api/telegram/route.ts` | Webhook Telegram |
+| `app/api/health/route.ts` | Health check (Supabase + serviços externos) — feito por codex |
 | `app/api/cron/generate-recurring/route.ts` | Cron: transações recorrentes |
 | `app/api/cron/telegram-summary/route.ts` | Cron: resumos semanais/mensais |
 | `services/supabase.ts` | CRUD Supabase (usa `logger.supabase`) |
@@ -258,6 +259,12 @@ curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://controlec.verce
 
 # Verificar
 curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+```
+
+### Health Check — feito por codex
+
+```bash
+curl "https://controlec.vercel.app/api/health"
 ```
 
 ### SMTP (Supabase)
