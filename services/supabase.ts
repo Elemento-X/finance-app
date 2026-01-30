@@ -87,15 +87,17 @@ interface ProfileRow {
   language: string
   default_month: string | null
   telegram_chat_id: number | null
+  telegram_summary_enabled: boolean | null
 }
 
-function profileToRow(p: UserProfile, userId: string): Omit<ProfileRow, 'telegram_chat_id'> {
+function profileToRow(p: UserProfile, userId: string): Omit<ProfileRow, 'telegram_chat_id' | 'telegram_summary_enabled'> & { telegram_summary_enabled?: boolean } {
   return {
     id: userId,
     name: p.name || null,
     currency: p.currency,
     language: p.language,
     default_month: p.defaultMonth || null,
+    telegram_summary_enabled: p.telegramSummaryEnabled ?? false,
   }
 }
 
@@ -106,6 +108,7 @@ function rowToProfile(row: ProfileRow): UserProfile {
     defaultMonth: row.default_month ?? new Date().toISOString().slice(0, 7),
     language: (row.language as 'en' | 'pt') || 'pt',
     telegramChatId: row.telegram_chat_id ?? null,
+    telegramSummaryEnabled: row.telegram_summary_enabled ?? false,
   }
 }
 
@@ -473,6 +476,23 @@ export const supabaseService = {
 
     if (error) {
       console.error('Error updating telegram chat id:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateTelegramSummaryEnabled(enabled: boolean): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ telegram_summary_enabled: enabled })
+      .eq('id', userId)
+
+    if (error) {
+      console.error('Error updating telegram summary enabled:', error)
       return false
     }
 
