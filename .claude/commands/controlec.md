@@ -573,5 +573,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-30:** Fase 10.2 (Cache Agressivo — feito por codex): cache de cotações em 1h + persistência da última cotação válida offline.
 - **2026-01-30:** Fase 11.1 (Health Check — feito por codex): `/api/health` com status do Supabase e conectividade de serviços externos.
 - **2026-01-30:** Fase 10.1 (Retry e Fallback — feito por codex): retry com backoff no sync + timeouts de 10s em APIs externas.
+- **2026-01-30:** Investimentos: removido botão manual de atualização; mantido auto-refresh a cada 5 min — feito por codex.
 
 > Histórico detalhado disponível no git.

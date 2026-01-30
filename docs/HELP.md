@@ -28,6 +28,10 @@
 - Limiar: max(10% da média do saldo absoluto, R$500)
 - Moeda segue preferência do perfil (BRL/USD/EUR) com formatação correta
 
+### Investimentos (UI)
+
+- Atualização automática das cotações a cada 5 minutos (sem botão manual) — feito por codex
+
 ### Resiliência (Cache)
 
 - Cotações com cache de 1h — feito por codex
