@@ -338,6 +338,11 @@ export const translations = {
     "telegram.disconnectSuccess": "Telegram disconnected",
     "telegram.disconnectError": "Failed to disconnect Telegram",
     "telegram.refreshed": "Status refreshed",
+    "telegram.summaryTitle": "Automatic Summaries",
+    "telegram.summaryDesc": "Receive weekly and monthly financial summaries via Telegram",
+    "telegram.summaryEnabled": "Automatic summaries enabled",
+    "telegram.summaryDisabled": "Automatic summaries disabled",
+    "telegram.summaryError": "Failed to update summary settings",
 
     // Backup
     "backup.title": "Backup & Restore",
@@ -797,6 +802,11 @@ export const translations = {
     "telegram.disconnectSuccess": "Telegram desconectado",
     "telegram.disconnectError": "Falha ao desconectar o Telegram",
     "telegram.refreshed": "Status atualizado",
+    "telegram.summaryTitle": "Resumos Automáticos",
+    "telegram.summaryDesc": "Receba resumos financeiros semanais e mensais pelo Telegram",
+    "telegram.summaryEnabled": "Resumos automáticos ativados",
+    "telegram.summaryDisabled": "Resumos automáticos desativados",
+    "telegram.summaryError": "Falha ao atualizar configuração de resumos",
 
     // Backup
     "backup.title": "Backup e Restauração",
