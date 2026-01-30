@@ -370,16 +370,23 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 | 6 | Telegram Bot: vinculação, parsing IA, transações, consultas |
 | 7.1 | Resumos Automáticos via Telegram (semanal/mensal) |
 | 7.2 | Alertas de Orçamento por categoria |
+| 7.3 | Categorização Automática via IA (matching local + Groq fallback) |
+| 7.4 | Bot Multilíngue (PT/EN baseado no perfil) |
 | 9 | Segurança: rate limiting, validação de input, auditoria |
 
-### Fase 7 — Funcionalidades Bot (Em Andamento)
+### Fase 7 — Funcionalidades Bot
 
-#### 7.3 — Categorização Automática via IA
-- [ ] Sugerir categoria baseado na descrição
-- [ ] Matching local primeiro, IA como fallback
+#### 7.3 — Categorização Automática via IA ✅
+- [x] Sugerir categoria baseado na descrição
+- [x] Matching local primeiro, IA como fallback
+- [x] `matchCategoryLocally()` com keywords PT/EN
+- [x] Priorização de categorias do usuário
 
-#### 7.4 — Suporte Multilíngue no Bot
-- [ ] Bot responde no idioma do perfil do usuário
+#### 7.4 — Suporte Multilíngue no Bot ✅
+- [x] Bot responde no idioma do perfil do usuário
+- [x] System prompts PT/EN no Groq
+- [x] Mensagens de erro e feedback multilíngues
+- [x] Formatação de moeda baseada no perfil
 
 #### 7.5 — Dashboard com Tendências
 - [ ] Gráfico de tendência (últimos 6 meses)
@@ -554,6 +561,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-27:** Schema Supabase + RLS aplicados. Auth Magic Link. Sync offline-first definido.
 - **2026-01-28:** Deploy Vercel. Fase 5 e 6 concluídas. Bot funcional.
 - **2026-01-29:** Fase 4 descongelada e concluída. Fase 7.1 e 7.2 implementadas.
-- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS.
+- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA) e 7.4 (Bot multilíngue) implementadas.
 
 > Histórico detalhado disponível no git.
