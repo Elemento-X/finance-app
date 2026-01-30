@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { parseMessage, formatQueryResponse } from '@/services/groq'
+import { parseMessage, formatQueryResponse, Locale } from '@/services/groq'
 import { logger } from '@/lib/logger'
 import {
   checkRateLimit,
@@ -33,6 +33,8 @@ type TelegramLinkToken = {
 type ProfileRow = {
   id: string
   telegram_chat_id: number | null
+  language: string | null
+  currency: string | null
 }
 
 type CategoryRow = {
@@ -53,6 +55,86 @@ type BudgetAlertRow = {
   monthly_limit: number
   alert_threshold: number
   is_active: boolean
+}
+
+// Multilingual messages
+const MESSAGES: Record<
+  Locale,
+  {
+    rateLimit: (seconds: number) => string
+    invalidInput: string
+    startNoCode: string
+    invalidCode: string
+    codeUsed: string
+    codeExpired: string
+    connectError: string
+    alreadyConnected: string
+    chatLinkedToOther: string
+    connected: string
+    notLinked: string
+    parseError: string
+    saveError: string
+    fallback: string
+    income: string
+    expense: string
+    investment: string
+    registered: string
+    budgetExceeded: string
+    budgetAlert: string
+  }
+> = {
+  pt: {
+    rateLimit: (s) => `⏳ Muitas mensagens! Aguarde ${s} segundos.`,
+    invalidInput: 'Não entendi. Tenta reformular? 🤔',
+    startNoCode:
+      'Envie o link do app e clique em Start para conectar sua conta.',
+    invalidCode: 'Código inválido. Gere um novo no app.',
+    codeUsed: 'Este código já foi usado. Gere um novo no app.',
+    codeExpired: 'Código expirado. Gere um novo no app.',
+    connectError: 'Erro ao conectar. Tente novamente.',
+    alreadyConnected: 'Sua conta já está conectada. Desconecte no app para relinkar.',
+    chatLinkedToOther: 'Este Telegram já está vinculado a outro usuário.',
+    connected: 'Conta conectada com sucesso!',
+    notLinked: 'Conta não vinculada. Use o botão no app para conectar o Telegram.',
+    parseError: 'Erro ao processar. Tenta de novo? 🔄',
+    saveError: 'Erro ao salvar. Tente novamente. 😕',
+    fallback: 'Não entendi. Tenta me contar um gasto ou receita? 🤔',
+    income: 'Receita',
+    expense: 'Despesa',
+    investment: 'Investimento',
+    registered: 'registrada!',
+    budgetExceeded: '⚠️ Orçamento excedido!',
+    budgetAlert: '📊 Alerta de orçamento!',
+  },
+  en: {
+    rateLimit: (s) => `⏳ Too many messages! Wait ${s} seconds.`,
+    invalidInput: "I didn't understand. Try rephrasing? 🤔",
+    startNoCode:
+      'Send the app link and click Start to connect your account.',
+    invalidCode: 'Invalid code. Generate a new one in the app.',
+    codeUsed: 'This code has already been used. Generate a new one in the app.',
+    codeExpired: 'Code expired. Generate a new one in the app.',
+    connectError: 'Error connecting. Please try again.',
+    alreadyConnected: 'Your account is already connected. Disconnect in the app to relink.',
+    chatLinkedToOther: 'This Telegram is already linked to another user.',
+    connected: 'Account connected successfully!',
+    notLinked: 'Account not linked. Use the button in the app to connect Telegram.',
+    parseError: 'Error processing. Try again? 🔄',
+    saveError: 'Error saving. Please try again. 😕',
+    fallback: "I didn't understand. Try telling me an expense or income? 🤔",
+    income: 'Income',
+    expense: 'Expense',
+    investment: 'Investment',
+    registered: 'recorded!',
+    budgetExceeded: '⚠️ Budget exceeded!',
+    budgetAlert: '📊 Budget alert!',
+  },
+}
+
+// Helper to get locale from language string
+function getLocale(language: string | null): Locale {
+  if (language === 'en' || language === 'en-US') return 'en'
+  return 'pt'
 }
 
 async function sendTelegramMessage(
@@ -242,22 +324,23 @@ export async function POST(req: Request) {
   // Handle transaction messages
   const supabase = getSupabaseAdmin()
 
-  // Find user by telegram_chat_id
+  // Find user by telegram_chat_id (including language and currency)
   const { data: userProfile, error: userError } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, language, currency')
     .eq('telegram_chat_id', chatId)
-    .maybeSingle<Pick<ProfileRow, 'id'>>()
+    .maybeSingle<Pick<ProfileRow, 'id' | 'language' | 'currency'>>()
 
   if (userError || !userProfile) {
-    await sendTelegramMessage(
-      chatId,
-      'Conta não vinculada. Use o botão no app para conectar o Telegram.',
-    )
+    // Default to Portuguese if we don't know the user
+    await sendTelegramMessage(chatId, MESSAGES.pt.notLinked)
     return NextResponse.json({ ok: true })
   }
 
   const userId = userProfile.id
+  const locale = getLocale(userProfile.language)
+  const currency = userProfile.currency ?? 'BRL'
+  const msg = MESSAGES[locale]
 
   // Get user's categories for better matching
   const { data: categoriesData } = await supabase
@@ -268,14 +351,11 @@ export async function POST(req: Request) {
   const userCategories =
     (categoriesData as CategoryRow[] | null)?.map((c) => c.name) ?? []
 
-  // Parse the message with Groq
-  const parseResult = await parseMessage(text, userCategories)
+  // Parse the message with Groq (with locale support)
+  const parseResult = await parseMessage(text, userCategories, undefined, locale)
 
   if (!parseResult.success || !parseResult.response) {
-    await sendTelegramMessage(
-      chatId,
-      parseResult.error ?? 'Erro ao processar. Tenta de novo? 🔄',
-    )
+    await sendTelegramMessage(chatId, parseResult.error ?? msg.parseError)
     return NextResponse.json({ ok: true })
   }
 
@@ -293,6 +373,8 @@ export async function POST(req: Request) {
     const queryResponse = formatQueryResponse(
       response.query.queryType,
       financialData,
+      locale,
+      currency,
     )
     await sendTelegramMessage(chatId, queryResponse)
     return NextResponse.json({ ok: true })
@@ -323,11 +405,11 @@ export async function POST(req: Request) {
 
     if (insertError) {
       logger.telegram.error('Failed to insert transaction:', insertError)
-      await sendTelegramMessage(chatId, 'Erro ao salvar. Tente novamente. 😕')
+      await sendTelegramMessage(chatId, msg.saveError)
       return NextResponse.json({ ok: true })
     }
 
-    // Format confirmation message
+    // Format confirmation message (multilingual)
     const typeEmoji =
       transaction.type === 'income'
         ? '💰'
@@ -336,38 +418,43 @@ export async function POST(req: Request) {
           : '📈'
     const typeLabel =
       transaction.type === 'income'
-        ? 'Receita'
+        ? msg.income
         : transaction.type === 'expense'
-          ? 'Despesa'
-          : 'Investimento'
-    const formattedAmount = transaction.amount.toLocaleString('pt-BR', {
+          ? msg.expense
+          : msg.investment
+    const localeCode = locale === 'pt' ? 'pt-BR' : 'en-US'
+    const formattedAmount = transaction.amount.toLocaleString(localeCode, {
       style: 'currency',
-      currency: 'BRL',
+      currency,
     })
     const formattedDate = new Date(
       transaction.date + 'T12:00:00',
-    ).toLocaleDateString('pt-BR', {
+    ).toLocaleDateString(localeCode, {
       day: '2-digit',
       month: '2-digit',
     })
 
-    const confirmation = `${typeEmoji} ${typeLabel} registrada!\n${formattedAmount} — ${transaction.category} — ${formattedDate}`
+    const confirmation = `${typeEmoji} ${typeLabel} ${msg.registered}\n${formattedAmount} — ${transaction.category} — ${formattedDate}`
 
     await sendTelegramMessage(chatId, confirmation)
 
     // Check budget alerts for expense transactions
     if (transaction.type === 'expense') {
-      await checkBudgetAlert(supabase, userId, chatId, transaction.category)
+      await checkBudgetAlert(
+        supabase,
+        userId,
+        chatId,
+        transaction.category,
+        locale,
+        currency,
+      )
     }
 
     return NextResponse.json({ ok: true })
   }
 
   // Fallback
-  await sendTelegramMessage(
-    chatId,
-    'Não entendi. Tenta me contar um gasto ou receita? 🤔',
-  )
+  await sendTelegramMessage(chatId, msg.fallback)
   return NextResponse.json({ ok: true })
 }
 
@@ -450,7 +537,11 @@ async function checkBudgetAlert(
   userId: string,
   chatId: number,
   category: string,
+  locale: Locale = 'pt',
+  currency: string = 'BRL',
 ) {
+  const msg = MESSAGES[locale]
+  const localeCode = locale === 'pt' ? 'pt-BR' : 'en-US'
   // Get budget alert for this category
   const { data: alertData } = await supabase
     .from('budget_alerts')
@@ -490,30 +581,30 @@ async function checkBudgetAlert(
 
   // Check if we should send an alert
   if (percentUsed >= 100) {
-    const formattedLimit = alert.monthly_limit.toLocaleString('pt-BR', {
+    const formattedLimit = alert.monthly_limit.toLocaleString(localeCode, {
       style: 'currency',
-      currency: 'BRL',
+      currency,
     })
-    const formattedSpent = totalSpent.toLocaleString('pt-BR', {
+    const formattedSpent = totalSpent.toLocaleString(localeCode, {
       style: 'currency',
-      currency: 'BRL',
+      currency,
     })
     await sendTelegramMessage(
       chatId,
-      `⚠️ Orçamento excedido!\n\n${category}: ${formattedSpent} de ${formattedLimit} (${percentUsed.toFixed(0)}%)`,
+      `${msg.budgetExceeded}\n\n${category}: ${formattedSpent} / ${formattedLimit} (${percentUsed.toFixed(0)}%)`,
     )
   } else if (percentUsed >= alert.alert_threshold) {
-    const formattedLimit = alert.monthly_limit.toLocaleString('pt-BR', {
+    const formattedLimit = alert.monthly_limit.toLocaleString(localeCode, {
       style: 'currency',
-      currency: 'BRL',
+      currency,
     })
-    const formattedSpent = totalSpent.toLocaleString('pt-BR', {
+    const formattedSpent = totalSpent.toLocaleString(localeCode, {
       style: 'currency',
-      currency: 'BRL',
+      currency,
     })
     await sendTelegramMessage(
       chatId,
-      `📊 Alerta de orçamento!\n\n${category}: ${formattedSpent} de ${formattedLimit} (${percentUsed.toFixed(0)}%)`,
+      `${msg.budgetAlert}\n\n${category}: ${formattedSpent} / ${formattedLimit} (${percentUsed.toFixed(0)}%)`,
     )
   }
 }
