@@ -864,22 +864,27 @@ alter table goals add column if not exists deadline date;
 
 **Objetivo:** Adicionar funcionalidades proativas que agregam valor sem interação manual.
 
-#### 7.1 — Resumos Automáticos via Telegram
+#### 7.1 — Resumos Automáticos via Telegram ✅ CONCLUÍDA
 
 **Objetivo:** Bot envia resumo financeiro semanal/mensal automaticamente.
 
 **Funcionalidades:**
-- [ ] Resumo semanal (toda segunda-feira às 9h): gastos da semana, comparativo com semana anterior
-- [ ] Resumo mensal (dia 1 às 9h): receitas, despesas, saldo, top categorias, comparativo mês anterior
+- [x] Resumo semanal (toda segunda-feira às 12h UTC / 9h BRT): gastos da semana, comparativo com semana anterior
+- [x] Resumo mensal (dia 1 às 12h UTC / 9h BRT): receitas, despesas, saldo, top categorias, comparativo mês anterior
 
 **Etapas:**
-- [ ] Criar API Route `app/api/cron/telegram-summary/route.ts`
-- [ ] Configurar cron no `vercel.json` (semanal + mensal)
-- [ ] Buscar todos os usuários com `telegram_chat_id` vinculado
-- [ ] Gerar resumo personalizado por usuário
-- [ ] Enviar via Telegram Bot API
-- [ ] Adicionar toggle no perfil: "Receber resumos automáticos" (opt-in)
-- [ ] Traduções PT/EN (~12 chaves)
+- [x] Criar API Route `app/api/cron/telegram-summary/route.ts`
+- [x] Configurar cron no `vercel.json` (semanal + mensal)
+- [x] Buscar todos os usuários com `telegram_chat_id` vinculado e `telegram_summary_enabled = true`
+- [x] Gerar resumo personalizado por usuário (formatado no idioma do usuário)
+- [x] Enviar via Telegram Bot API (com HTML formatting)
+- [x] Adicionar toggle no perfil: "Receber resumos automáticos" (opt-in)
+- [x] Traduções PT/EN (~5 chaves)
+
+**Alteração necessária no Supabase (rodar manualmente):**
+```sql
+alter table profiles add column if not exists telegram_summary_enabled boolean default false;
+```
 
 #### 7.2 — Alertas de Orçamento
 
@@ -1102,6 +1107,18 @@ Finalize perguntando:
   - `lib/i18n.ts`: ~11 chaves de export em PT/EN
   - Dependência jsPDF adicionada
 - **Fase 4 100% concluída:** Todas as sub-fases (4.1 a 4.5) finalizadas
+- **Fase 7.1 Resumos Automáticos via Telegram:**
+  - `app/api/cron/telegram-summary/route.ts`: Cron job para resumos semanais e mensais
+  - `vercel.json`: Adicionados crons semanais (segunda 12h UTC) e mensais (dia 1 às 12h UTC)
+  - `lib/types.ts`: Adicionado `telegramSummaryEnabled?: boolean` em UserProfile
+  - `lib/schemas.ts`: Schema atualizado com novo campo
+  - `services/supabase.ts`: ProfileRow atualizado + função `updateTelegramSummaryEnabled()`
+  - `app/profile/page.tsx`: Toggle de "Resumos Automáticos" na seção Telegram
+  - `components/ui/switch.tsx`: Componente Switch criado (Radix UI)
+  - `lib/i18n.ts`: ~5 chaves de resumos em PT/EN
+  - `docs/supabase-schema-rls.sql`: Schema atualizado + migration documentada
+  - Dependência `@radix-ui/react-switch` adicionada
+- **Fase 7.1 100% concluída:** Resumos automáticos com opt-in no perfil
 
 **2026-01-26:**
 
@@ -1212,5 +1229,6 @@ Finalize perguntando:
 | 2026-01-29 | Fase 4.3 ✅ | Goals evoluídos: valor alvo, valor atual, prazo, barra de progresso, indicadores visuais |
 | 2026-01-29 | Fase 4.4 ✅ | Gráficos Comparativos: já existiam (MonthlyEvolution, ExpensesByCategory, IncomeVsExpense) |
 | 2026-01-29 | Fase 4.5 ✅ | Relatórios Exportáveis: CSV + PDF com jsPDF, seção de export no Profile |
+| 2026-01-29 | Fase 7.1 ✅ | Resumos Automáticos via Telegram: cron semanal/mensal, toggle opt-in no perfil |
 
 > Detalhes granulares de cada mudança estão no histórico git.
