@@ -1,15 +1,15 @@
-"use client"
+'use client'
 
-import { useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { useTranslation } from "@/lib/i18n"
-import { Home, Target, FolderOpen, TrendingUp, User } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useEffect } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import { useTranslation } from '@/lib/i18n'
+import { Home, Target, FolderOpen, TrendingUp, User } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function AppHeader() {
   const { loadData, profile, isHydrated } = useFinanceStore()
@@ -21,11 +21,11 @@ export function AppHeader() {
   }, [loadData])
 
   const navItems = [
-    { href: "/", label: t("nav.home"), icon: Home },
-    { href: "/goals", label: t("nav.goals"), icon: Target },
-    { href: "/categories", label: t("nav.categories"), icon: FolderOpen },
-    { href: "/investments", label: t("nav.investments"), icon: TrendingUp },
-    { href: "/profile", label: t("nav.profile"), icon: User },
+    { href: '/', label: t('nav.home'), icon: Home },
+    { href: '/goals', label: t('nav.goals'), icon: Target },
+    { href: '/categories', label: t('nav.categories'), icon: FolderOpen },
+    { href: '/investments', label: t('nav.investments'), icon: TrendingUp },
+    { href: '/profile', label: t('nav.profile'), icon: User },
   ]
 
   return (
@@ -50,7 +50,7 @@ export function AppHeader() {
             <div>
               {profile.name && (
                 <p className="text-sm text-muted-foreground">
-                  {t("home.hello")}, {profile.name}!
+                  {t('home.hello')}, {profile.name}!
                 </p>
               )}
             </div>
@@ -64,9 +64,9 @@ export function AppHeader() {
             return (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant={isActive ? "secondary" : "ghost"}
+                  variant={isActive ? 'secondary' : 'ghost'}
                   size="sm"
-                  className={cn(isActive && "bg-secondary")}
+                  className={cn(isActive && 'bg-secondary')}
                 >
                   <Icon className="size-4 mr-1 sm:mr-2" />
                   <span className="hidden md:inline">{item.label}</span>
@@ -84,9 +84,9 @@ export function AppHeader() {
             return (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant={isActive ? "secondary" : "ghost"}
+                  variant={isActive ? 'secondary' : 'ghost'}
                   size="icon"
-                  className={cn("size-9", isActive && "bg-secondary")}
+                  className={cn('size-9', isActive && 'bg-secondary')}
                 >
                   <Icon className="size-4" />
                 </Button>

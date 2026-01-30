@@ -1,4 +1,4 @@
-import type { Transaction, TransactionType } from "@/lib/types"
+import type { Transaction, TransactionType } from '@/lib/types'
 import {
   startOfMonth,
   endOfMonth,
@@ -9,31 +9,31 @@ import {
   parseISO,
   format,
   isSameMonth,
-} from "date-fns"
+} from 'date-fns'
 
 export const calculationsService = {
   filterTransactionsByPeriod(
     transactions: Transaction[],
-    period: "day" | "week" | "month" | "year",
+    period: 'day' | 'week' | 'month' | 'year',
     date: Date,
   ): Transaction[] {
     let start: Date
     let end: Date
 
     switch (period) {
-      case "day":
+      case 'day':
         start = startOfDay(date)
         end = endOfDay(date)
         break
-      case "week":
+      case 'week':
         start = startOfWeek(date, { weekStartsOn: 0 })
         end = endOfWeek(date, { weekStartsOn: 0 })
         break
-      case "month":
+      case 'month':
         start = startOfMonth(date)
         end = endOfMonth(date)
         break
-      case "year":
+      case 'year':
         start = new Date(date.getFullYear(), 0, 1)
         end = new Date(date.getFullYear(), 11, 31, 23, 59, 59)
         break
@@ -47,20 +47,25 @@ export const calculationsService = {
     })
   },
 
-  calculateTotalByType(transactions: Transaction[], type: TransactionType): number {
-    return transactions.filter((t) => t.type === type).reduce((sum, t) => sum + t.amount, 0)
+  calculateTotalByType(
+    transactions: Transaction[],
+    type: TransactionType,
+  ): number {
+    return transactions
+      .filter((t) => t.type === type)
+      .reduce((sum, t) => sum + t.amount, 0)
   },
 
   calculateBalance(transactions: Transaction[]): number {
-    const income = this.calculateTotalByType(transactions, "income")
-    const expense = this.calculateTotalByType(transactions, "expense")
-    const investment = this.calculateTotalByType(transactions, "investment")
+    const income = this.calculateTotalByType(transactions, 'income')
+    const expense = this.calculateTotalByType(transactions, 'expense')
+    const investment = this.calculateTotalByType(transactions, 'investment')
 
     return income - expense - investment
   },
 
   getExpensesByCategory(transactions: Transaction[]): Record<string, number> {
-    const expenses = transactions.filter((t) => t.type === "expense")
+    const expenses = transactions.filter((t) => t.type === 'expense')
     return expenses.reduce(
       (acc, t) => {
         acc[t.category] = (acc[t.category] || 0) + t.amount
@@ -75,7 +80,7 @@ export const calculationsService = {
    */
   calculateUnexpectedIncome(transactions: Transaction[]): number {
     return transactions
-      .filter((t) => t.type === "income" && t.isUnexpected)
+      .filter((t) => t.type === 'income' && t.isUnexpected)
       .reduce((sum, t) => sum + t.amount, 0)
   },
 
@@ -84,7 +89,7 @@ export const calculationsService = {
    */
   calculateUnexpectedExpenses(transactions: Transaction[]): number {
     return transactions
-      .filter((t) => t.type === "expense" && t.isUnexpected)
+      .filter((t) => t.type === 'expense' && t.isUnexpected)
       .reduce((sum, t) => sum + t.amount, 0)
   },
 
@@ -103,14 +108,19 @@ export const calculationsService = {
 
     for (let i = months - 1; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthTransactions = transactions.filter((t) => isSameMonth(parseISO(t.date), date))
+      const monthTransactions = transactions.filter((t) =>
+        isSameMonth(parseISO(t.date), date),
+      )
 
-      const income = this.calculateTotalByType(monthTransactions, "income")
-      const expense = this.calculateTotalByType(monthTransactions, "expense")
-      const investment = this.calculateTotalByType(monthTransactions, "investment")
+      const income = this.calculateTotalByType(monthTransactions, 'income')
+      const expense = this.calculateTotalByType(monthTransactions, 'expense')
+      const investment = this.calculateTotalByType(
+        monthTransactions,
+        'investment',
+      )
 
       result.push({
-        month: format(date, "MMM/yy"),
+        month: format(date, 'MMM/yy'),
         income,
         expense,
         investment,

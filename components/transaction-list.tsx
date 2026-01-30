@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,15 +14,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import type { Transaction } from "@/lib/types"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { formatCurrency, formatDate } from "@/utils/formatters"
-import { TransactionForm } from "./transaction-form"
-import { Pencil, Trash2, TrendingUp, TrendingDown, DollarSign, AlertCircle } from "lucide-react"
-import { useTranslation } from "@/lib/i18n"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/alert-dialog'
+import type { Transaction } from '@/lib/types'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import { formatCurrency, formatDate } from '@/utils/formatters'
+import { TransactionForm } from './transaction-form'
+import {
+  Pencil,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  AlertCircle,
+} from 'lucide-react'
+import { useTranslation } from '@/lib/i18n'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 function TransactionListSkeleton() {
   return (
@@ -57,7 +64,6 @@ function TransactionListSkeleton() {
 
 export function TransactionList() {
   const {
-    getFilteredTransactions,
     deleteTransaction,
     categories,
     profile,
@@ -65,19 +71,19 @@ export function TransactionList() {
     isHydrated,
   } = useFinanceStore()
   const t = useTranslation()
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>()
+  const [editingTransaction, setEditingTransaction] = useState<
+    Transaction | undefined
+  >()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   if (!isHydrated) {
     return <TransactionListSkeleton />
   }
 
-  const transactions = getFilteredTransactions()
-
   const handleDelete = () => {
     if (deletingId) {
       deleteTransaction(deletingId)
-      toast.success(t("transaction.deleted"))
+      toast.success(t('transaction.deleted'))
       setDeletingId(null)
     }
   }
@@ -89,11 +95,11 @@ export function TransactionList() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "income":
+      case 'income':
         return <TrendingUp className="size-4" />
-      case "expense":
+      case 'expense':
         return <TrendingDown className="size-4" />
-      case "investment":
+      case 'investment':
         return <DollarSign className="size-4" />
       default:
         return null
@@ -102,12 +108,12 @@ export function TransactionList() {
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case "income":
-        return t("type.income")
-      case "expense":
-        return t("type.expense")
-      case "investment":
-        return t("type.investment")
+      case 'income':
+        return t('type.income')
+      case 'expense':
+        return t('type.expense')
+      case 'investment':
+        return t('type.investment')
       default:
         return type
     }
@@ -115,20 +121,20 @@ export function TransactionList() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "income":
-        return "text-income"
-      case "expense":
-        return "text-expense"
-      case "investment":
-        return "text-investment"
+      case 'income':
+        return 'text-income'
+      case 'expense':
+        return 'text-expense'
+      case 'investment':
+        return 'text-investment'
       default:
-        return ""
+        return ''
     }
   }
 
   const sortedTransactions = [...allTransactions].sort((a, b) => {
-    const timeA = a.createdAt || Number.parseInt(a.id.split("-")[0]) || 0
-    const timeB = b.createdAt || Number.parseInt(b.id.split("-")[0]) || 0
+    const timeA = a.createdAt || Number.parseInt(a.id.split('-')[0]) || 0
+    const timeB = b.createdAt || Number.parseInt(b.id.split('-')[0]) || 0
     return timeB - timeA
   })
 
@@ -145,8 +151,12 @@ export function TransactionList() {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-muted-foreground">{t("transaction.noTransactions")}</p>
-          <p className="text-sm text-muted-foreground">{t("transaction.addToStart")}</p>
+          <p className="text-muted-foreground">
+            {t('transaction.noTransactions')}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t('transaction.addToStart')}
+          </p>
         </CardContent>
       </Card>
     )
@@ -158,41 +168,68 @@ export function TransactionList() {
         {sortedTransactions.map((transaction) => (
           <Card
             key={transaction.id}
-            className={cn("overflow-hidden", isFutureTransaction(transaction) && "border-dashed opacity-70")}
+            className={cn(
+              'overflow-hidden',
+              isFutureTransaction(transaction) && 'border-dashed opacity-70',
+            )}
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className={cn("font-medium", getTypeColor(transaction.type))}>
+                    <span
+                      className={cn(
+                        'font-medium',
+                        getTypeColor(transaction.type),
+                      )}
+                    >
                       {getTypeIcon(transaction.type)}
                     </span>
-                    <Badge variant="outline" className={cn("text-xs", getTypeColor(transaction.type))}>
+                    <Badge
+                      variant="outline"
+                      className={cn('text-xs', getTypeColor(transaction.type))}
+                    >
                       {getTypeLabel(transaction.type)}
                     </Badge>
                     {isFutureTransaction(transaction) && (
                       <Badge variant="secondary" className="text-xs">
-                        {t("transaction.futureBadge")}
+                        {t('transaction.futureBadge')}
                       </Badge>
                     )}
                     {transaction.isUnexpected && (
-                      <Badge variant="outline" className="text-xs text-unexpected">
+                      <Badge
+                        variant="outline"
+                        className="text-xs text-unexpected"
+                      >
                         <AlertCircle className="size-3 mr-1" />
-                        {t("transaction.unexpectedBadge")}
+                        {t('transaction.unexpectedBadge')}
                       </Badge>
                     )}
                   </div>
 
-                  <div className="text-sm text-muted-foreground">{getCategoryName(transaction.category)}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {getCategoryName(transaction.category)}
+                  </div>
 
-                  {transaction.description && <p className="text-sm text-foreground/80">{transaction.description}</p>}
+                  {transaction.description && (
+                    <p className="text-sm text-foreground/80">
+                      {transaction.description}
+                    </p>
+                  )}
 
-                  <div className="text-xs text-muted-foreground">{formatDate(transaction.date)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDate(transaction.date)}
+                  </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2">
-                  <div className={cn("text-xl font-bold", getTypeColor(transaction.type))}>
-                    {transaction.type === "income" ? "+" : "-"}
+                  <div
+                    className={cn(
+                      'text-xl font-bold',
+                      getTypeColor(transaction.type),
+                    )}
+                  >
+                    {transaction.type === 'income' ? '+' : '-'}
                     {formatCurrency(transaction.amount, profile.currency)}
                   </div>
 
@@ -228,19 +265,26 @@ export function TransactionList() {
         mode="edit"
       />
 
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("transactionList.confirmDeleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("transaction.confirmDelete")}</AlertDialogDescription>
+            <AlertDialogTitle>
+              {t('transactionList.confirmDeleteTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('transaction.confirmDelete')}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("common.delete")}
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

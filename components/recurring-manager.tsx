@@ -1,9 +1,15 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from 'react'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,68 +19,76 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Trash2, Repeat, Pause, Play } from "lucide-react"
-import { toast } from "sonner"
-import type { RecurringTransaction, TransactionType } from "@/lib/types"
-import { useTranslation } from "@/lib/i18n"
+} from '@/components/ui/alert-dialog'
+import { Trash2, Repeat, Pause, Play } from 'lucide-react'
+import { toast } from 'sonner'
+import type { RecurringTransaction, TransactionType } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
 
 export function RecurringManager() {
-  const { recurringTransactions, deleteRecurringTransaction, toggleRecurringTransaction } = useFinanceStore()
+  const {
+    recurringTransactions,
+    deleteRecurringTransaction,
+    toggleRecurringTransaction,
+  } = useFinanceStore()
   const t = useTranslation()
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const handleDelete = () => {
     if (deletingId) {
       deleteRecurringTransaction(deletingId)
-      toast.success(t("recurring.deleteSuccess"))
+      toast.success(t('recurring.deleteSuccess'))
       setDeletingId(null)
     }
   }
 
   const handleToggle = (id: string, currentlyActive: boolean) => {
     toggleRecurringTransaction(id)
-    toast.success(currentlyActive ? t("recurring.pauseSuccess") : t("recurring.activateSuccess"))
+    toast.success(
+      currentlyActive
+        ? t('recurring.pauseSuccess')
+        : t('recurring.activateSuccess'),
+    )
   }
 
   const formatFrequency = (recurring: RecurringTransaction): string => {
     const days = [
-      t("recurring.sunday"),
-      t("recurring.monday"),
-      t("recurring.tuesday"),
-      t("recurring.wednesday"),
-      t("recurring.thursday"),
-      t("recurring.friday"),
-      t("recurring.saturday"),
+      t('recurring.sunday'),
+      t('recurring.monday'),
+      t('recurring.tuesday'),
+      t('recurring.wednesday'),
+      t('recurring.thursday'),
+      t('recurring.friday'),
+      t('recurring.saturday'),
     ]
 
     switch (recurring.frequency) {
-      case "weekly":
-        return `${t("recurring.frequencyWeekly")} - ${days[recurring.dayOfWeek ?? 0]}`
-      case "monthly":
-        return `${t("recurring.frequencyMonthly")} - ${t("recurring.dayOfMonth")} ${recurring.dayOfMonth ?? 1}`
-      case "yearly":
-        return `${t("recurring.frequencyYearly")} - ${recurring.dayOfMonth ?? 1}/${recurring.monthOfYear ?? 1}`
+      case 'weekly':
+        return `${t('recurring.frequencyWeekly')} - ${days[recurring.dayOfWeek ?? 0]}`
+      case 'monthly':
+        return `${t('recurring.frequencyMonthly')} - ${t('recurring.dayOfMonth')} ${recurring.dayOfMonth ?? 1}`
+      case 'yearly':
+        return `${t('recurring.frequencyYearly')} - ${recurring.dayOfMonth ?? 1}/${recurring.monthOfYear ?? 1}`
       default:
-        return ""
+        return ''
     }
   }
 
   const formatAmount = (amount: number, type: TransactionType): string => {
-    const prefix = type === "income" ? "+" : "-"
+    const prefix = type === 'income' ? '+' : '-'
     return `${prefix} R$ ${amount.toFixed(2)}`
   }
 
   const getTypeColor = (type: TransactionType): string => {
     switch (type) {
-      case "income":
-        return "text-green-500"
-      case "expense":
-        return "text-red-500"
-      case "investment":
-        return "text-blue-500"
+      case 'income':
+        return 'text-green-500'
+      case 'expense':
+        return 'text-red-500'
+      case 'investment':
+        return 'text-blue-500'
       default:
-        return ""
+        return ''
     }
   }
 
@@ -94,8 +108,8 @@ export function RecurringManager() {
               <Repeat className="size-5 text-primary" />
             </div>
             <div>
-              <CardTitle>{t("recurring.title")}</CardTitle>
-              <CardDescription>{t("recurring.manageDesc")}</CardDescription>
+              <CardTitle>{t('recurring.title')}</CardTitle>
+              <CardDescription>{t('recurring.manageDesc')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -103,7 +117,7 @@ export function RecurringManager() {
           {activeRecurrings.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">
-                {t("recurring.active")} ({activeRecurrings.length})
+                {t('recurring.active')} ({activeRecurrings.length})
               </p>
               {activeRecurrings.map((recurring) => (
                 <div
@@ -112,7 +126,9 @@ export function RecurringManager() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`font-semibold ${getTypeColor(recurring.type)}`}>
+                      <span
+                        className={`font-semibold ${getTypeColor(recurring.type)}`}
+                      >
                         {formatAmount(recurring.amount, recurring.type)}
                       </span>
                       <span className="text-sm text-muted-foreground truncate">
@@ -128,7 +144,9 @@ export function RecurringManager() {
                       size="icon"
                       variant="ghost"
                       className="size-8"
-                      onClick={() => handleToggle(recurring.id, recurring.isActive)}
+                      onClick={() =>
+                        handleToggle(recurring.id, recurring.isActive)
+                      }
                     >
                       <Pause className="size-4" />
                     </Button>
@@ -149,7 +167,7 @@ export function RecurringManager() {
           {pausedRecurrings.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">
-                {t("recurring.paused")} ({pausedRecurrings.length})
+                {t('recurring.paused')} ({pausedRecurrings.length})
               </p>
               {pausedRecurrings.map((recurring) => (
                 <div
@@ -158,7 +176,9 @@ export function RecurringManager() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`font-semibold ${getTypeColor(recurring.type)}`}>
+                      <span
+                        className={`font-semibold ${getTypeColor(recurring.type)}`}
+                      >
                         {formatAmount(recurring.amount, recurring.type)}
                       </span>
                       <span className="text-sm text-muted-foreground truncate">
@@ -174,7 +194,9 @@ export function RecurringManager() {
                       size="icon"
                       variant="ghost"
                       className="size-8"
-                      onClick={() => handleToggle(recurring.id, recurring.isActive)}
+                      onClick={() =>
+                        handleToggle(recurring.id, recurring.isActive)
+                      }
                     >
                       <Play className="size-4" />
                     </Button>
@@ -194,21 +216,26 @@ export function RecurringManager() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("dialog.confirmDelete")}</AlertDialogTitle>
+            <AlertDialogTitle>{t('dialog.confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("dialog.confirmDeleteDesc", { item: t("recurring.title").toLowerCase() })}
+              {t('dialog.confirmDeleteDesc', {
+                item: t('recurring.title').toLowerCase(),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("common.delete")}
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

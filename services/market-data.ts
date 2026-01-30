@@ -1,9 +1,9 @@
 // Market Data Service - Fetches real-time market data from external APIs
-import type { AssetClass, MarketData } from "@/lib/investment-types"
-import { logger } from "@/lib/logger"
+import type { AssetClass, MarketData } from '@/lib/investment-types'
+import { logger } from '@/lib/logger'
 
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-const CACHE_KEY = "market_data_cache"
+const CACHE_KEY = 'market_data_cache'
 
 // Retry configuration
 const MAX_RETRIES = 3
@@ -13,7 +13,7 @@ const INITIAL_RETRY_DELAY = 1000 // 1 second
  * Sleep helper for retry delays
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /**
@@ -23,7 +23,7 @@ function sleep(ms: number): Promise<void> {
 async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  maxRetries: number = MAX_RETRIES
+  maxRetries: number = MAX_RETRIES,
 ): Promise<Response> {
   let lastError: Error | null = null
 
@@ -34,7 +34,10 @@ async function fetchWithRetry(
       return response
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
-      logger.marketData.warn(`Fetch attempt ${attempt}/${maxRetries} failed:`, lastError.message)
+      logger.marketData.warn(
+        `Fetch attempt ${attempt}/${maxRetries} failed:`,
+        lastError.message,
+      )
 
       // Don't sleep after the last attempt
       if (attempt < maxRetries) {
@@ -117,23 +120,23 @@ class MarketDataService {
   }
 
   private loadCache() {
-    if (typeof window === "undefined") return
+    if (typeof window === 'undefined') return
     try {
       const cached = localStorage.getItem(CACHE_KEY)
       if (cached) {
         this.cache = JSON.parse(cached)
       }
     } catch (error) {
-      logger.marketData.error("Failed to load cache:", error)
+      logger.marketData.error('Failed to load cache:', error)
     }
   }
 
   private saveCache() {
-    if (typeof window === "undefined") return
+    if (typeof window === 'undefined') return
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(this.cache))
     } catch (error) {
-      logger.marketData.error("Failed to save cache:", error)
+      logger.marketData.error('Failed to save cache:', error)
     }
   }
 
@@ -147,13 +150,16 @@ class MarketDataService {
     return this.cache[symbol]?.data || null
   }
 
-  async fetchStockData(symbol: string, assetClass: AssetClass): Promise<MarketDataResult> {
+  async fetchStockData(
+    symbol: string,
+    assetClass: AssetClass,
+  ): Promise<MarketDataResult> {
     const cacheKey = symbol.toUpperCase()
 
     if (this.isCacheValid(cacheKey)) {
       return {
         data: this.cache[cacheKey].data,
-        fromCache: true
+        fromCache: true,
       }
     }
 
@@ -170,7 +176,7 @@ class MarketDataService {
         return {
           data: cachedData,
           error: { type: 'network', symbol },
-          fromCache: !!cachedData
+          fromCache: !!cachedData,
         }
       }
 
@@ -182,7 +188,7 @@ class MarketDataService {
         return {
           data: cachedData,
           error: { type: 'not_found', symbol },
-          fromCache: !!cachedData
+          fromCache: !!cachedData,
         }
       }
 
@@ -196,7 +202,7 @@ class MarketDataService {
         return {
           data: cachedData,
           error: { type: 'invalid_response', symbol },
-          fromCache: !!cachedData
+          fromCache: !!cachedData,
         }
       }
 
@@ -206,7 +212,7 @@ class MarketDataService {
         symbol: symbol.toUpperCase(),
         currentPrice,
         dailyChange,
-        currency: meta.currency || "BRL",
+        currency: meta.currency || 'BRL',
         lastUpdate: Date.now(),
       }
 
@@ -222,7 +228,7 @@ class MarketDataService {
       return {
         data: cachedData,
         error: { type: 'network', symbol },
-        fromCache: !!cachedData
+        fromCache: !!cachedData,
       }
     }
   }
@@ -233,7 +239,7 @@ class MarketDataService {
     if (this.isCacheValid(cacheKey)) {
       return {
         data: this.cache[cacheKey].data,
-        fromCache: true
+        fromCache: true,
       }
     }
 
@@ -249,7 +255,7 @@ class MarketDataService {
         return {
           data: cachedData,
           error: { type: 'network', symbol },
-          fromCache: !!cachedData
+          fromCache: !!cachedData,
         }
       }
 
@@ -262,7 +268,7 @@ class MarketDataService {
         return {
           data: cachedData,
           error: { type: 'not_found', symbol },
-          fromCache: !!cachedData
+          fromCache: !!cachedData,
         }
       }
 
@@ -270,7 +276,7 @@ class MarketDataService {
         symbol: symbol.toUpperCase(),
         currentPrice: coinData.brl,
         dailyChange: coinData.brl_24h_change || 0,
-        currency: "BRL",
+        currency: 'BRL',
         lastUpdate: Date.now(),
       }
 
@@ -286,42 +292,45 @@ class MarketDataService {
       return {
         data: cachedData,
         error: { type: 'network', symbol },
-        fromCache: !!cachedData
+        fromCache: !!cachedData,
       }
     }
   }
 
   private getCoinGeckoId(symbol: string): string {
     const mapping: Record<string, string> = {
-      BTC: "bitcoin",
-      ETH: "ethereum",
-      BNB: "binancecoin",
-      ADA: "cardano",
-      SOL: "solana",
-      XRP: "ripple",
-      DOT: "polkadot",
-      DOGE: "dogecoin",
-      AVAX: "avalanche-2",
-      MATIC: "matic-network",
-      USDT: "tether",
-      USDC: "usd-coin",
-      LINK: "chainlink",
-      UNI: "uniswap",
-      ATOM: "cosmos",
+      BTC: 'bitcoin',
+      ETH: 'ethereum',
+      BNB: 'binancecoin',
+      ADA: 'cardano',
+      SOL: 'solana',
+      XRP: 'ripple',
+      DOT: 'polkadot',
+      DOGE: 'dogecoin',
+      AVAX: 'avalanche-2',
+      MATIC: 'matic-network',
+      USDT: 'tether',
+      USDC: 'usd-coin',
+      LINK: 'chainlink',
+      UNI: 'uniswap',
+      ATOM: 'cosmos',
     }
     return mapping[symbol.toUpperCase()] || symbol.toLowerCase()
   }
 
-  async fetchMarketData(symbol: string, assetClass: AssetClass): Promise<MarketDataResult> {
+  async fetchMarketData(
+    symbol: string,
+    assetClass: AssetClass,
+  ): Promise<MarketDataResult> {
     // Fixed income doesn't have real-time quotes
-    if (assetClass === "fixed-income") {
+    if (assetClass === 'fixed-income') {
       return {
         data: null,
-        error: { type: 'fixed_income', symbol }
+        error: { type: 'fixed_income', symbol },
       }
     }
 
-    if (assetClass === "crypto") {
+    if (assetClass === 'crypto') {
       return this.fetchCryptoData(symbol)
     }
 

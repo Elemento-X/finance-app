@@ -1,21 +1,27 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Cloud, Upload, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { useTranslation } from "@/lib/i18n"
-import { storageService } from "@/services/storage"
-import { investmentsStorageService } from "@/services/investments-storage"
-import { supabaseService } from "@/services/supabase"
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Cloud, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useTranslation } from '@/lib/i18n'
+import { storageService } from '@/services/storage'
+import { investmentsStorageService } from '@/services/investments-storage'
+import { supabaseService } from '@/services/supabase'
 import {
   TransactionSchema,
   CategorySchema,
   GoalSchema,
   AssetSchema,
   validateArray,
-} from "@/lib/schemas"
+} from '@/lib/schemas'
 
 type MigrationStatus = 'idle' | 'migrating' | 'success' | 'error'
 
@@ -59,8 +65,14 @@ export function MigrationTool() {
       const localAssets = investmentsStorageService.getAssets()
 
       // Validate with Zod
-      const { valid: validTransactions } = validateArray(localTransactions, TransactionSchema)
-      const { valid: validCategories } = validateArray(localCategories, CategorySchema)
+      const { valid: validTransactions } = validateArray(
+        localTransactions,
+        TransactionSchema,
+      )
+      const { valid: validCategories } = validateArray(
+        localCategories,
+        CategorySchema,
+      )
       const { valid: validGoals } = validateArray(localGoals, GoalSchema)
       const { valid: validAssets } = validateArray(localAssets, AssetSchema)
 
@@ -74,7 +86,8 @@ export function MigrationTool() {
 
       // Migrate profile first
       if (localProfile.name) {
-        migrationResult.profile = await supabaseService.saveProfile(localProfile)
+        migrationResult.profile =
+          await supabaseService.saveProfile(localProfile)
       } else {
         migrationResult.profile = true // No profile to migrate
       }
@@ -136,7 +149,9 @@ export function MigrationTool() {
       if (totalFailed === 0) {
         setStatus('success')
         toast.success(t('migration.success'), {
-          description: t('migration.successDesc', { count: totalSuccess.toString() }),
+          description: t('migration.successDesc', {
+            count: totalSuccess.toString(),
+          }),
         })
       } else {
         setStatus('error')
@@ -157,7 +172,8 @@ export function MigrationTool() {
   }
 
   const counts = getLocalCounts()
-  const totalItems = counts.transactions + counts.categories + counts.goals + counts.assets
+  const totalItems =
+    counts.transactions + counts.categories + counts.goals + counts.assets
 
   return (
     <Card>
@@ -176,11 +192,15 @@ export function MigrationTool() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 rounded-lg border border-border text-center">
             <p className="text-xl font-bold">{counts.transactions}</p>
-            <p className="text-xs text-muted-foreground">{t('home.transactions')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('home.transactions')}
+            </p>
           </div>
           <div className="p-3 rounded-lg border border-border text-center">
             <p className="text-xl font-bold">{counts.categories}</p>
-            <p className="text-xs text-muted-foreground">{t('categories.title')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('categories.title')}
+            </p>
           </div>
           <div className="p-3 rounded-lg border border-border text-center">
             <p className="text-xl font-bold">{counts.goals}</p>
@@ -188,7 +208,9 @@ export function MigrationTool() {
           </div>
           <div className="p-3 rounded-lg border border-border text-center">
             <p className="text-xl font-bold">{counts.assets}</p>
-            <p className="text-xs text-muted-foreground">{t('investments.myAssets')}</p>
+            <p className="text-xs text-muted-foreground">
+              {t('investments.myAssets')}
+            </p>
           </div>
         </div>
 
@@ -196,20 +218,28 @@ export function MigrationTool() {
           <div className="p-3 rounded-lg border border-border bg-muted/50 text-sm space-y-1">
             <p className="font-medium">{t('migration.results')}:</p>
             <p>
-              {t('home.transactions')}: {result.transactions.success} {t('migration.migrated')}
-              {result.transactions.failed > 0 && `, ${result.transactions.failed} ${t('migration.failed')}`}
+              {t('home.transactions')}: {result.transactions.success}{' '}
+              {t('migration.migrated')}
+              {result.transactions.failed > 0 &&
+                `, ${result.transactions.failed} ${t('migration.failed')}`}
             </p>
             <p>
-              {t('categories.title')}: {result.categories.success} {t('migration.migrated')}
-              {result.categories.failed > 0 && `, ${result.categories.failed} ${t('migration.failed')}`}
+              {t('categories.title')}: {result.categories.success}{' '}
+              {t('migration.migrated')}
+              {result.categories.failed > 0 &&
+                `, ${result.categories.failed} ${t('migration.failed')}`}
             </p>
             <p>
-              {t('goals.title')}: {result.goals.success} {t('migration.migrated')}
-              {result.goals.failed > 0 && `, ${result.goals.failed} ${t('migration.failed')}`}
+              {t('goals.title')}: {result.goals.success}{' '}
+              {t('migration.migrated')}
+              {result.goals.failed > 0 &&
+                `, ${result.goals.failed} ${t('migration.failed')}`}
             </p>
             <p>
-              {t('investments.myAssets')}: {result.assets.success} {t('migration.migrated')}
-              {result.assets.failed > 0 && `, ${result.assets.failed} ${t('migration.failed')}`}
+              {t('investments.myAssets')}: {result.assets.success}{' '}
+              {t('migration.migrated')}
+              {result.assets.failed > 0 &&
+                `, ${result.assets.failed} ${t('migration.failed')}`}
             </p>
           </div>
         )}
@@ -244,7 +274,9 @@ export function MigrationTool() {
           </Button>
 
           {totalItems === 0 && (
-            <p className="text-sm text-muted-foreground">{t('migration.noData')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('migration.noData')}
+            </p>
           )}
         </div>
 

@@ -15,16 +15,23 @@ import { getTranslation } from '@/lib/i18n'
 const ARCA_CATEGORY_KEYS: Record<ARCACategory, string> = {
   'fixed-income': 'arcaCategory.fixedIncome',
   'variable-income': 'arcaCategory.variableIncome',
-  'etfs': 'arcaCategory.etfs',
-  'crypto': 'arcaCategory.crypto',
+  etfs: 'arcaCategory.etfs',
+  crypto: 'arcaCategory.crypto',
 }
 
 export const investmentsCalculationsService = {
   calculatePortfolioSummary(assets: AssetWithMarket[]): PortfolioSummary {
-    const totalInvested = assets.reduce((sum, asset) => sum + asset.totalInvested, 0)
-    const currentValue = assets.reduce((sum, asset) => sum + asset.currentValue, 0)
+    const totalInvested = assets.reduce(
+      (sum, asset) => sum + asset.totalInvested,
+      0,
+    )
+    const currentValue = assets.reduce(
+      (sum, asset) => sum + asset.currentValue,
+      0,
+    )
     const totalGain = currentValue - totalInvested
-    const returnPercentage = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0
+    const returnPercentage =
+      totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0
 
     const byAssetClass: PortfolioSummary['byAssetClass'] = {
       stocks: { invested: 0, currentValue: 0, gain: 0, percentage: 0 },
@@ -44,7 +51,9 @@ export const investmentsCalculationsService = {
     Object.keys(byAssetClass).forEach((key) => {
       const classKey = key as AssetClass
       byAssetClass[classKey].percentage =
-        currentValue > 0 ? (byAssetClass[classKey].currentValue / currentValue) * 100 : 0
+        currentValue > 0
+          ? (byAssetClass[classKey].currentValue / currentValue) * 100
+          : 0
     })
 
     return {
@@ -72,21 +81,23 @@ export const investmentsCalculationsService = {
     const total = summary.currentValue
     Object.keys(current).forEach((key) => {
       const categoryKey = key as ARCACategory
-      current[categoryKey] = total > 0 ? (current[categoryKey] / total) * 100 : 0
+      current[categoryKey] =
+        total > 0 ? (current[categoryKey] / total) * 100 : 0
     })
 
     const difference: Record<ARCACategory, number> = {
       'fixed-income': current['fixed-income'] - ARCA_TARGET['fixed-income'],
-      'variable-income': current['variable-income'] - ARCA_TARGET['variable-income'],
-      etfs: current['etfs'] - ARCA_TARGET['etfs'],
-      crypto: current['crypto'] - ARCA_TARGET['crypto'],
+      'variable-income':
+        current['variable-income'] - ARCA_TARGET['variable-income'],
+      etfs: current.etfs - ARCA_TARGET.etfs,
+      crypto: current.crypto - ARCA_TARGET.crypto,
     }
 
     const status: Record<ARCACategory, 'ideal' | 'below' | 'above'> = {
       'fixed-income': this.getStatus(difference['fixed-income']),
       'variable-income': this.getStatus(difference['variable-income']),
-      etfs: this.getStatus(difference['etfs']),
-      crypto: this.getStatus(difference['crypto']),
+      etfs: this.getStatus(difference.etfs),
+      crypto: this.getStatus(difference.crypto),
     }
 
     return {
@@ -103,7 +114,10 @@ export const investmentsCalculationsService = {
     return diff < 0 ? 'below' : 'above'
   },
 
-  generateAlerts(assets: AssetWithMarket[], summary: PortfolioSummary): Alert[] {
+  generateAlerts(
+    assets: AssetWithMarket[],
+    summary: PortfolioSummary,
+  ): Alert[] {
     const alerts: Alert[] = []
     const arcaAllocation = this.calculateARCAAllocation(summary)
 
@@ -112,13 +126,19 @@ export const investmentsCalculationsService = {
       if (status !== 'ideal') {
         const diff = arcaAllocation.difference[category as ARCACategory]
         const categoryKey = ARCA_CATEGORY_KEYS[category as ARCACategory]
-        const categoryName = getTranslation(categoryKey as keyof typeof import('@/lib/i18n').translations.en)
+        const categoryName = getTranslation(
+          categoryKey as keyof typeof import('@/lib/i18n').translations.en,
+        )
 
-        const messageKey = status === 'below' ? 'alerts.arcaBelow' : 'alerts.arcaAbove'
-        const message = getTranslation(messageKey as keyof typeof import('@/lib/i18n').translations.en, {
-          category: categoryName,
-          percent: Math.abs(diff).toFixed(1),
-        })
+        const messageKey =
+          status === 'below' ? 'alerts.arcaBelow' : 'alerts.arcaAbove'
+        const message = getTranslation(
+          messageKey as keyof typeof import('@/lib/i18n').translations.en,
+          {
+            category: categoryName,
+            percent: Math.abs(diff).toFixed(1),
+          },
+        )
 
         alerts.push({
           id: `arca-${category}-${Date.now()}`,
@@ -152,7 +172,9 @@ export const investmentsCalculationsService = {
     // Concentration alerts
     assets.forEach((asset) => {
       const percentage =
-        summary.currentValue > 0 ? (asset.currentValue / summary.currentValue) * 100 : 0
+        summary.currentValue > 0
+          ? (asset.currentValue / summary.currentValue) * 100
+          : 0
       if (percentage > 20) {
         const message = getTranslation('alerts.concentration', {
           symbol: asset.symbol,

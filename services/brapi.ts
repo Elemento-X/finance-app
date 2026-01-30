@@ -2,30 +2,30 @@
 // Free tier: 15,000 requests/month
 // Docs: https://brapi.dev/docs
 
-import { logger } from "@/lib/logger"
+import { logger } from '@/lib/logger'
 
 const API_KEY = process.env.NEXT_PUBLIC_BRAPI_API_KEY
-const BASE_URL = "https://brapi.dev/api"
-const CACHE_KEY = "brapi_stocks_cache"
+const BASE_URL = 'https://brapi.dev/api'
+const CACHE_KEY = 'brapi_stocks_cache'
 const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
 
 // List of 15 Brazilian stocks to display in the radar
 export const RADAR_STOCKS = [
-  "DIRR3",
-  "ITSA4",
-  "CURY3",
-  "CMIG4",
-  "KLBN11",
-  "BMOB3",
-  "AAPL34", // BDR Apple
-  "MSFT34", // BDR Microsoft
-  "ITUB4",  // Itaú Unibanco
-  "MRVE3",
-  "PETR3",
-  "PETR4",
-  "VALE3",
-  "BBAS3",
-  "ABEV3",  // Ambev
+  'DIRR3',
+  'ITSA4',
+  'CURY3',
+  'CMIG4',
+  'KLBN11',
+  'BMOB3',
+  'AAPL34', // BDR Apple
+  'MSFT34', // BDR Microsoft
+  'ITUB4', // Itaú Unibanco
+  'MRVE3',
+  'PETR3',
+  'PETR4',
+  'VALE3',
+  'BBAS3',
+  'ABEV3', // Ambev
 ]
 
 // Interface with ALL data available in free tier
@@ -97,7 +97,7 @@ interface BrapiQuoteResult {
  * Load cache from localStorage
  */
 function loadCache(): CacheData | null {
-  if (typeof window === "undefined") return null
+  if (typeof window === 'undefined') return null
 
   try {
     const cached = localStorage.getItem(CACHE_KEY)
@@ -119,7 +119,7 @@ function loadCache(): CacheData | null {
  * Save cache to localStorage
  */
 function saveCache(stocks: StockData[]): void {
-  if (typeof window === "undefined") return
+  if (typeof window === 'undefined') return
 
   try {
     const data: CacheData = {
@@ -128,7 +128,7 @@ function saveCache(stocks: StockData[]): void {
     }
     localStorage.setItem(CACHE_KEY, JSON.stringify(data))
   } catch (error) {
-    logger.brapi.error("Failed to save cache:", error)
+    logger.brapi.error('Failed to save cache:', error)
   }
 }
 
@@ -141,7 +141,7 @@ async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
 
     const headers: HeadersInit = {}
     if (API_KEY) {
-      headers['Authorization'] = `Bearer ${API_KEY}`
+      headers.Authorization = `Bearer ${API_KEY}`
     }
 
     const response = await fetch(url, { headers })
@@ -167,7 +167,7 @@ async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
       shortName: r.shortName || symbol,
       longName: r.longName || r.shortName || symbol,
       logoUrl: r.logourl,
-      currency: r.currency || "BRL",
+      currency: r.currency || 'BRL',
       currentPrice: r.regularMarketPrice || 0,
       previousClose: r.regularMarketPreviousClose || 0,
       open: r.regularMarketOpen || 0,
@@ -198,7 +198,7 @@ function createErrorStock(symbol: string): StockData {
     symbol,
     shortName: symbol,
     longName: symbol,
-    currency: "BRL",
+    currency: 'BRL',
     currentPrice: 0,
     previousClose: 0,
     open: 0,
@@ -214,7 +214,7 @@ function createErrorStock(symbol: string): StockData {
     peRatio: 0,
     eps: 0,
     lastUpdate: Date.now(),
-    error: "Failed to fetch data",
+    error: 'Failed to fetch data',
   }
 }
 
@@ -240,10 +240,10 @@ export async function fetchRadarStocks(): Promise<StockData[]> {
     }
 
     // Delay to respect rate limits (500ms between requests)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 500))
   }
 
-  if (results.some(r => !r.error)) {
+  if (results.some((r) => !r.error)) {
     saveCache(results)
   }
 
@@ -254,7 +254,7 @@ export async function fetchRadarStocks(): Promise<StockData[]> {
  * Clear the cache
  */
 export function clearRadarCache(): void {
-  if (typeof window === "undefined") return
+  if (typeof window === 'undefined') return
   localStorage.removeItem(CACHE_KEY)
 }
 
@@ -269,7 +269,7 @@ export function hasCachedData(): boolean {
  * Get cache age in hours
  */
 export function getCacheAge(): number | null {
-  if (typeof window === "undefined") return null
+  if (typeof window === 'undefined') return null
 
   try {
     const cached = localStorage.getItem(CACHE_KEY)
@@ -285,8 +285,11 @@ export function getCacheAge(): number | null {
 /**
  * Format large numbers (market cap, volume)
  */
-export function formatLargeNumber(value: number, locale: string = "pt-BR"): string {
-  if (value == null || isNaN(value)) return "0"
+export function formatLargeNumber(
+  value: number,
+  locale: string = 'pt-BR',
+): string {
+  if (value == null || isNaN(value)) return '0'
   if (value >= 1e12) {
     return `${(value / 1e12).toLocaleString(locale, { maximumFractionDigits: 2 })} T`
   }

@@ -1,8 +1,14 @@
-"use client"
+'use client'
 
-import { useState, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useRef } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,9 +18,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Download, Upload, FileJson, AlertCircle, CheckCircle2 } from "lucide-react"
-import { toast } from "sonner"
+} from '@/components/ui/alert-dialog'
+import {
+  Download,
+  Upload,
+  FileJson,
+  AlertCircle,
+  CheckCircle2,
+} from 'lucide-react'
+import { toast } from 'sonner'
 import {
   downloadBackup,
   readFileAsText,
@@ -23,10 +35,9 @@ import {
   importBackup,
   type BackupData,
   type BackupPreview,
-} from "@/services/backup"
-import { useTranslation } from "@/lib/i18n"
-import { formatCurrency } from "@/utils/formatters"
-import { useFinanceStore } from "@/hooks/use-finance-store"
+} from '@/services/backup'
+import { useTranslation } from '@/lib/i18n'
+import { useFinanceStore } from '@/hooks/use-finance-store'
 
 export function BackupManager() {
   const t = useTranslation()
@@ -34,7 +45,7 @@ export function BackupManager() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [showImportDialog, setShowImportDialog] = useState(false)
-  const [importMode, setImportMode] = useState<"replace" | "merge">("replace")
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace')
   const [pendingBackup, setPendingBackup] = useState<BackupData | null>(null)
   const [preview, setPreview] = useState<BackupPreview | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -42,23 +53,25 @@ export function BackupManager() {
   const handleExport = () => {
     try {
       downloadBackup()
-      toast.success(t("backup.exportSuccess"))
+      toast.success(t('backup.exportSuccess'))
     } catch (error) {
-      toast.error(t("backup.exportError"))
+      toast.error(t('backup.exportError'))
     }
   }
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
     // Reset input
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""
+      fileInputRef.current.value = ''
     }
 
-    if (!file.name.endsWith(".json")) {
-      toast.error(t("backup.invalidFileType"))
+    if (!file.name.endsWith('.json')) {
+      toast.error(t('backup.invalidFileType'))
       return
     }
 
@@ -69,7 +82,7 @@ export function BackupManager() {
       const backup = parseBackupFile(content)
 
       if (!backup) {
-        toast.error(t("backup.invalidBackupFile"))
+        toast.error(t('backup.invalidBackupFile'))
         setIsProcessing(false)
         return
       }
@@ -79,7 +92,7 @@ export function BackupManager() {
       setPreview(backupPreview)
       setShowImportDialog(true)
     } catch (error) {
-      toast.error(t("backup.readError"))
+      toast.error(t('backup.readError'))
     } finally {
       setIsProcessing(false)
     }
@@ -109,10 +122,13 @@ export function BackupManager() {
   }
 
   const formatDate = (isoString: string) => {
-    return new Date(isoString).toLocaleString(profile.language === "pt" ? "pt-BR" : "en-US", {
-      dateStyle: "long",
-      timeStyle: "short",
-    })
+    return new Date(isoString).toLocaleString(
+      profile.language === 'pt' ? 'pt-BR' : 'en-US',
+      {
+        dateStyle: 'long',
+        timeStyle: 'short',
+      },
+    )
   }
 
   return (
@@ -124,8 +140,8 @@ export function BackupManager() {
               <FileJson className="size-5 text-primary" />
             </div>
             <div>
-              <CardTitle>{t("backup.title")}</CardTitle>
-              <CardDescription>{t("backup.description")}</CardDescription>
+              <CardTitle>{t('backup.title')}</CardTitle>
+              <CardDescription>{t('backup.description')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -134,21 +150,29 @@ export function BackupManager() {
             <div className="p-4 rounded-lg border border-border space-y-3">
               <div className="flex items-center gap-2">
                 <Download className="size-5 text-muted-foreground" />
-                <h4 className="font-medium">{t("backup.export")}</h4>
+                <h4 className="font-medium">{t('backup.export')}</h4>
               </div>
-              <p className="text-sm text-muted-foreground">{t("backup.exportDesc")}</p>
-              <Button onClick={handleExport} className="w-full" variant="outline">
+              <p className="text-sm text-muted-foreground">
+                {t('backup.exportDesc')}
+              </p>
+              <Button
+                onClick={handleExport}
+                className="w-full"
+                variant="outline"
+              >
                 <Download className="size-4 mr-2" />
-                {t("backup.downloadBackup")}
+                {t('backup.downloadBackup')}
               </Button>
             </div>
 
             <div className="p-4 rounded-lg border border-border space-y-3">
               <div className="flex items-center gap-2">
                 <Upload className="size-5 text-muted-foreground" />
-                <h4 className="font-medium">{t("backup.import")}</h4>
+                <h4 className="font-medium">{t('backup.import')}</h4>
               </div>
-              <p className="text-sm text-muted-foreground">{t("backup.importDesc")}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('backup.importDesc')}
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -163,14 +187,14 @@ export function BackupManager() {
                 disabled={isProcessing}
               >
                 <Upload className="size-4 mr-2" />
-                {isProcessing ? t("backup.processing") : t("backup.selectFile")}
+                {isProcessing ? t('backup.processing') : t('backup.selectFile')}
               </Button>
             </div>
           </div>
 
           <div className="p-3 rounded-lg bg-muted/50 flex items-start gap-2">
             <AlertCircle className="size-4 text-muted-foreground mt-0.5 shrink-0" />
-            <p className="text-xs text-muted-foreground">{t("backup.tip")}</p>
+            <p className="text-xs text-muted-foreground">{t('backup.tip')}</p>
           </div>
         </CardContent>
       </Card>
@@ -178,72 +202,100 @@ export function BackupManager() {
       <AlertDialog open={showImportDialog} onOpenChange={setShowImportDialog}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("backup.confirmImport")}</AlertDialogTitle>
+            <AlertDialogTitle>{t('backup.confirmImport')}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
                 {preview && (
                   <div className="space-y-3 text-left">
                     <div className="p-3 rounded-lg bg-muted space-y-2">
                       <p className="text-sm">
-                        <span className="text-muted-foreground">{t("backup.exportedAt")}:</span>{" "}
-                        <span className="font-medium">{formatDate(preview.exportedAt)}</span>
+                        <span className="text-muted-foreground">
+                          {t('backup.exportedAt')}:
+                        </span>{' '}
+                        <span className="font-medium">
+                          {formatDate(preview.exportedAt)}
+                        </span>
                       </p>
                       <p className="text-sm">
-                        <span className="text-muted-foreground">{t("backup.version")}:</span>{" "}
+                        <span className="text-muted-foreground">
+                          {t('backup.version')}:
+                        </span>{' '}
                         <span className="font-medium">v{preview.version}</span>
                       </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
                       <div className="p-2 rounded border text-center">
-                        <p className="text-lg font-bold">{preview.counts.transactions}</p>
-                        <p className="text-xs text-muted-foreground">{t("backup.transactions")}</p>
+                        <p className="text-lg font-bold">
+                          {preview.counts.transactions}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('backup.transactions')}
+                        </p>
                       </div>
                       <div className="p-2 rounded border text-center">
-                        <p className="text-lg font-bold">{preview.counts.categories}</p>
-                        <p className="text-xs text-muted-foreground">{t("backup.categories")}</p>
+                        <p className="text-lg font-bold">
+                          {preview.counts.categories}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('backup.categories')}
+                        </p>
                       </div>
                       <div className="p-2 rounded border text-center">
-                        <p className="text-lg font-bold">{preview.counts.goals}</p>
-                        <p className="text-xs text-muted-foreground">{t("backup.goals")}</p>
+                        <p className="text-lg font-bold">
+                          {preview.counts.goals}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('backup.goals')}
+                        </p>
                       </div>
                       <div className="p-2 rounded border text-center">
-                        <p className="text-lg font-bold">{preview.counts.assets}</p>
-                        <p className="text-xs text-muted-foreground">{t("backup.assets")}</p>
+                        <p className="text-lg font-bold">
+                          {preview.counts.assets}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('backup.assets')}
+                        </p>
                       </div>
                     </div>
 
                     <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                       <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
                         <CheckCircle2 className="size-4" />
-                        {t("backup.validFile")}
+                        {t('backup.validFile')}
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">{t("backup.importMode")}:</p>
+                      <p className="text-sm font-medium">
+                        {t('backup.importMode')}:
+                      </p>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant={importMode === "replace" ? "default" : "outline"}
-                          onClick={() => setImportMode("replace")}
+                          variant={
+                            importMode === 'replace' ? 'default' : 'outline'
+                          }
+                          onClick={() => setImportMode('replace')}
                           className="flex-1"
                         >
-                          {t("backup.replaceAll")}
+                          {t('backup.replaceAll')}
                         </Button>
                         <Button
                           size="sm"
-                          variant={importMode === "merge" ? "default" : "outline"}
-                          onClick={() => setImportMode("merge")}
+                          variant={
+                            importMode === 'merge' ? 'default' : 'outline'
+                          }
+                          onClick={() => setImportMode('merge')}
                           className="flex-1"
                         >
-                          {t("backup.mergeData")}
+                          {t('backup.mergeData')}
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {importMode === "replace"
-                          ? t("backup.replaceModeDesc")
-                          : t("backup.mergeModeDesc")}
+                        {importMode === 'replace'
+                          ? t('backup.replaceModeDesc')
+                          : t('backup.mergeModeDesc')}
                       </p>
                     </div>
                   </div>
@@ -252,9 +304,11 @@ export function BackupManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleImportCancel}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel onClick={handleImportCancel}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleImportConfirm}>
-              {t("backup.confirmRestore")}
+              {t('backup.confirmRestore')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

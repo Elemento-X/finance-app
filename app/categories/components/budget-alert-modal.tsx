@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -11,13 +11,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Slider } from "@/components/ui/slider"
-import { toast } from "sonner"
-import { supabaseService } from "@/services/supabase"
-import { useTranslation } from "@/lib/i18n"
-import type { BudgetAlert, Category } from "@/lib/types"
-import { Trash2 } from "lucide-react"
+} from '@/components/ui/dialog'
+import { Slider } from '@/components/ui/slider'
+import { toast } from 'sonner'
+import { supabaseService } from '@/services/supabase'
+import { useTranslation } from '@/lib/i18n'
+import type { BudgetAlert, Category } from '@/lib/types'
+import { Trash2 } from 'lucide-react'
 
 interface BudgetAlertModalProps {
   open: boolean
@@ -35,7 +35,7 @@ export function BudgetAlertModal({
   onSave,
 }: BudgetAlertModalProps) {
   const t = useTranslation()
-  const [monthlyLimit, setMonthlyLimit] = useState("")
+  const [monthlyLimit, setMonthlyLimit] = useState('')
   const [alertThreshold, setAlertThreshold] = useState(80)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -44,7 +44,7 @@ export function BudgetAlertModal({
       setMonthlyLimit(existingAlert.monthlyLimit.toString())
       setAlertThreshold(existingAlert.alertThreshold)
     } else {
-      setMonthlyLimit("")
+      setMonthlyLimit('')
       setAlertThreshold(80)
     }
   }, [existingAlert, open])
@@ -54,7 +54,7 @@ export function BudgetAlertModal({
 
     const limit = parseFloat(monthlyLimit)
     if (isNaN(limit) || limit <= 0) {
-      toast.error(t("transaction.amountPositive"))
+      toast.error(t('transaction.amountPositive'))
       return
     }
 
@@ -74,11 +74,11 @@ export function BudgetAlertModal({
       : await supabaseService.addBudgetAlert(alert)
 
     if (success) {
-      toast.success(existingAlert ? t("budget.updated") : t("budget.created"))
+      toast.success(existingAlert ? t('budget.updated') : t('budget.created'))
       onSave()
       onOpenChange(false)
     } else {
-      toast.error(t("budget.error"))
+      toast.error(t('budget.error'))
     }
 
     setIsSaving(false)
@@ -91,11 +91,11 @@ export function BudgetAlertModal({
     const success = await supabaseService.deleteBudgetAlert(existingAlert.id)
 
     if (success) {
-      toast.success(t("budget.deleted"))
+      toast.success(t('budget.deleted'))
       onSave()
       onOpenChange(false)
     } else {
-      toast.error(t("budget.error"))
+      toast.error(t('budget.error'))
     }
 
     setIsSaving(false)
@@ -108,7 +108,7 @@ export function BudgetAlertModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {existingAlert ? t("budget.editLimit") : t("budget.setLimit")}
+            {existingAlert ? t('budget.editLimit') : t('budget.setLimit')}
           </DialogTitle>
           <DialogDescription>
             {category.icon} {category.name}
@@ -117,7 +117,7 @@ export function BudgetAlertModal({
 
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label htmlFor="monthlyLimit">{t("budget.monthlyLimit")}</Label>
+            <Label htmlFor="monthlyLimit">{t('budget.monthlyLimit')}</Label>
             <Input
               id="monthlyLimit"
               type="number"
@@ -131,7 +131,7 @@ export function BudgetAlertModal({
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>{t("budget.threshold")}</Label>
+              <Label>{t('budget.threshold')}</Label>
               <span className="text-sm font-medium">{alertThreshold}%</span>
             </div>
             <Slider
@@ -143,7 +143,7 @@ export function BudgetAlertModal({
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
-              {t("budget.alertAt")} {alertThreshold}% {t("budget.ofLimit")}
+              {t('budget.alertAt')} {alertThreshold}% {t('budget.ofLimit')}
             </p>
           </div>
         </div>
@@ -157,7 +157,7 @@ export function BudgetAlertModal({
               className="w-full sm:w-auto"
             >
               <Trash2 className="size-4 mr-2" />
-              {t("common.delete")}
+              {t('common.delete')}
             </Button>
           )}
           <div className="flex gap-2 w-full sm:w-auto">
@@ -167,14 +167,14 @@ export function BudgetAlertModal({
               disabled={isSaving}
               className="flex-1 sm:flex-none"
             >
-              {t("common.cancel")}
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleSave}
               disabled={isSaving || !monthlyLimit}
               className="flex-1 sm:flex-none"
             >
-              {isSaving ? t("common.loading") : t("common.save")}
+              {isSaving ? t('common.loading') : t('common.save')}
             </Button>
           </div>
         </DialogFooter>

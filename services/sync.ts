@@ -1,16 +1,28 @@
 // Sync Service - Offline-first sync layer between localStorage and Supabase
-import { supabaseService } from "./supabase"
-import { storageService } from "./storage"
-import { investmentsStorageService } from "./investments-storage"
-import { logger } from "@/lib/logger"
-import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
-import type { Asset } from "@/lib/investment-types"
+import { supabaseService } from './supabase'
+import { storageService } from './storage'
+import { investmentsStorageService } from './investments-storage'
+import { logger } from '@/lib/logger'
+import type {
+  Transaction,
+  Category,
+  UserProfile,
+  Goal,
+  RecurringTransaction,
+} from '@/lib/types'
+import type { Asset } from '@/lib/investment-types'
 
 // =============================================================================
 // Types
 // =============================================================================
 
-type EntityType = 'transactions' | 'categories' | 'goals' | 'profile' | 'assets' | 'recurringTransactions'
+type EntityType =
+  | 'transactions'
+  | 'categories'
+  | 'goals'
+  | 'profile'
+  | 'assets'
+  | 'recurringTransactions'
 type OperationType = 'create' | 'update' | 'delete'
 
 interface SyncOperation {
@@ -18,7 +30,15 @@ interface SyncOperation {
   operationType: OperationType
   entity: EntityType
   entityId: string
-  data: Transaction | Category | Goal | UserProfile | Asset | Partial<Asset> | RecurringTransaction | null
+  data:
+    | Transaction
+    | Category
+    | Goal
+    | UserProfile
+    | Asset
+    | Partial<Asset>
+    | RecurringTransaction
+    | null
   timestamp: number
 }
 
@@ -40,7 +60,7 @@ const SYNC_INTERVAL_MS = 15 * 60 * 1000 // 15 minutes
 // State
 // =============================================================================
 
-let syncState: SyncState = {
+const syncState: SyncState = {
   lastSync: null,
   isSyncing: false,
   isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -78,8 +98,9 @@ function addToQueue(operation: Omit<SyncOperation, 'id' | 'timestamp'>): void {
   }
 
   // For updates/deletes, remove previous pending operations for the same entity
-  const filtered = queue.filter(q =>
-    !(q.entity === operation.entity && q.entityId === operation.entityId)
+  const filtered = queue.filter(
+    (q) =>
+      !(q.entity === operation.entity && q.entityId === operation.entityId),
   )
 
   filtered.push(op)
@@ -88,7 +109,7 @@ function addToQueue(operation: Omit<SyncOperation, 'id' | 'timestamp'>): void {
 
 function removeFromQueue(operationId: string): void {
   const queue = getQueue()
-  saveQueue(queue.filter(q => q.id !== operationId))
+  saveQueue(queue.filter((q) => q.id !== operationId))
 }
 
 function clearQueue(): void {
@@ -195,7 +216,10 @@ async function executeTransactionOp(op: SyncOperation): Promise<boolean> {
     case 'create':
       return supabaseService.addTransaction(op.data as Transaction)
     case 'update':
-      return supabaseService.updateTransaction(op.entityId, op.data as Transaction)
+      return supabaseService.updateTransaction(
+        op.entityId,
+        op.data as Transaction,
+      )
     case 'delete':
       return supabaseService.deleteTransaction(op.entityId)
     default:
@@ -249,12 +273,19 @@ async function executeAssetOp(op: SyncOperation): Promise<boolean> {
   }
 }
 
-async function executeRecurringTransactionOp(op: SyncOperation): Promise<boolean> {
+async function executeRecurringTransactionOp(
+  op: SyncOperation,
+): Promise<boolean> {
   switch (op.operationType) {
     case 'create':
-      return supabaseService.addRecurringTransaction(op.data as RecurringTransaction)
+      return supabaseService.addRecurringTransaction(
+        op.data as RecurringTransaction,
+      )
     case 'update':
-      return supabaseService.updateRecurringTransaction(op.entityId, op.data as RecurringTransaction)
+      return supabaseService.updateRecurringTransaction(
+        op.entityId,
+        op.data as RecurringTransaction,
+      )
     case 'delete':
       return supabaseService.deleteRecurringTransaction(op.entityId)
     default:
@@ -273,7 +304,14 @@ async function pullFromSupabase(): Promise<boolean> {
 
   try {
     // Pull all entities in parallel
-    const [transactions, categories, goals, profile, assets, recurringTransactions] = await Promise.all([
+    const [
+      transactions,
+      categories,
+      goals,
+      profile,
+      assets,
+      recurringTransactions,
+    ] = await Promise.all([
       supabaseService.getTransactions(),
       supabaseService.getCategories(),
       supabaseService.getGoals(),
@@ -454,7 +492,10 @@ function queueProfile(profile: UserProfile): void {
   }
 }
 
-function queueAsset(type: OperationType, asset: Asset | Partial<Asset> & { id: string }): void {
+function queueAsset(
+  type: OperationType,
+  asset: Asset | (Partial<Asset> & { id: string }),
+): void {
   addToQueue({
     operationType: type,
     entity: 'assets',
@@ -468,7 +509,10 @@ function queueAsset(type: OperationType, asset: Asset | Partial<Asset> & { id: s
   }
 }
 
-function queueRecurringTransaction(type: OperationType, recurringTransaction: RecurringTransaction): void {
+function queueRecurringTransaction(
+  type: OperationType,
+  recurringTransaction: RecurringTransaction,
+): void {
   addToQueue({
     operationType: type,
     entity: 'recurringTransactions',

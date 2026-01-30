@@ -1,26 +1,28 @@
-"use client"
+'use client'
 
-import { useEffect } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { useAuth } from "@/components/auth-provider"
-import { AppHeader } from "@/components/app-header"
+import { useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { useAuth } from '@/components/auth-provider'
+import { AppHeader } from '@/components/app-header'
 
-const PUBLIC_ROUTES = ["/login", "/auth/"]
+const PUBLIC_ROUTES = ['/login', '/auth/']
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
 
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
+  const isPublicRoute = PUBLIC_ROUTES.some((route) =>
+    pathname.startsWith(route),
+  )
 
   useEffect(() => {
     if (!loading && !user && !isPublicRoute) {
-      router.replace("/login")
+      router.replace('/login')
     }
-    if (!loading && user && pathname === "/login") {
-      router.replace("/")
+    if (!loading && user && pathname === '/login') {
+      router.replace('/')
     }
   }, [loading, user, isPublicRoute, pathname, router])
 
