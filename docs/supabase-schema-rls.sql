@@ -92,6 +92,17 @@ create table if not exists recurring_transactions (
   created_at timestamptz default now()
 );
 
+create table if not exists budget_alerts (
+  id text primary key,
+  user_id uuid references auth.users not null,
+  category text not null,
+  monthly_limit numeric not null,
+  alert_threshold smallint default 80,   -- % do limite para alertar
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  unique(user_id, category)              -- apenas 1 alerta por categoria por usuário
+);
+
 -- 2) Indexes
 create index if not exists idx_transactions_user_date on transactions (user_id, date);
 create index if not exists idx_goals_user_created on goals (user_id, created_at);
@@ -100,6 +111,7 @@ create index if not exists idx_categories_user_name on categories (user_id, name
 create index if not exists idx_telegram_tokens_code on telegram_link_tokens (code);
 create index if not exists idx_telegram_tokens_user on telegram_link_tokens (user_id);
 create index if not exists idx_recurring_user_active on recurring_transactions (user_id, is_active);
+create index if not exists idx_budget_alerts_user on budget_alerts (user_id);
 
 -- 3) RLS enable
 alter table profiles enable row level security;
@@ -109,6 +121,7 @@ alter table transactions enable row level security;
 alter table goals enable row level security;
 alter table assets enable row level security;
 alter table recurring_transactions enable row level security;
+alter table budget_alerts enable row level security;
 
 -- 4) RLS policies
 create policy "Profiles own data" on profiles
@@ -130,4 +143,7 @@ create policy "Assets own data" on assets
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "Recurring transactions own data" on recurring_transactions
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "Budget alerts own data" on budget_alerts
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
