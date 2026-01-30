@@ -1,22 +1,28 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileSpreadsheet, FileText, Download } from "lucide-react"
-import { toast } from "sonner"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { useTranslation } from "@/lib/i18n"
-import { exportToCSV, exportToPDF } from "@/services/export"
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { FileSpreadsheet, FileText, Download } from 'lucide-react'
+import { toast } from 'sonner'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import { useTranslation } from '@/lib/i18n'
+import { exportToCSV, exportToPDF } from '@/services/export'
 
 export function ExportManager() {
   const { transactions, categories, profile } = useFinanceStore()
   const t = useTranslation()
 
-  const locale = profile.language === "pt" ? "pt-BR" : "en-US"
+  const locale = profile.language === 'pt' ? 'pt-BR' : 'en-US'
 
   const handleExportCSV = () => {
     if (transactions.length === 0) {
-      toast.error(t("export.noData"))
+      toast.error(t('export.noData'))
       return
     }
 
@@ -27,12 +33,12 @@ export function ExportManager() {
       locale,
     })
 
-    toast.success(t("export.csvSuccess"))
+    toast.success(t('export.csvSuccess'))
   }
 
   const handleExportPDF = () => {
     if (transactions.length === 0) {
-      toast.error(t("export.noData"))
+      toast.error(t('export.noData'))
       return
     }
 
@@ -43,7 +49,7 @@ export function ExportManager() {
       locale,
     })
 
-    toast.success(t("export.pdfSuccess"))
+    toast.success(t('export.pdfSuccess'))
   }
 
   return (
@@ -54,8 +60,8 @@ export function ExportManager() {
             <Download className="size-5 text-primary" />
           </div>
           <div>
-            <CardTitle>{t("export.title")}</CardTitle>
-            <CardDescription>{t("export.description")}</CardDescription>
+            <CardTitle>{t('export.title')}</CardTitle>
+            <CardDescription>{t('export.description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -64,24 +70,36 @@ export function ExportManager() {
           <div className="p-4 rounded-lg border border-border space-y-3">
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="size-5 text-muted-foreground" />
-              <h4 className="font-medium">{t("export.csv")}</h4>
+              <h4 className="font-medium">{t('export.csv')}</h4>
             </div>
-            <p className="text-sm text-muted-foreground">{t("export.csvDesc")}</p>
-            <Button onClick={handleExportCSV} className="w-full" variant="outline">
+            <p className="text-sm text-muted-foreground">
+              {t('export.csvDesc')}
+            </p>
+            <Button
+              onClick={handleExportCSV}
+              className="w-full"
+              variant="outline"
+            >
               <FileSpreadsheet className="size-4 mr-2" />
-              {t("export.csv")}
+              {t('export.csv')}
             </Button>
           </div>
 
           <div className="p-4 rounded-lg border border-border space-y-3">
             <div className="flex items-center gap-2">
               <FileText className="size-5 text-muted-foreground" />
-              <h4 className="font-medium">{t("export.pdf")}</h4>
+              <h4 className="font-medium">{t('export.pdf')}</h4>
             </div>
-            <p className="text-sm text-muted-foreground">{t("export.pdfDesc")}</p>
-            <Button onClick={handleExportPDF} className="w-full" variant="outline">
+            <p className="text-sm text-muted-foreground">
+              {t('export.pdfDesc')}
+            </p>
+            <Button
+              onClick={handleExportPDF}
+              className="w-full"
+              variant="outline"
+            >
               <FileText className="size-4 mr-2" />
-              {t("export.pdf")}
+              {t('export.pdf')}
             </Button>
           </div>
         </div>

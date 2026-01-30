@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { GoalsContent } from "./components/goals-content"
+import { GoalsContent } from './components/goals-content'
 
 export default function GoalsPage() {
   return <GoalsContent />

@@ -1,6 +1,10 @@
-export type AssetClass = "stocks" | "fiis" | "fixed-income" | "etfs" | "crypto"
+export type AssetClass = 'stocks' | 'fiis' | 'fixed-income' | 'etfs' | 'crypto'
 
-export type ARCACategory = "fixed-income" | "variable-income" | "etfs" | "crypto"
+export type ARCACategory =
+  | 'fixed-income'
+  | 'variable-income'
+  | 'etfs'
+  | 'crypto'
 
 export interface Asset {
   id: string
@@ -54,7 +58,7 @@ export interface ARCAAllocation {
   target: Record<ARCACategory, number> // Target percentage
   current: Record<ARCACategory, number> // Current percentage
   difference: Record<ARCACategory, number> // Difference
-  status: Record<ARCACategory, "ideal" | "below" | "above">
+  status: Record<ARCACategory, 'ideal' | 'below' | 'above'>
 }
 
 export interface TopAsset {
@@ -72,8 +76,8 @@ export interface TopAsset {
 
 export interface Alert {
   id: string
-  type: "allocation" | "volatility" | "concentration"
-  severity: "info" | "warning" | "error"
+  type: 'allocation' | 'volatility' | 'concentration'
+  severity: 'info' | 'warning' | 'error'
   message: string
   assetClass?: AssetClass
   timestamp: number
@@ -81,18 +85,18 @@ export interface Alert {
 
 // ARCA Strategy - Thiago Nigro
 export const ARCA_TARGET: Record<ARCACategory, number> = {
-  "fixed-income": 25,
-  "variable-income": 25,
+  'fixed-income': 25,
+  'variable-income': 25,
   etfs: 25,
   crypto: 25,
 }
 
 export const ASSET_CLASS_TO_ARCA: Record<AssetClass, ARCACategory> = {
-  stocks: "variable-income",
-  fiis: "variable-income",
-  "fixed-income": "fixed-income",
-  etfs: "etfs",
-  crypto: "crypto",
+  stocks: 'variable-income',
+  fiis: 'variable-income',
+  'fixed-income': 'fixed-income',
+  etfs: 'etfs',
+  crypto: 'crypto',
 }
 
 // NOTE: ASSET_CLASS_LABELS and ARCA_LABELS were removed in favor of i18n translations

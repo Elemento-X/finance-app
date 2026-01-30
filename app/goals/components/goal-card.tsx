@@ -1,14 +1,14 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Progress } from "@/components/ui/progress"
-import { Trash2, Pencil, Calendar, Trophy } from "lucide-react"
-import type { Goal } from "@/lib/types"
-import { useTranslation } from "@/lib/i18n"
-import { formatCurrency } from "@/utils/formatters"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Progress } from '@/components/ui/progress'
+import { Trash2, Pencil, Calendar, Trophy } from 'lucide-react'
+import type { Goal } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
+import { formatCurrency } from '@/utils/formatters'
+import { cn } from '@/lib/utils'
 
 interface GoalCardProps {
   goal: Goal
@@ -25,7 +25,10 @@ function getProgress(goal: Goal): number {
   return Math.min(100, Math.round((current / goal.targetAmount) * 100))
 }
 
-function getDaysInfo(goal: Goal): { days: number; status: "left" | "overdue" | "today" | null } {
+function getDaysInfo(goal: Goal): {
+  days: number
+  status: 'left' | 'overdue' | 'today' | null
+} {
   if (!goal.deadline) return { days: 0, status: null }
 
   const today = new Date()
@@ -36,19 +39,26 @@ function getDaysInfo(goal: Goal): { days: number; status: "left" | "overdue" | "
   const diffTime = deadlineDate.getTime() - today.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return { days: 0, status: "today" }
-  if (diffDays > 0) return { days: diffDays, status: "left" }
-  return { days: Math.abs(diffDays), status: "overdue" }
+  if (diffDays === 0) return { days: 0, status: 'today' }
+  if (diffDays > 0) return { days: diffDays, status: 'left' }
+  return { days: Math.abs(diffDays), status: 'overdue' }
 }
 
-export function GoalCard({ goal, isCompleted = false, currency, onEdit, onDelete, onToggle }: GoalCardProps) {
+export function GoalCard({
+  goal,
+  isCompleted = false,
+  currency,
+  onEdit,
+  onDelete,
+  onToggle,
+}: GoalCardProps) {
   const t = useTranslation()
   const progress = getProgress(goal)
   const daysInfo = getDaysInfo(goal)
   const hasFinancialTracking = goal.targetAmount !== undefined
 
   return (
-    <Card className={cn(isCompleted && "opacity-60")}>
+    <Card className={cn(isCompleted && 'opacity-60')}>
       <CardContent className="p-4">
         <div className="space-y-3">
           {/* Header row */}
@@ -63,8 +73,8 @@ export function GoalCard({ goal, isCompleted = false, currency, onEdit, onDelete
               <label
                 htmlFor={goal.id}
                 className={cn(
-                  "font-medium leading-tight cursor-pointer block",
-                  isCompleted && "line-through"
+                  'font-medium leading-tight cursor-pointer block',
+                  isCompleted && 'line-through',
                 )}
               >
                 {goal.title}
@@ -76,16 +86,24 @@ export function GoalCard({ goal, isCompleted = false, currency, onEdit, onDelete
                   <Calendar className="size-3 text-muted-foreground" />
                   <span
                     className={cn(
-                      "text-xs",
-                      daysInfo.status === "overdue" && "text-expense font-medium",
-                      daysInfo.status === "today" && "text-unexpected font-medium",
-                      daysInfo.status === "left" && daysInfo.days <= 7 && "text-unexpected",
-                      daysInfo.status === "left" && daysInfo.days > 7 && "text-muted-foreground"
+                      'text-xs',
+                      daysInfo.status === 'overdue' &&
+                        'text-expense font-medium',
+                      daysInfo.status === 'today' &&
+                        'text-unexpected font-medium',
+                      daysInfo.status === 'left' &&
+                        daysInfo.days <= 7 &&
+                        'text-unexpected',
+                      daysInfo.status === 'left' &&
+                        daysInfo.days > 7 &&
+                        'text-muted-foreground',
                     )}
                   >
-                    {daysInfo.status === "today" && t("goals.today")}
-                    {daysInfo.status === "left" && `${daysInfo.days} ${t("goals.daysLeft")}`}
-                    {daysInfo.status === "overdue" && `${daysInfo.days} ${t("goals.daysOverdue")}`}
+                    {daysInfo.status === 'today' && t('goals.today')}
+                    {daysInfo.status === 'left' &&
+                      `${daysInfo.days} ${t('goals.daysLeft')}`}
+                    {daysInfo.status === 'overdue' &&
+                      `${daysInfo.days} ${t('goals.daysOverdue')}`}
                   </span>
                 </div>
               )}
@@ -115,9 +133,12 @@ export function GoalCard({ goal, isCompleted = false, currency, onEdit, onDelete
           {hasFinancialTracking && (
             <div className="pl-7 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{t("goals.progress")}</span>
+                <span className="text-muted-foreground">
+                  {t('goals.progress')}
+                </span>
                 <span className="font-medium">
-                  {formatCurrency(goal.currentAmount || 0, currency)} / {formatCurrency(goal.targetAmount!, currency)}
+                  {formatCurrency(goal.currentAmount || 0, currency)} /{' '}
+                  {formatCurrency(goal.targetAmount!, currency)}
                 </span>
               </div>
               <div className="relative">
@@ -131,7 +152,9 @@ export function GoalCard({ goal, isCompleted = false, currency, onEdit, onDelete
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{progress}%</span>
                 {progress >= 100 && (
-                  <span className="text-income font-medium">{t("goals.reached")}</span>
+                  <span className="text-income font-medium">
+                    {t('goals.reached')}
+                  </span>
                 )}
               </div>
             </div>

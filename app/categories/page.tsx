@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { CategoriesContent } from "./components/categories-content"
+import { CategoriesContent } from './components/categories-content'
 
 export default function CategoriesPage() {
   return <CategoriesContent />

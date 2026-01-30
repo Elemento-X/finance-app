@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom"
+import '@testing-library/jest-dom'
 
 // Mock localStorage for tests
 const localStorageMock = {
@@ -10,6 +10,6 @@ const localStorageMock = {
   key: vi.fn(),
 }
 
-Object.defineProperty(window, "localStorage", {
+Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 })

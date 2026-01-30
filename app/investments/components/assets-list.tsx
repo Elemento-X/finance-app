@@ -1,15 +1,15 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react"
-import { useInvestmentsStore } from "@/hooks/use-investments-store"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import type { AssetClass } from "@/lib/investment-types"
-import { AssetForm } from "./asset-form"
-import { useTranslation } from "@/lib/i18n"
+import { useState } from 'react'
+import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Pencil, Trash2, TrendingUp, TrendingDown } from 'lucide-react'
+import { useInvestmentsStore } from '@/hooks/use-investments-store'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import type { AssetClass } from '@/lib/investment-types'
+import { AssetForm } from './asset-form'
+import { useTranslation } from '@/lib/i18n'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from '@/components/ui/alert-dialog'
 
 function AssetsListSkeleton() {
   return (
@@ -60,25 +60,31 @@ interface AssetsListProps {
 
 // Map asset class to translation key
 const ASSET_CLASS_KEYS: Record<AssetClass, string> = {
-  stocks: "assetClass.stocks",
-  fiis: "assetClass.fiis",
-  "fixed-income": "assetClass.fixedIncome",
-  etfs: "assetClass.etfs",
-  crypto: "assetClass.crypto",
+  stocks: 'assetClass.stocks',
+  fiis: 'assetClass.fiis',
+  'fixed-income': 'assetClass.fixedIncome',
+  etfs: 'assetClass.etfs',
+  crypto: 'assetClass.crypto',
 }
 
 export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
-  const { assetsWithMarket, deleteAsset, refreshMarketData } = useInvestmentsStore()
+  const { assetsWithMarket, deleteAsset, refreshMarketData } =
+    useInvestmentsStore()
   const { profile } = useFinanceStore()
   const t = useTranslation()
   const [editingAsset, setEditingAsset] = useState<string | null>(null)
   const [deletingAsset, setDeletingAsset] = useState<string | null>(null)
 
-  const locale = profile.language === "pt" ? "pt-BR" : "en-US"
-  const filteredAssets = assetsWithMarket.filter((a) => a.assetClass === assetClass)
+  const locale = profile.language === 'pt' ? 'pt-BR' : 'en-US'
+  const filteredAssets = assetsWithMarket.filter(
+    (a) => a.assetClass === assetClass,
+  )
 
   const formatCurrency = (value: number) => {
-    return value.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return value.toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
   }
 
   if (isLoading) {
@@ -86,10 +92,14 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
   }
 
   if (filteredAssets.length === 0) {
-    const assetClassName = t(ASSET_CLASS_KEYS[assetClass] as keyof typeof import("@/lib/i18n").translations.en)
+    const assetClassName = t(
+      ASSET_CLASS_KEYS[
+        assetClass
+      ] as keyof typeof import('@/lib/i18n').translations.en,
+    )
     return (
       <div className="text-center py-8 text-muted-foreground">
-        {t("assets.noAssets", { class: assetClassName })}
+        {t('assets.noAssets', { class: assetClassName })}
       </div>
     )
   }
@@ -118,7 +128,9 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                     {hasMarketData && (
                       <span
                         className={`text-sm flex items-center gap-1 ${
-                          asset.marketData!.dailyChange >= 0 ? "text-income" : "text-expense"
+                          asset.marketData!.dailyChange >= 0
+                            ? 'text-income'
+                            : 'text-expense'
                         }`}
                       >
                         {asset.marketData!.dailyChange >= 0 ? (
@@ -130,62 +142,98 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{asset.name}</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {asset.name}
+                  </p>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">{t("assets.quantity")}</span>
+                      <span className="text-muted-foreground">
+                        {t('assets.quantity')}
+                      </span>
                       <p className="font-medium">{asset.quantity}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.avgPrice")}</span>
+                      <span className="text-muted-foreground">
+                        {t('assets.avgPrice')}
+                      </span>
                       <p className="font-medium">
                         {profile.currency} {formatCurrency(asset.averagePrice)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.currentPrice")}</span>
+                      <span className="text-muted-foreground">
+                        {t('assets.currentPrice')}
+                      </span>
                       <p className="font-medium">
-                        {profile.currency}{" "}
-                        {hasMarketData ? formatCurrency(asset.marketData!.currentPrice) : formatCurrency(asset.averagePrice)}
+                        {profile.currency}{' '}
+                        {hasMarketData
+                          ? formatCurrency(asset.marketData!.currentPrice)
+                          : formatCurrency(asset.averagePrice)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.invested")}</span>
+                      <span className="text-muted-foreground">
+                        {t('assets.invested')}
+                      </span>
                       <p className="font-medium">
                         {profile.currency} {formatCurrency(asset.totalInvested)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.currentValue")}</span>
+                      <span className="text-muted-foreground">
+                        {t('assets.currentValue')}
+                      </span>
                       <p className="font-medium">
                         {profile.currency} {formatCurrency(asset.currentValue)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.gainLoss")}</span>
-                      <p className={`font-medium ${isProfit ? "text-income" : "text-expense"}`}>
+                      <span className="text-muted-foreground">
+                        {t('assets.gainLoss')}
+                      </span>
+                      <p
+                        className={`font-medium ${isProfit ? 'text-income' : 'text-expense'}`}
+                      >
                         {profile.currency} {formatCurrency(asset.capitalGain)}
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.return")}</span>
-                      <p className={`font-medium ${isProfit ? "text-income" : "text-expense"}`}>
+                      <span className="text-muted-foreground">
+                        {t('assets.return')}
+                      </span>
+                      <p
+                        className={`font-medium ${isProfit ? 'text-income' : 'text-expense'}`}
+                      >
                         {asset.returnPercentage.toFixed(2)}%
                       </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{t("assets.purchaseDate")}</span>
-                      <p className="font-medium">{new Date(asset.purchaseDate).toLocaleDateString(locale)}</p>
+                      <span className="text-muted-foreground">
+                        {t('assets.purchaseDate')}
+                      </span>
+                      <p className="font-medium">
+                        {new Date(asset.purchaseDate).toLocaleDateString(
+                          locale,
+                        )}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setEditingAsset(asset.id)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditingAsset(asset.id)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setDeletingAsset(asset.id)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setDeletingAsset(asset.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -207,17 +255,22 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
         />
       )}
 
-      <AlertDialog open={!!deletingAsset} onOpenChange={() => setDeletingAsset(null)}>
+      <AlertDialog
+        open={!!deletingAsset}
+        onOpenChange={() => setDeletingAsset(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("assets.deleteAsset")}</AlertDialogTitle>
+            <AlertDialogTitle>{t('assets.deleteAsset')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("assets.confirmDelete")}
+              {t('assets.confirmDelete')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>{t("common.delete")}</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              {t('common.delete')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

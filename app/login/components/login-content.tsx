@@ -1,17 +1,23 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { supabase } from "@/lib/supabase"
-import { useTranslation } from "@/lib/i18n"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, CheckCircle2 } from "lucide-react"
-import { toast } from "sonner"
+import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useTranslation } from '@/lib/i18n'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Mail, CheckCircle2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function LoginContent() {
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const t = useTranslation()
@@ -42,17 +48,17 @@ export function LoginContent() {
     <div className="flex items-center justify-center min-h-screen px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">{t("auth.appName")}</CardTitle>
-          <CardDescription>{t("auth.appDesc")}</CardDescription>
+          <CardTitle className="text-2xl">{t('auth.appName')}</CardTitle>
+          <CardDescription>{t('auth.appDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           {sent ? (
             <div className="text-center space-y-4">
               <CheckCircle2 className="size-12 text-green-500 mx-auto" />
               <div>
-                <p className="font-medium">{t("auth.checkEmail")}</p>
+                <p className="font-medium">{t('auth.checkEmail')}</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("auth.checkEmailDesc", { email })}
+                  {t('auth.checkEmailDesc', { email })}
                 </p>
               </div>
               <Button
@@ -60,17 +66,17 @@ export function LoginContent() {
                 className="w-full"
                 onClick={() => setSent(false)}
               >
-                {t("auth.tryAgain")}
+                {t('auth.tryAgain')}
               </Button>
             </div>
           ) : (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder={t("auth.emailPlaceholder")}
+                  placeholder={t('auth.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -79,7 +85,7 @@ export function LoginContent() {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 <Mail className="size-4 mr-2" />
-                {loading ? t("auth.sending") : t("auth.sendMagicLink")}
+                {loading ? t('auth.sending') : t('auth.sendMagicLink')}
               </Button>
             </form>
           )}

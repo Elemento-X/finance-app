@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getSupabaseAdmin } from "@/lib/supabase-admin"
-import { logger } from "@/lib/logger"
+import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { logger } from '@/lib/logger'
 
 // =============================================================================
 // Types
@@ -36,22 +36,28 @@ interface SummaryData {
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN
 
-async function sendTelegramMessage(chatId: number, text: string): Promise<boolean> {
+async function sendTelegramMessage(
+  chatId: number,
+  text: string,
+): Promise<boolean> {
   if (!telegramToken) {
-    logger.cron.error("Missing TELEGRAM_BOT_TOKEN")
+    logger.cron.error('Missing TELEGRAM_BOT_TOKEN')
     return false
   }
 
   try {
-    const response = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML"
-      }),
-    })
+    const response = await fetch(
+      `https://api.telegram.org/bot${telegramToken}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text,
+          parse_mode: 'HTML',
+        }),
+      },
+    )
 
     if (!response.ok) {
       const errorData = await response.json()
@@ -70,10 +76,14 @@ async function sendTelegramMessage(chatId: number, text: string): Promise<boolea
 // Summary Generation
 // =============================================================================
 
-function formatCurrency(amount: number, currency: string, locale: string): string {
+function formatCurrency(
+  amount: number,
+  currency: string,
+  locale: string,
+): string {
   return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currency,
+    style: 'currency',
+    currency,
   }).format(amount)
 }
 
@@ -82,20 +92,28 @@ function generateWeeklySummary(
   prevWeekData: SummaryData,
   locale: string,
   currency: string,
-  userName: string | null
+  userName: string | null,
 ): string {
-  const isPt = locale === "pt-BR"
-  const greeting = userName ? (isPt ? `Olá, ${userName}!` : `Hello, ${userName}!`) : (isPt ? "Olá!" : "Hello!")
+  const isPt = locale === 'pt-BR'
+  const greeting = userName
+    ? isPt
+      ? `Olá, ${userName}!`
+      : `Hello, ${userName}!`
+    : isPt
+      ? 'Olá!'
+      : 'Hello!'
 
-  const title = isPt ? "📊 <b>Resumo Semanal</b>" : "📊 <b>Weekly Summary</b>"
+  const title = isPt ? '📊 <b>Resumo Semanal</b>' : '📊 <b>Weekly Summary</b>'
 
-  const incomeLabel = isPt ? "Receitas" : "Income"
-  const expensesLabel = isPt ? "Despesas" : "Expenses"
-  const investmentsLabel = isPt ? "Investimentos" : "Investments"
-  const balanceLabel = isPt ? "Saldo" : "Balance"
-  const topCategoriesLabel = isPt ? "Top Categorias" : "Top Categories"
-  const comparisonLabel = isPt ? "vs semana anterior" : "vs last week"
-  const noTransactionsLabel = isPt ? "Nenhuma transação esta semana" : "No transactions this week"
+  const incomeLabel = isPt ? 'Receitas' : 'Income'
+  const expensesLabel = isPt ? 'Despesas' : 'Expenses'
+  const investmentsLabel = isPt ? 'Investimentos' : 'Investments'
+  const balanceLabel = isPt ? 'Saldo' : 'Balance'
+  const topCategoriesLabel = isPt ? 'Top Categorias' : 'Top Categories'
+  const comparisonLabel = isPt ? 'vs semana anterior' : 'vs last week'
+  const noTransactionsLabel = isPt
+    ? 'Nenhuma transação esta semana'
+    : 'No transactions this week'
 
   if (data.transactionCount === 0) {
     return `${greeting}\n\n${title}\n\n${noTransactionsLabel}`
@@ -103,33 +121,45 @@ function generateWeeklySummary(
 
   const incomeFormatted = formatCurrency(data.income, currency, locale)
   const expensesFormatted = formatCurrency(data.expenses, currency, locale)
-  const investmentsFormatted = formatCurrency(data.investments, currency, locale)
+  const investmentsFormatted = formatCurrency(
+    data.investments,
+    currency,
+    locale,
+  )
   const balanceFormatted = formatCurrency(data.balance, currency, locale)
 
   // Calculate comparison with previous week
-  const expensesDiff = prevWeekData.expenses > 0
-    ? ((data.expenses - prevWeekData.expenses) / prevWeekData.expenses * 100).toFixed(0)
-    : null
+  const expensesDiff =
+    prevWeekData.expenses > 0
+      ? (
+          ((data.expenses - prevWeekData.expenses) / prevWeekData.expenses) *
+          100
+        ).toFixed(0)
+      : null
   const expensesTrend = expensesDiff
-    ? (Number(expensesDiff) > 0 ? `↑${expensesDiff}%` : Number(expensesDiff) < 0 ? `↓${Math.abs(Number(expensesDiff))}%` : "→")
-    : ""
+    ? Number(expensesDiff) > 0
+      ? `↑${expensesDiff}%`
+      : Number(expensesDiff) < 0
+        ? `↓${Math.abs(Number(expensesDiff))}%`
+        : '→'
+    : ''
 
   let message = `${greeting}\n\n${title}\n\n`
   message += `💰 ${incomeLabel}: ${incomeFormatted}\n`
-  message += `💸 ${expensesLabel}: ${expensesFormatted} ${expensesTrend ? `(${expensesTrend} ${comparisonLabel})` : ""}\n`
+  message += `💸 ${expensesLabel}: ${expensesFormatted} ${expensesTrend ? `(${expensesTrend} ${comparisonLabel})` : ''}\n`
 
   if (data.investments > 0) {
     message += `📈 ${investmentsLabel}: ${investmentsFormatted}\n`
   }
 
-  const balanceEmoji = data.balance >= 0 ? "✅" : "⚠️"
+  const balanceEmoji = data.balance >= 0 ? '✅' : '⚠️'
   message += `\n${balanceEmoji} ${balanceLabel}: ${balanceFormatted}`
 
   // Top categories (max 3)
   if (data.topCategories.length > 0) {
     message += `\n\n📂 ${topCategoriesLabel}:`
     data.topCategories.slice(0, 3).forEach((cat, i) => {
-      const emoji = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"
+      const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'
       message += `\n${emoji} ${cat.category}: ${formatCurrency(cat.total, currency, locale)}`
     })
   }
@@ -143,22 +173,32 @@ function generateMonthlySummary(
   locale: string,
   currency: string,
   userName: string | null,
-  monthName: string
+  monthName: string,
 ): string {
-  const isPt = locale === "pt-BR"
-  const greeting = userName ? (isPt ? `Olá, ${userName}!` : `Hello, ${userName}!`) : (isPt ? "Olá!" : "Hello!")
+  const isPt = locale === 'pt-BR'
+  const greeting = userName
+    ? isPt
+      ? `Olá, ${userName}!`
+      : `Hello, ${userName}!`
+    : isPt
+      ? 'Olá!'
+      : 'Hello!'
 
   const title = isPt
     ? `📊 <b>Resumo de ${monthName}</b>`
     : `📊 <b>${monthName} Summary</b>`
 
-  const incomeLabel = isPt ? "Receitas" : "Income"
-  const expensesLabel = isPt ? "Despesas" : "Expenses"
-  const investmentsLabel = isPt ? "Investimentos" : "Investments"
-  const balanceLabel = isPt ? "Saldo" : "Balance"
-  const topCategoriesLabel = isPt ? "Top Categorias de Despesas" : "Top Expense Categories"
-  const comparisonLabel = isPt ? "vs mês anterior" : "vs previous month"
-  const noTransactionsLabel = isPt ? "Nenhuma transação no mês" : "No transactions this month"
+  const incomeLabel = isPt ? 'Receitas' : 'Income'
+  const expensesLabel = isPt ? 'Despesas' : 'Expenses'
+  const investmentsLabel = isPt ? 'Investimentos' : 'Investments'
+  const balanceLabel = isPt ? 'Saldo' : 'Balance'
+  const topCategoriesLabel = isPt
+    ? 'Top Categorias de Despesas'
+    : 'Top Expense Categories'
+  const comparisonLabel = isPt ? 'vs mês anterior' : 'vs previous month'
+  const noTransactionsLabel = isPt
+    ? 'Nenhuma transação no mês'
+    : 'No transactions this month'
 
   if (data.transactionCount === 0) {
     return `${greeting}\n\n${title}\n\n${noTransactionsLabel}`
@@ -166,40 +206,60 @@ function generateMonthlySummary(
 
   const incomeFormatted = formatCurrency(data.income, currency, locale)
   const expensesFormatted = formatCurrency(data.expenses, currency, locale)
-  const investmentsFormatted = formatCurrency(data.investments, currency, locale)
+  const investmentsFormatted = formatCurrency(
+    data.investments,
+    currency,
+    locale,
+  )
   const balanceFormatted = formatCurrency(data.balance, currency, locale)
 
   // Calculate comparison with previous month
-  const expensesDiff = prevMonthData.expenses > 0
-    ? ((data.expenses - prevMonthData.expenses) / prevMonthData.expenses * 100).toFixed(0)
-    : null
+  const expensesDiff =
+    prevMonthData.expenses > 0
+      ? (
+          ((data.expenses - prevMonthData.expenses) / prevMonthData.expenses) *
+          100
+        ).toFixed(0)
+      : null
   const expensesTrend = expensesDiff
-    ? (Number(expensesDiff) > 0 ? `↑${expensesDiff}%` : Number(expensesDiff) < 0 ? `↓${Math.abs(Number(expensesDiff))}%` : "→")
-    : ""
+    ? Number(expensesDiff) > 0
+      ? `↑${expensesDiff}%`
+      : Number(expensesDiff) < 0
+        ? `↓${Math.abs(Number(expensesDiff))}%`
+        : '→'
+    : ''
 
-  const incomeDiff = prevMonthData.income > 0
-    ? ((data.income - prevMonthData.income) / prevMonthData.income * 100).toFixed(0)
-    : null
+  const incomeDiff =
+    prevMonthData.income > 0
+      ? (
+          ((data.income - prevMonthData.income) / prevMonthData.income) *
+          100
+        ).toFixed(0)
+      : null
   const incomeTrend = incomeDiff
-    ? (Number(incomeDiff) > 0 ? `↑${incomeDiff}%` : Number(incomeDiff) < 0 ? `↓${Math.abs(Number(incomeDiff))}%` : "→")
-    : ""
+    ? Number(incomeDiff) > 0
+      ? `↑${incomeDiff}%`
+      : Number(incomeDiff) < 0
+        ? `↓${Math.abs(Number(incomeDiff))}%`
+        : '→'
+    : ''
 
   let message = `${greeting}\n\n${title}\n\n`
-  message += `💰 ${incomeLabel}: ${incomeFormatted} ${incomeTrend ? `(${incomeTrend} ${comparisonLabel})` : ""}\n`
-  message += `💸 ${expensesLabel}: ${expensesFormatted} ${expensesTrend ? `(${expensesTrend} ${comparisonLabel})` : ""}\n`
+  message += `💰 ${incomeLabel}: ${incomeFormatted} ${incomeTrend ? `(${incomeTrend} ${comparisonLabel})` : ''}\n`
+  message += `💸 ${expensesLabel}: ${expensesFormatted} ${expensesTrend ? `(${expensesTrend} ${comparisonLabel})` : ''}\n`
 
   if (data.investments > 0) {
     message += `📈 ${investmentsLabel}: ${investmentsFormatted}\n`
   }
 
-  const balanceEmoji = data.balance >= 0 ? "✅" : "⚠️"
+  const balanceEmoji = data.balance >= 0 ? '✅' : '⚠️'
   message += `\n${balanceEmoji} ${balanceLabel}: ${balanceFormatted}`
 
   // Top categories (max 5 for monthly)
   if (data.topCategories.length > 0) {
     message += `\n\n📂 ${topCategoriesLabel}:`
     data.topCategories.slice(0, 5).forEach((cat, i) => {
-      const emoji = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•"
+      const emoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '•'
       message += `\n${emoji} ${cat.category}: ${formatCurrency(cat.total, currency, locale)}`
     })
   }
@@ -215,14 +275,14 @@ async function getSummaryData(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Promise<SummaryData> {
   const { data: transactions } = await supabase
-    .from("transactions")
-    .select("type, amount, category, date")
-    .eq("user_id", userId)
-    .gte("date", startDate)
-    .lte("date", endDate)
+    .from('transactions')
+    .select('type, amount, category, date')
+    .eq('user_id', userId)
+    .gte('date', startDate)
+    .lte('date', endDate)
 
   const txns = (transactions as TransactionRow[] | null) ?? []
 
@@ -233,12 +293,12 @@ async function getSummaryData(
 
   for (const t of txns) {
     const amount = Number(t.amount)
-    if (t.type === "income") {
+    if (t.type === 'income') {
       income += amount
-    } else if (t.type === "expense") {
+    } else if (t.type === 'expense') {
       expenses += amount
       categoryTotals[t.category] = (categoryTotals[t.category] ?? 0) + amount
-    } else if (t.type === "investment") {
+    } else if (t.type === 'investment') {
       investments += amount
     }
   }
@@ -274,8 +334,8 @@ function getWeekRange(date: Date): { start: string; end: string } {
   endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6) // Previous week Sunday
 
   return {
-    start: startOfWeek.toISOString().split("T")[0],
-    end: endOfWeek.toISOString().split("T")[0],
+    start: startOfWeek.toISOString().split('T')[0],
+    end: endOfWeek.toISOString().split('T')[0],
   }
 }
 
@@ -290,24 +350,27 @@ function getPreviousWeekRange(date: Date): { start: string; end: string } {
   endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6)
 
   return {
-    start: startOfWeek.toISOString().split("T")[0],
-    end: endOfWeek.toISOString().split("T")[0],
+    start: startOfWeek.toISOString().split('T')[0],
+    end: endOfWeek.toISOString().split('T')[0],
   }
 }
 
-function getMonthRange(year: number, month: number): { start: string; end: string } {
+function getMonthRange(
+  year: number,
+  month: number,
+): { start: string; end: string } {
   const start = new Date(Date.UTC(year, month, 1))
   const end = new Date(Date.UTC(year, month + 1, 0))
 
   return {
-    start: start.toISOString().split("T")[0],
-    end: end.toISOString().split("T")[0],
+    start: start.toISOString().split('T')[0],
+    end: end.toISOString().split('T')[0],
   }
 }
 
 function getMonthName(month: number, locale: string): string {
   const date = new Date(2000, month, 1)
-  return date.toLocaleDateString(locale, { month: "long" })
+  return date.toLocaleDateString(locale, { month: 'long' })
 }
 
 // =============================================================================
@@ -317,21 +380,24 @@ function getMonthName(month: number, locale: string): string {
 export async function GET(request: NextRequest) {
   try {
     // Verify cron secret
-    const authHeader = request.headers.get("authorization")
+    const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret) {
-      logger.cron.error("CRON_SECRET not configured")
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+      logger.cron.error('CRON_SECRET not configured')
+      return NextResponse.json(
+        { error: 'Server misconfigured' },
+        { status: 500 },
+      )
     }
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-      logger.cron.warn("Invalid authorization attempt")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      logger.cron.warn('Invalid authorization attempt')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Determine summary type from query param
-    const summaryType = request.nextUrl.searchParams.get("type") || "weekly"
+    const summaryType = request.nextUrl.searchParams.get('type') || 'weekly'
 
     const supabase = getSupabaseAdmin()
     const now = new Date()
@@ -340,18 +406,18 @@ export async function GET(request: NextRequest) {
 
     // Fetch all users with telegram enabled and summary opted-in
     const { data: profiles, error: fetchError } = await supabase
-      .from("profiles")
-      .select("id, telegram_chat_id, language, currency, name")
-      .not("telegram_chat_id", "is", null)
-      .eq("telegram_summary_enabled", true)
+      .from('profiles')
+      .select('id, telegram_chat_id, language, currency, name')
+      .not('telegram_chat_id', 'is', null)
+      .eq('telegram_summary_enabled', true)
 
     if (fetchError) {
-      logger.cron.error("Error fetching profiles:", fetchError)
-      return NextResponse.json({ error: "Database error" }, { status: 500 })
+      logger.cron.error('Error fetching profiles:', fetchError)
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
     if (!profiles || profiles.length === 0) {
-      logger.cron.info("No users with telegram summaries enabled")
+      logger.cron.info('No users with telegram summaries enabled')
       return NextResponse.json({ sent: 0, skipped: 0 })
     }
 
@@ -361,39 +427,78 @@ export async function GET(request: NextRequest) {
     let failed = 0
 
     for (const profile of profiles as ProfileRow[]) {
-      const locale = profile.language === "pt" ? "pt-BR" : "en-US"
-      const currency = profile.currency || "BRL"
+      const locale = profile.language === 'pt' ? 'pt-BR' : 'en-US'
+      const currency = profile.currency || 'BRL'
 
       let message: string
 
-      if (summaryType === "monthly") {
+      if (summaryType === 'monthly') {
         // Monthly summary: first day of month, summarize previous month
         const prevMonth = now.getUTCMonth() === 0 ? 11 : now.getUTCMonth() - 1
-        const prevMonthYear = now.getUTCMonth() === 0 ? now.getUTCFullYear() - 1 : now.getUTCFullYear()
+        const prevMonthYear =
+          now.getUTCMonth() === 0
+            ? now.getUTCFullYear() - 1
+            : now.getUTCFullYear()
 
         const currentRange = getMonthRange(prevMonthYear, prevMonth)
         const prevRange = getMonthRange(
           prevMonth === 0 ? prevMonthYear - 1 : prevMonthYear,
-          prevMonth === 0 ? 11 : prevMonth - 1
+          prevMonth === 0 ? 11 : prevMonth - 1,
         )
 
-        const currentData = await getSummaryData(supabase, profile.id, currentRange.start, currentRange.end)
-        const prevData = await getSummaryData(supabase, profile.id, prevRange.start, prevRange.end)
+        const currentData = await getSummaryData(
+          supabase,
+          profile.id,
+          currentRange.start,
+          currentRange.end,
+        )
+        const prevData = await getSummaryData(
+          supabase,
+          profile.id,
+          prevRange.start,
+          prevRange.end,
+        )
 
         const monthName = getMonthName(prevMonth, locale)
-        message = generateMonthlySummary(currentData, prevData, locale, currency, profile.name, monthName)
+        message = generateMonthlySummary(
+          currentData,
+          prevData,
+          locale,
+          currency,
+          profile.name,
+          monthName,
+        )
       } else {
         // Weekly summary: every Monday, summarize previous week
         const currentWeekRange = getWeekRange(now)
         const prevWeekRange = getPreviousWeekRange(now)
 
-        const currentData = await getSummaryData(supabase, profile.id, currentWeekRange.start, currentWeekRange.end)
-        const prevData = await getSummaryData(supabase, profile.id, prevWeekRange.start, prevWeekRange.end)
+        const currentData = await getSummaryData(
+          supabase,
+          profile.id,
+          currentWeekRange.start,
+          currentWeekRange.end,
+        )
+        const prevData = await getSummaryData(
+          supabase,
+          profile.id,
+          prevWeekRange.start,
+          prevWeekRange.end,
+        )
 
-        message = generateWeeklySummary(currentData, prevData, locale, currency, profile.name)
+        message = generateWeeklySummary(
+          currentData,
+          prevData,
+          locale,
+          currency,
+          profile.name,
+        )
       }
 
-      const success = await sendTelegramMessage(profile.telegram_chat_id, message)
+      const success = await sendTelegramMessage(
+        profile.telegram_chat_id,
+        message,
+      )
 
       if (success) {
         sent++
@@ -414,7 +519,10 @@ export async function GET(request: NextRequest) {
       timestamp: now.toISOString(),
     })
   } catch (error) {
-    logger.cron.error("Unexpected error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    logger.cron.error('Unexpected error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    )
   }
 }

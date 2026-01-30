@@ -1,0 +1,11 @@
+{
+  "extends": "@rocketseat/eslint-config/next",
+  "rules": {
+    "no-console": "off",
+    "new-cap": "off",
+    "@typescript-eslint/no-unused-vars": ["error", {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }]
+  }
+}

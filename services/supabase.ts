@@ -1,8 +1,15 @@
 // Supabase CRUD Service - Mirrors storage.ts interface for cloud persistence
-import { supabase } from "@/lib/supabase"
-import { logger } from "@/lib/logger"
-import type { Transaction, Category, UserProfile, Goal, RecurringTransaction, BudgetAlert } from "@/lib/types"
-import type { Asset } from "@/lib/investment-types"
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import type {
+  Transaction,
+  Category,
+  UserProfile,
+  Goal,
+  RecurringTransaction,
+  BudgetAlert,
+} from '@/lib/types'
+import type { Asset } from '@/lib/investment-types'
 
 // =============================================================================
 // Type Converters (camelCase ↔ snake_case)
@@ -23,7 +30,10 @@ interface TransactionRow {
   created_at: string
 }
 
-function transactionToRow(t: Transaction, userId: string): Omit<TransactionRow, 'created_at'> {
+function transactionToRow(
+  t: Transaction,
+  userId: string,
+): Omit<TransactionRow, 'created_at'> {
   return {
     id: t.id,
     user_id: userId,
@@ -91,7 +101,12 @@ interface ProfileRow {
   telegram_summary_enabled: boolean | null
 }
 
-function profileToRow(p: UserProfile, userId: string): Omit<ProfileRow, 'telegram_chat_id' | 'telegram_summary_enabled'> & { telegram_summary_enabled?: boolean } {
+function profileToRow(
+  p: UserProfile,
+  userId: string,
+): Omit<ProfileRow, 'telegram_chat_id' | 'telegram_summary_enabled'> & {
+  telegram_summary_enabled?: boolean
+} {
   return {
     id: userId,
     name: p.name || null,
@@ -210,7 +225,10 @@ interface RecurringTransactionRow {
   created_at: string
 }
 
-function recurringTransactionToRow(r: RecurringTransaction, userId: string): Omit<RecurringTransactionRow, 'created_at'> {
+function recurringTransactionToRow(
+  r: RecurringTransaction,
+  userId: string,
+): Omit<RecurringTransactionRow, 'created_at'> {
   return {
     id: r.id,
     user_id: userId,
@@ -229,7 +247,9 @@ function recurringTransactionToRow(r: RecurringTransaction, userId: string): Omi
   }
 }
 
-function rowToRecurringTransaction(row: RecurringTransactionRow): RecurringTransaction {
+function rowToRecurringTransaction(
+  row: RecurringTransactionRow,
+): RecurringTransaction {
   return {
     id: row.id,
     type: row.type as RecurringTransaction['type'],
@@ -259,7 +279,10 @@ interface BudgetAlertRow {
   created_at: string
 }
 
-function budgetAlertToRow(b: BudgetAlert, userId: string): Omit<BudgetAlertRow, 'created_at'> {
+function budgetAlertToRow(
+  b: BudgetAlert,
+  userId: string,
+): Omit<BudgetAlertRow, 'created_at'> {
   return {
     id: b.id,
     user_id: userId,
@@ -286,7 +309,9 @@ function rowToBudgetAlert(row: BudgetAlertRow): BudgetAlert {
 // =============================================================================
 
 async function getCurrentUserId(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   return user?.id ?? null
 }
 
@@ -341,7 +366,11 @@ export const supabaseService = {
           message: error.message,
           details: error.details,
           hint: error.hint,
-          transaction: { id: transaction.id, type: transaction.type, category: transaction.category },
+          transaction: {
+            id: transaction.id,
+            type: transaction.type,
+            category: transaction.category,
+          },
         })
       }
       return false
@@ -350,7 +379,10 @@ export const supabaseService = {
     return true
   },
 
-  async updateTransaction(id: string, transaction: Transaction): Promise<boolean> {
+  async updateTransaction(
+    id: string,
+    transaction: Transaction,
+  ): Promise<boolean> {
     const userId = await getCurrentUserId()
     if (!userId) return false
 
@@ -652,11 +684,15 @@ export const supabaseService = {
     const updateRow: Record<string, unknown> = {}
     if (updates.symbol !== undefined) updateRow.symbol = updates.symbol
     if (updates.name !== undefined) updateRow.name = updates.name
-    if (updates.assetClass !== undefined) updateRow.asset_class = updates.assetClass
+    if (updates.assetClass !== undefined)
+      updateRow.asset_class = updates.assetClass
     if (updates.quantity !== undefined) updateRow.quantity = updates.quantity
-    if (updates.averagePrice !== undefined) updateRow.average_price = updates.averagePrice
-    if (updates.totalInvested !== undefined) updateRow.total_invested = updates.totalInvested
-    if (updates.purchaseDate !== undefined) updateRow.purchase_date = updates.purchaseDate
+    if (updates.averagePrice !== undefined)
+      updateRow.average_price = updates.averagePrice
+    if (updates.totalInvested !== undefined)
+      updateRow.total_invested = updates.totalInvested
+    if (updates.purchaseDate !== undefined)
+      updateRow.purchase_date = updates.purchaseDate
 
     const { error } = await supabase
       .from('assets')
@@ -723,14 +759,19 @@ export const supabaseService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      logger.supabase.error('Error fetching active recurring transactions:', error)
+      logger.supabase.error(
+        'Error fetching active recurring transactions:',
+        error,
+      )
       return []
     }
 
     return (data as RecurringTransactionRow[]).map(rowToRecurringTransaction)
   },
 
-  async addRecurringTransaction(recurringTransaction: RecurringTransaction): Promise<boolean> {
+  async addRecurringTransaction(
+    recurringTransaction: RecurringTransaction,
+  ): Promise<boolean> {
     const userId = await getCurrentUserId()
     if (!userId) {
       logger.supabase.warn('No user ID, skipping recurring transaction sync')
@@ -746,14 +787,21 @@ export const supabaseService = {
 
     if (error) {
       if (error.code === '42501') {
-        logger.supabase.warn('Recurring transaction sync failed (auth):', error.message)
+        logger.supabase.warn(
+          'Recurring transaction sync failed (auth):',
+          error.message,
+        )
       } else {
         logger.supabase.error('Error adding recurring transaction:', {
           code: error.code,
           message: error.message,
           details: error.details,
           hint: error.hint,
-          recurringTransaction: { id: recurringTransaction.id, type: recurringTransaction.type, frequency: recurringTransaction.frequency },
+          recurringTransaction: {
+            id: recurringTransaction.id,
+            type: recurringTransaction.type,
+            frequency: recurringTransaction.frequency,
+          },
         })
       }
       return false
@@ -762,7 +810,10 @@ export const supabaseService = {
     return true
   },
 
-  async updateRecurringTransaction(id: string, recurringTransaction: RecurringTransaction): Promise<boolean> {
+  async updateRecurringTransaction(
+    id: string,
+    recurringTransaction: RecurringTransaction,
+  ): Promise<boolean> {
     const userId = await getCurrentUserId()
     if (!userId) return false
 
@@ -781,7 +832,10 @@ export const supabaseService = {
     return true
   },
 
-  async updateRecurringTransactionLastGenerated(id: string, lastGeneratedDate: string): Promise<boolean> {
+  async updateRecurringTransactionLastGenerated(
+    id: string,
+    lastGeneratedDate: string,
+  ): Promise<boolean> {
     const userId = await getCurrentUserId()
     if (!userId) return false
 
@@ -792,7 +846,10 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      logger.supabase.error('Error updating recurring transaction last generated date:', error)
+      logger.supabase.error(
+        'Error updating recurring transaction last generated date:',
+        error,
+      )
       return false
     }
 
@@ -838,7 +895,9 @@ export const supabaseService = {
     return (data as BudgetAlertRow[]).map(rowToBudgetAlert)
   },
 
-  async getBudgetAlertByCategory(category: string): Promise<BudgetAlert | null> {
+  async getBudgetAlertByCategory(
+    category: string,
+  ): Promise<BudgetAlert | null> {
     const userId = await getCurrentUserId()
     if (!userId) return null
 

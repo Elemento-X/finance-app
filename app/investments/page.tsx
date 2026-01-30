@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { InvestmentsContent } from "./components/investments-content"
+import { InvestmentsContent } from './components/investments-content'
 
 export default function InvestmentsPage() {
   return <InvestmentsContent />

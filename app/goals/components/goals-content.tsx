@@ -1,19 +1,20 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { useFinanceStore } from "@/hooks/use-finance-store"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Plus, Target } from "lucide-react"
-import { toast } from "sonner"
-import type { Goal } from "@/lib/types"
-import { useTranslation } from "@/lib/i18n"
-import { GoalCard } from "./goal-card"
-import { GoalFormDialog } from "./goal-form-dialog"
-import { DeleteGoalDialog } from "./delete-goal-dialog"
+import { useState } from 'react'
+import { useFinanceStore } from '@/hooks/use-finance-store'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Plus, Target } from 'lucide-react'
+import { toast } from 'sonner'
+import type { Goal } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
+import { GoalCard } from './goal-card'
+import { GoalFormDialog } from './goal-form-dialog'
+import { DeleteGoalDialog } from './delete-goal-dialog'
 
 export function GoalsContent() {
-  const { goals, addGoal, updateGoal, toggleGoal, deleteGoal, profile } = useFinanceStore()
+  const { goals, addGoal, updateGoal, toggleGoal, deleteGoal, profile } =
+    useFinanceStore()
   const t = useTranslation()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
@@ -32,10 +33,10 @@ export function GoalsContent() {
   const handleSubmit = (goalData: Goal) => {
     if (editingGoal) {
       updateGoal(editingGoal.id, goalData)
-      toast.success(t("goals.updateSuccess"))
+      toast.success(t('goals.updateSuccess'))
     } else {
       addGoal(goalData)
-      toast.success(t("goals.addSuccess"))
+      toast.success(t('goals.addSuccess'))
     }
     setEditingGoal(null)
   }
@@ -43,7 +44,7 @@ export function GoalsContent() {
   const handleDelete = () => {
     if (deletingId) {
       deleteGoal(deletingId)
-      toast.success(t("goals.deleteSuccess"))
+      toast.success(t('goals.deleteSuccess'))
       setDeletingId(null)
     }
   }
@@ -59,7 +60,7 @@ export function GoalsContent() {
           <CardContent className="p-4">
             <Button onClick={openNewForm} className="w-full">
               <Plus className="size-4 mr-2" />
-              {t("goals.new")}
+              {t('goals.new')}
             </Button>
           </CardContent>
         </Card>
@@ -69,7 +70,7 @@ export function GoalsContent() {
           <div className="flex items-center gap-2">
             <Target className="size-5 text-muted-foreground" />
             <h2 className="text-lg font-semibold">
-              {t("goals.active")} ({activeGoals.length})
+              {t('goals.active')} ({activeGoals.length})
             </h2>
           </div>
 
@@ -77,8 +78,10 @@ export function GoalsContent() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Target className="size-12 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">{t("goals.empty")}</p>
-                <p className="text-sm text-muted-foreground">{t("goals.emptyDesc")}</p>
+                <p className="text-muted-foreground">{t('goals.empty')}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('goals.emptyDesc')}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -105,7 +108,7 @@ export function GoalsContent() {
                 <div className="size-2 rounded-full bg-green-500" />
               </div>
               <h2 className="text-lg font-semibold">
-                {t("goals.completed")} ({completedGoals.length})
+                {t('goals.completed')} ({completedGoals.length})
               </h2>
             </div>
 

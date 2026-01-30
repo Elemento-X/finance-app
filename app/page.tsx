@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { DashboardContent } from "@/components/dashboard-content"
+import { DashboardContent } from '@/components/dashboard-content'
 
 export default function HomePage() {
   return <DashboardContent />

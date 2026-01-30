@@ -32,8 +32,8 @@ function cleanupExpiredEntries(): void {
 }
 
 export interface RateLimitConfig {
-  maxRequests: number    // Maximum requests allowed
-  windowMs: number       // Time window in milliseconds
+  maxRequests: number // Maximum requests allowed
+  windowMs: number // Time window in milliseconds
 }
 
 export interface RateLimitResult {
@@ -48,7 +48,10 @@ export interface RateLimitResult {
  * @param config Rate limit configuration
  * @returns Whether the request is allowed and remaining quota
  */
-export function checkRateLimit(key: string, config: RateLimitConfig): RateLimitResult {
+export function checkRateLimit(
+  key: string,
+  config: RateLimitConfig,
+): RateLimitResult {
   cleanupExpiredEntries()
 
   const now = Date.now()
@@ -91,9 +94,9 @@ export function checkRateLimit(key: string, config: RateLimitConfig): RateLimitR
 // =============================================================================
 
 export interface SanitizeConfig {
-  maxLength: number           // Maximum allowed length
-  stripControlChars: boolean  // Remove control characters (except newline, tab)
-  stripHtml: boolean          // Remove HTML tags
+  maxLength: number // Maximum allowed length
+  stripControlChars: boolean // Remove control characters (except newline, tab)
+  stripHtml: boolean // Remove HTML tags
 }
 
 const DEFAULT_SANITIZE_CONFIG: SanitizeConfig = {
@@ -108,7 +111,10 @@ const DEFAULT_SANITIZE_CONFIG: SanitizeConfig = {
  * @param config Sanitization configuration
  * @returns Sanitized input
  */
-export function sanitizeInput(input: string, config: Partial<SanitizeConfig> = {}): string {
+export function sanitizeInput(
+  input: string,
+  config: Partial<SanitizeConfig> = {},
+): string {
   const cfg = { ...DEFAULT_SANITIZE_CONFIG, ...config }
 
   let sanitized = input
@@ -140,7 +146,10 @@ export function sanitizeInput(input: string, config: Partial<SanitizeConfig> = {
  * @param input User input to validate
  * @returns Object with validation result and error message
  */
-export function validateInput(input: string): { valid: boolean; error?: string } {
+export function validateInput(input: string): {
+  valid: boolean
+  error?: string
+} {
   // Check for empty input
   if (!input || input.trim().length === 0) {
     return { valid: false, error: 'Input cannot be empty' }

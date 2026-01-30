@@ -1,17 +1,17 @@
 // Groq API Service - Financial Assistant with Llama 3
-import { logger } from "@/lib/logger"
+import { logger } from '@/lib/logger'
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-const GROQ_MODEL = "llama-3.3-70b-versatile"
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL = 'llama-3.3-70b-versatile'
 
 // =============================================================================
 // Types
 // =============================================================================
 
-export type IntentType = "transaction" | "query" | "conversation"
+export type IntentType = 'transaction' | 'query' | 'conversation'
 
 export interface ParsedTransaction {
-  type: "income" | "expense" | "investment"
+  type: 'income' | 'expense' | 'investment'
   amount: number
   category: string
   date: string
@@ -19,8 +19,8 @@ export interface ParsedTransaction {
 }
 
 export interface ParsedQuery {
-  queryType: "balance" | "summary" | "category_spending" | "recent"
-  period?: "today" | "week" | "month" | "year"
+  queryType: 'balance' | 'summary' | 'category_spending' | 'recent'
+  period?: 'today' | 'week' | 'month' | 'year'
   category?: string
 }
 
@@ -89,19 +89,19 @@ period: "today", "week", "month", "year"
 // =============================================================================
 
 function getTodayDate(): string {
-  return new Date().toISOString().split("T")[0]
+  return new Date().toISOString().split('T')[0]
 }
 
 export async function parseMessage(
   message: string,
   userCategories?: string[],
-  financialContext?: string
+  financialContext?: string,
 ): Promise<ParseResult> {
   const apiKey = process.env.GROQ_API_KEY
 
   if (!apiKey) {
-    logger.telegram.error("Missing GROQ_API_KEY")
-    return { success: false, error: "Serviço de IA não configurado" }
+    logger.telegram.error('Missing GROQ_API_KEY')
+    return { success: false, error: 'Serviço de IA não configurado' }
   }
 
   const today = getTodayDate()
@@ -109,7 +109,7 @@ export async function parseMessage(
   let userPrompt = `Data de hoje: ${today}\nMensagem do usuário: "${message}"`
 
   if (userCategories && userCategories.length > 0) {
-    userPrompt += `\nCategorias personalizadas do usuário: ${userCategories.join(", ")}`
+    userPrompt += `\nCategorias personalizadas do usuário: ${userCategories.join(', ')}`
   }
 
   if (financialContext) {
@@ -118,16 +118,16 @@ export async function parseMessage(
 
   try {
     const response = await fetch(GROQ_API_URL, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
         max_tokens: 500,
@@ -136,36 +136,36 @@ export async function parseMessage(
 
     if (!response.ok) {
       const errorText = await response.text()
-      logger.telegram.error("Groq API error:", response.status, errorText)
-      return { success: false, error: "Erro ao processar mensagem" }
+      logger.telegram.error('Groq API error:', response.status, errorText)
+      return { success: false, error: 'Erro ao processar mensagem' }
     }
 
     const data = await response.json()
     const content = data.choices?.[0]?.message?.content?.trim()
 
     if (!content) {
-      return { success: false, error: "Resposta vazia da IA" }
+      return { success: false, error: 'Resposta vazia da IA' }
     }
 
     // Parse JSON response
     let parsed: AssistantResponse
     try {
-      const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim()
+      const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim()
       parsed = JSON.parse(cleanContent)
     } catch {
-      logger.telegram.error("Groq invalid JSON response:", content)
+      logger.telegram.error('Groq invalid JSON response:', content)
       // If JSON parsing fails, treat as conversation
       return {
         success: true,
         response: {
-          intent: "conversation",
-          message: "Desculpa, não entendi bem. Pode reformular? 🤔",
+          intent: 'conversation',
+          message: 'Desculpa, não entendi bem. Pode reformular? 🤔',
         },
       }
     }
 
     // Validate and fix transaction data
-    if (parsed.intent === "transaction" && parsed.transaction) {
+    if (parsed.intent === 'transaction' && parsed.transaction) {
       const t = parsed.transaction
 
       // Validate required fields
@@ -173,8 +173,9 @@ export async function parseMessage(
         return {
           success: true,
           response: {
-            intent: "conversation",
-            message: "Não consegui entender o valor ou a categoria. Tenta algo como: 'gastei 50 no mercado'",
+            intent: 'conversation',
+            message:
+              "Não consegui entender o valor ou a categoria. Tenta algo como: 'gastei 50 no mercado'",
           },
         }
       }
@@ -185,8 +186,9 @@ export async function parseMessage(
         return {
           success: true,
           response: {
-            intent: "conversation",
-            message: "Não entendi o valor. Pode repetir com o número? Ex: 'gastei 50 reais'",
+            intent: 'conversation',
+            message:
+              "Não entendi o valor. Pode repetir com o número? Ex: 'gastei 50 reais'",
           },
         }
       }
@@ -201,8 +203,8 @@ export async function parseMessage(
 
     return { success: true, response: parsed }
   } catch (error) {
-    logger.telegram.error("Groq request failed:", error)
-    return { success: false, error: "Erro de conexão. Tenta de novo? 🔄" }
+    logger.telegram.error('Groq request failed:', error)
+    return { success: false, error: 'Erro de conexão. Tenta de novo? 🔄' }
   }
 }
 
@@ -216,10 +218,15 @@ export function formatFinancialContext(data: {
   monthInvestments: number
   balance: number
   topCategories: { category: string; total: number }[]
-  recentTransactions: { type: string; amount: number; category: string; date: string }[]
+  recentTransactions: {
+    type: string
+    amount: number
+    category: string
+    date: string
+  }[]
 }): string {
   const formatCurrency = (n: number) =>
-    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   let context = `Resumo do mês atual:
 - Receitas: ${formatCurrency(data.monthIncome)}
@@ -237,7 +244,8 @@ export function formatFinancialContext(data: {
   if (data.recentTransactions.length > 0) {
     context += `\n\nÚltimas transações:`
     data.recentTransactions.slice(0, 5).forEach((t) => {
-      const emoji = t.type === "income" ? "💰" : t.type === "expense" ? "💸" : "📈"
+      const emoji =
+        t.type === 'income' ? '💰' : t.type === 'expense' ? '💸' : '📈'
       context += `\n${emoji} ${formatCurrency(t.amount)} - ${t.category} (${t.date})`
     })
   }
@@ -257,22 +265,30 @@ export function formatQueryResponse(
     monthInvestments: number
     balance: number
     topCategories: { category: string; total: number }[]
-    recentTransactions: { type: string; amount: number; category: string; date: string }[]
-  }
+    recentTransactions: {
+      type: string
+      amount: number
+      category: string
+      date: string
+    }[]
+  },
 ): string {
   const formatCurrency = (n: number) =>
-    n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
   switch (queryType) {
-    case "balance":
-      return `💰 Seu saldo do mês:\n\n` +
+    case 'balance':
+      return (
+        `💰 Seu saldo do mês:\n\n` +
         `Receitas: ${formatCurrency(data.monthIncome)}\n` +
         `Despesas: ${formatCurrency(data.monthExpenses)}\n` +
         `Investimentos: ${formatCurrency(data.monthInvestments)}\n\n` +
         `📊 Saldo: ${formatCurrency(data.balance)}`
+      )
 
-    case "summary": {
-      let msg = `📊 Resumo do mês:\n\n` +
+    case 'summary': {
+      let msg =
+        `📊 Resumo do mês:\n\n` +
         `💰 Receitas: ${formatCurrency(data.monthIncome)}\n` +
         `💸 Despesas: ${formatCurrency(data.monthExpenses)}\n` +
         `📈 Investimentos: ${formatCurrency(data.monthInvestments)}\n` +
@@ -287,9 +303,9 @@ export function formatQueryResponse(
       return msg
     }
 
-    case "category_spending": {
+    case 'category_spending': {
       if (data.topCategories.length === 0) {
-        return "Você ainda não tem gastos registrados esse mês! 📝"
+        return 'Você ainda não tem gastos registrados esse mês! 📝'
       }
       let msg = `📋 Gastos por categoria:\n`
       data.topCategories.forEach((c) => {
@@ -298,23 +314,27 @@ export function formatQueryResponse(
       return msg
     }
 
-    case "recent": {
+    case 'recent': {
       if (data.recentTransactions.length === 0) {
-        return "Você ainda não tem transações registradas! Começa me contando um gasto ou receita 😊"
+        return 'Você ainda não tem transações registradas! Começa me contando um gasto ou receita 😊'
       }
       let msg = `📋 Últimas transações:\n`
       data.recentTransactions.slice(0, 10).forEach((t) => {
-        const emoji = t.type === "income" ? "💰" : t.type === "expense" ? "💸" : "📈"
-        const formattedDate = new Date(t.date + "T12:00:00").toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-        })
+        const emoji =
+          t.type === 'income' ? '💰' : t.type === 'expense' ? '💸' : '📈'
+        const formattedDate = new Date(t.date + 'T12:00:00').toLocaleDateString(
+          'pt-BR',
+          {
+            day: '2-digit',
+            month: '2-digit',
+          },
+        )
         msg += `\n${emoji} ${formatCurrency(t.amount)} - ${t.category} (${formattedDate})`
       })
       return msg
     }
 
     default:
-      return formatQueryResponse("summary", data)
+      return formatQueryResponse('summary', data)
   }
 }

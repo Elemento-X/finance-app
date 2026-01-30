@@ -1,6 +1,12 @@
-import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
-import { DEFAULT_CATEGORIES } from "@/lib/constants"
-import { safeGetItem, safeSetItem } from "./migrations"
+import type {
+  Transaction,
+  Category,
+  UserProfile,
+  Goal,
+  RecurringTransaction,
+} from '@/lib/types'
+import { DEFAULT_CATEGORIES } from '@/lib/constants'
+import { safeGetItem, safeSetItem } from './migrations'
 import {
   TransactionSchema,
   CategorySchema,
@@ -9,16 +15,16 @@ import {
   RecurringTransactionSchema,
   validateArray,
   validateObject,
-} from "@/lib/schemas"
-import { getTranslation } from "@/lib/i18n"
-import { toast } from "sonner"
+} from '@/lib/schemas'
+import { getTranslation } from '@/lib/i18n'
+import { toast } from 'sonner'
 
 const STORAGE_KEYS = {
-  TRANSACTIONS: "finance_transactions",
-  CATEGORIES: "finance_categories",
-  PROFILE: "finance_profile",
-  GOALS: "finance_goals",
-  RECURRING_TRANSACTIONS: "finance_recurring_transactions",
+  TRANSACTIONS: 'finance_transactions',
+  CATEGORIES: 'finance_categories',
+  PROFILE: 'finance_profile',
+  GOALS: 'finance_goals',
+  RECURRING_TRANSACTIONS: 'finance_recurring_transactions',
 } as const
 
 // Track if we've already shown validation warnings in this session
@@ -29,10 +35,12 @@ function showValidationWarning(type: string, invalidCount: number): void {
   if (validationWarningsShown[key]) return
   validationWarningsShown[key] = true
 
-  const typeTranslation = getTranslation(`validation.${type}` as keyof typeof import("@/lib/i18n").translations.en)
+  const typeTranslation = getTranslation(
+    `validation.${type}` as keyof typeof import('@/lib/i18n').translations.en,
+  )
 
-  toast.warning(getTranslation("validation.corruptedData"), {
-    description: getTranslation("validation.corruptedDataDesc", {
+  toast.warning(getTranslation('validation.corruptedData'), {
+    description: getTranslation('validation.corruptedDataDesc', {
       count: invalidCount.toString(),
       type: typeTranslation,
     }),
@@ -48,7 +56,7 @@ export const storageService = {
     const { valid, invalidCount } = validateArray(raw, TransactionSchema)
 
     if (invalidCount > 0) {
-      showValidationWarning("transactions", invalidCount)
+      showValidationWarning('transactions', invalidCount)
       // Save only valid transactions back to storage
       this.saveTransactions(valid as Transaction[])
     }
@@ -82,13 +90,16 @@ export const storageService = {
   },
 
   getCategories(): Category[] {
-    const raw = safeGetItem<unknown[]>(STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES)
+    const raw = safeGetItem<unknown[]>(
+      STORAGE_KEYS.CATEGORIES,
+      DEFAULT_CATEGORIES,
+    )
     if (!Array.isArray(raw)) return DEFAULT_CATEGORIES
 
     const { valid, invalidCount } = validateArray(raw, CategorySchema)
 
     if (invalidCount > 0) {
-      showValidationWarning("categories", invalidCount)
+      showValidationWarning('categories', invalidCount)
       this.saveCategories(valid as Category[])
     }
 
@@ -123,23 +134,27 @@ export const storageService = {
 
   getProfile(): UserProfile {
     const defaultProfile: UserProfile = {
-      name: "",
-      currency: "BRL",
+      name: '',
+      currency: 'BRL',
       defaultMonth: new Date().toISOString().slice(0, 7),
-      language: "en",
+      language: 'en',
       telegramChatId: null,
     }
 
     const raw = safeGetItem<unknown>(STORAGE_KEYS.PROFILE, defaultProfile)
-    const { value, isValid } = validateObject(raw, UserProfileSchema, defaultProfile)
+    const { value, isValid } = validateObject(
+      raw,
+      UserProfileSchema,
+      defaultProfile,
+    )
 
     if (!isValid && raw !== null && raw !== undefined) {
       // Only show warning if there was actual data that was invalid
-      const key = "validation_profile"
+      const key = 'validation_profile'
       if (!validationWarningsShown[key]) {
         validationWarningsShown[key] = true
-        toast.warning(getTranslation("validation.corruptedData"), {
-          description: getTranslation("validation.profileReset"),
+        toast.warning(getTranslation('validation.corruptedData'), {
+          description: getTranslation('validation.profileReset'),
           duration: 6000,
         })
       }
@@ -161,7 +176,7 @@ export const storageService = {
     const { valid, invalidCount } = validateArray(raw, GoalSchema)
 
     if (invalidCount > 0) {
-      showValidationWarning("goals", invalidCount)
+      showValidationWarning('goals', invalidCount)
       this.saveGoals(valid as Goal[])
     }
 
@@ -198,17 +213,22 @@ export const storageService = {
     const raw = safeGetItem<unknown[]>(STORAGE_KEYS.RECURRING_TRANSACTIONS, [])
     if (!Array.isArray(raw)) return []
 
-    const { valid, invalidCount } = validateArray(raw, RecurringTransactionSchema)
+    const { valid, invalidCount } = validateArray(
+      raw,
+      RecurringTransactionSchema,
+    )
 
     if (invalidCount > 0) {
-      showValidationWarning("recurringTransactions", invalidCount)
+      showValidationWarning('recurringTransactions', invalidCount)
       this.saveRecurringTransactions(valid as RecurringTransaction[])
     }
 
     return valid as RecurringTransaction[]
   },
 
-  saveRecurringTransactions(recurringTransactions: RecurringTransaction[]): void {
+  saveRecurringTransactions(
+    recurringTransactions: RecurringTransaction[],
+  ): void {
     safeSetItem(STORAGE_KEYS.RECURRING_TRANSACTIONS, recurringTransactions)
   },
 
@@ -218,7 +238,10 @@ export const storageService = {
     this.saveRecurringTransactions(recurringTransactions)
   },
 
-  updateRecurringTransaction(id: string, updatedRecurringTransaction: RecurringTransaction): void {
+  updateRecurringTransaction(
+    id: string,
+    updatedRecurringTransaction: RecurringTransaction,
+  ): void {
     const recurringTransactions = this.getRecurringTransactions()
     const index = recurringTransactions.findIndex((r) => r.id === id)
     if (index !== -1) {
