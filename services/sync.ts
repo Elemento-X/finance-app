@@ -2,14 +2,14 @@
 import { supabaseService } from "./supabase"
 import { storageService } from "./storage"
 import { investmentsStorageService } from "./investments-storage"
-import type { Transaction, Category, UserProfile, Goal } from "@/lib/types"
+import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
 import type { Asset } from "@/lib/investment-types"
 
 // =============================================================================
 // Types
 // =============================================================================
 
-type EntityType = 'transactions' | 'categories' | 'goals' | 'profile' | 'assets'
+type EntityType = 'transactions' | 'categories' | 'goals' | 'profile' | 'assets' | 'recurringTransactions'
 type OperationType = 'create' | 'update' | 'delete'
 
 interface SyncOperation {
@@ -17,7 +17,7 @@ interface SyncOperation {
   operationType: OperationType
   entity: EntityType
   entityId: string
-  data: Transaction | Category | Goal | UserProfile | Asset | Partial<Asset> | null
+  data: Transaction | Category | Goal | UserProfile | Asset | Partial<Asset> | RecurringTransaction | null
   timestamp: number
 }
 
@@ -176,6 +176,8 @@ async function executeOperation(op: SyncOperation): Promise<boolean> {
       return executeProfileOp(op)
     case 'assets':
       return executeAssetOp(op)
+    case 'recurringTransactions':
+      return executeRecurringTransactionOp(op)
     default:
       console.warn(`[Sync] Unknown entity type: ${op.entity}`)
       return false
@@ -241,6 +243,19 @@ async function executeAssetOp(op: SyncOperation): Promise<boolean> {
   }
 }
 
+async function executeRecurringTransactionOp(op: SyncOperation): Promise<boolean> {
+  switch (op.operationType) {
+    case 'create':
+      return supabaseService.addRecurringTransaction(op.data as RecurringTransaction)
+    case 'update':
+      return supabaseService.updateRecurringTransaction(op.entityId, op.data as RecurringTransaction)
+    case 'delete':
+      return supabaseService.deleteRecurringTransaction(op.entityId)
+    default:
+      return false
+  }
+}
+
 // =============================================================================
 // Pull from Supabase - Update localStorage with cloud data
 // =============================================================================
@@ -255,12 +270,13 @@ async function pullFromSupabase(): Promise<boolean> {
 
   try {
     // Pull all entities in parallel
-    const [transactions, categories, goals, profile, assets] = await Promise.all([
+    const [transactions, categories, goals, profile, assets, recurringTransactions] = await Promise.all([
       supabaseService.getTransactions(),
       supabaseService.getCategories(),
       supabaseService.getGoals(),
       supabaseService.getProfile(),
       supabaseService.getAssets(),
+      supabaseService.getRecurringTransactions(),
     ])
 
     // Update localStorage with cloud data
@@ -283,6 +299,10 @@ async function pullFromSupabase(): Promise<boolean> {
 
     if (assets) {
       investmentsStorageService.saveAssets(assets)
+    }
+
+    if (recurringTransactions) {
+      storageService.saveRecurringTransactions(recurringTransactions)
     }
 
     // Update last sync timestamp
@@ -391,9 +411,9 @@ function queueTransaction(type: OperationType, transaction: Transaction): void {
     data: type === 'delete' ? null : transaction,
   })
 
-  // If online, try to flush immediately
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -405,8 +425,9 @@ function queueCategory(type: OperationType, category: Category): void {
     data: type === 'delete' ? null : category,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -418,8 +439,9 @@ function queueGoal(type: OperationType, goal: Goal): void {
     data: type === 'delete' ? null : goal,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -431,8 +453,9 @@ function queueProfile(profile: UserProfile): void {
     data: profile,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -444,8 +467,23 @@ function queueAsset(type: OperationType, asset: Asset | Partial<Asset> & { id: s
     data: type === 'delete' ? null : asset,
   })
 
+  // If online, try to flush in background (non-blocking)
   if (syncState.isOnline) {
-    flushQueue()
+    setTimeout(() => flushQueue(), 0)
+  }
+}
+
+function queueRecurringTransaction(type: OperationType, recurringTransaction: RecurringTransaction): void {
+  addToQueue({
+    operationType: type,
+    entity: 'recurringTransactions',
+    entityId: recurringTransaction.id,
+    data: type === 'delete' ? null : recurringTransaction,
+  })
+
+  // If online, try to flush in background (non-blocking)
+  if (syncState.isOnline) {
+    setTimeout(() => flushQueue(), 0)
   }
 }
 
@@ -470,6 +508,7 @@ export const syncService = {
   queueGoal,
   queueProfile,
   queueAsset,
+  queueRecurringTransaction,
 
   // Queue management
   getQueue,

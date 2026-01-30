@@ -1,4 +1,4 @@
-import type { Transaction, Category, UserProfile, Goal } from "@/lib/types"
+import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
 import { DEFAULT_CATEGORIES } from "@/lib/constants"
 import { safeGetItem, safeSetItem } from "./migrations"
 import {
@@ -6,6 +6,7 @@ import {
   CategorySchema,
   UserProfileSchema,
   GoalSchema,
+  RecurringTransactionSchema,
   validateArray,
   validateObject,
 } from "@/lib/schemas"
@@ -17,6 +18,7 @@ const STORAGE_KEYS = {
   CATEGORIES: "finance_categories",
   PROFILE: "finance_profile",
   GOALS: "finance_goals",
+  RECURRING_TRANSACTIONS: "finance_recurring_transactions",
 } as const
 
 // Track if we've already shown validation warnings in this session
@@ -189,5 +191,45 @@ export const storageService = {
     const goals = this.getGoals()
     const filtered = goals.filter((g) => g.id !== id)
     this.saveGoals(filtered)
+  },
+
+  // Recurring Transactions
+  getRecurringTransactions(): RecurringTransaction[] {
+    const raw = safeGetItem<unknown[]>(STORAGE_KEYS.RECURRING_TRANSACTIONS, [])
+    if (!Array.isArray(raw)) return []
+
+    const { valid, invalidCount } = validateArray(raw, RecurringTransactionSchema)
+
+    if (invalidCount > 0) {
+      showValidationWarning("recurringTransactions", invalidCount)
+      this.saveRecurringTransactions(valid as RecurringTransaction[])
+    }
+
+    return valid as RecurringTransaction[]
+  },
+
+  saveRecurringTransactions(recurringTransactions: RecurringTransaction[]): void {
+    safeSetItem(STORAGE_KEYS.RECURRING_TRANSACTIONS, recurringTransactions)
+  },
+
+  addRecurringTransaction(recurringTransaction: RecurringTransaction): void {
+    const recurringTransactions = this.getRecurringTransactions()
+    recurringTransactions.push(recurringTransaction)
+    this.saveRecurringTransactions(recurringTransactions)
+  },
+
+  updateRecurringTransaction(id: string, updatedRecurringTransaction: RecurringTransaction): void {
+    const recurringTransactions = this.getRecurringTransactions()
+    const index = recurringTransactions.findIndex((r) => r.id === id)
+    if (index !== -1) {
+      recurringTransactions[index] = updatedRecurringTransaction
+      this.saveRecurringTransactions(recurringTransactions)
+    }
+  },
+
+  deleteRecurringTransaction(id: string): void {
+    const recurringTransactions = this.getRecurringTransactions()
+    const filtered = recurringTransactions.filter((r) => r.id !== id)
+    this.saveRecurringTransactions(filtered)
   },
 }

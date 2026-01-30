@@ -141,6 +141,41 @@
   button {
     @apply cursor-pointer;
   }
+
+  /* Custom Scrollbar - WebKit (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: oklch(0.20 0.012 265);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.87 0.185 90 / 0.6);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.87 0.185 90 / 0.9);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: oklch(0.87 0.185 90);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: oklch(0.20 0.012 265);
+  }
+
+  /* Custom Scrollbar - Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.87 0.185 90 / 0.6) oklch(0.20 0.012 265);
+  }
 }
 
 .text-income {
