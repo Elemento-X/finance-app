@@ -432,9 +432,10 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 ### Fase 10 — Resiliência (Prioridade Média)
 
 #### 10.1 — Retry e Fallback
-- [ ] Exponential backoff no sync offline com notificação visual
-- [ ] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB)
-- [ ] Fallback para última cotação quando API falhar
+#### 10.1 — Retry e Fallback (feito por codex)
+- [x] Exponential backoff no sync offline com notificação visual — feito por codex
+- [x] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB) — feito por codex
+- [x] Fallback para última cotação quando API falhar — feito por codex
 
 #### 10.2 — Cache Agressivo (feito por codex)
 - [x] Cache de cotações de 1h (atualmente 5 min) — feito por codex
@@ -442,7 +443,6 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 
 ### Fase 11 — Observabilidade (Prioridade Média)
 
-#### 11.1 — Health Check
 #### 11.1 — Health Check (feito por codex)
 - [x] Endpoint `/api/health` retornando status do Supabase — feito por codex
 - [x] Verificação de conectividade com serviços externos — feito por codex
@@ -570,5 +570,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA), 7.4 (Bot multilíngue) e 7.5 (Dashboard com tendências — feito por codex) implementadas.
 - **2026-01-30:** Fase 10.2 (Cache Agressivo — feito por codex): cache de cotações em 1h + persistência da última cotação válida offline.
 - **2026-01-30:** Fase 11.1 (Health Check — feito por codex): `/api/health` com status do Supabase e conectividade de serviços externos.
+- **2026-01-30:** Fase 10.1 (Retry e Fallback — feito por codex): retry com backoff no sync + timeouts de 10s em APIs externas.
 
 > Histórico detalhado disponível no git.

@@ -33,6 +33,11 @@
 - Cotações com cache de 1h — feito por codex
 - Última cotação válida persistida para uso offline — feito por codex
 
+### Resiliência (Retry + Timeout)
+
+- Sync offline com retry exponencial e aviso visual — feito por codex
+- APIs externas com timeout de 10s (Brapi, Yahoo, BCB) — feito por codex
+
 ### Planejadas
 
 - 8.2: Expandir indicadores de ativos

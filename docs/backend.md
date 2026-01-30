@@ -66,6 +66,7 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | `services/groq.ts` | Parsing de mensagens com IA (usa `logger.telegram`) |
 | `services/migrations.ts` | Migrações de dados (usa `logger.migrations`) |
 | `services/bcb.ts` | API Banco Central (Selic, IPCA) |
+| `services/brapi.ts` | API Brapi.dev com timeout de 10s |
 | `components/dashboard/trend-chart.tsx` | Card de tendência (saldo 6 meses + previsão) |
 | `utils/formatters.ts` | Formatação de moeda por locale (BRL/USD/EUR) |
 | `lib/supabase.ts` | Client Supabase (browser) |
@@ -161,6 +162,7 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 1. Cada mudança salva no localStorage e enfileira operação
 2. Se online: flush imediato (non-blocking)
 3. A cada 15 min: sync periódico (flush + pull)
+4. Retry exponencial no sync com notificação visual — feito por codex
 
 **Chaves localStorage:**
 - `supabase_sync_queue` - Operações pendentes
@@ -172,6 +174,7 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 
 - Cache de cotações por 1h (`market_data_cache`) — feito por codex
 - Última cotação válida persistida para uso offline (`market_data_last_valid`) — feito por codex
+- Timeout de 10s em APIs externas (Yahoo, CoinGecko) — feito por codex
 
 ## 5. BCB (Banco Central)
 
