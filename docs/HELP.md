@@ -28,6 +28,11 @@
 - Limiar: max(10% da média do saldo absoluto, R$500)
 - Moeda segue preferência do perfil (BRL/USD/EUR) com formatação correta
 
+### Resiliência (Cache)
+
+- Cotações com cache de 1h — feito por codex
+- Última cotação válida persistida para uso offline — feito por codex
+
 ### Planejadas
 
 - 8.2: Expandir indicadores de ativos

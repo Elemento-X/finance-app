@@ -373,7 +373,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 | 7.2 | Alertas de Orçamento por categoria |
 | 7.3 | Categorização Automática via IA (matching local + Groq fallback) |
 | 7.4 | Bot Multilíngue (PT/EN baseado no perfil) |
-| 7.5 | Dashboard com Tendências (gráfico + previsão) |
+| 7.5 | Dashboard com Tendências (gráfico + previsão) — feito por codex |
 | 9 | Segurança: rate limiting, validação de input, auditoria |
 
 ### Fase 7 — Funcionalidades Bot
@@ -390,12 +390,12 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Mensagens de erro e feedback multilíngues
 - [x] Formatação de moeda baseada no perfil
 
-#### 7.5 — Dashboard com Tendências
-- [x] Gráfico de tendência (últimos 6 meses)
-- [x] Previsão: "Se continuar assim, terminará com R$X"
-- [x] Indicadores visuais: ↑ ↓ →
-- [x] Limiar: max(10% da média do saldo absoluto, R$500)
-- [x] Tooltip explicativo no card de tendência
+#### 7.5 — Dashboard com Tendências (feito por codex)
+- [x] Gráfico de tendência (últimos 6 meses) — feito por codex
+- [x] Previsão: "Se continuar assim, terminará com R$X" — feito por codex
+- [x] Indicadores visuais: ↑ ↓ → — feito por codex
+- [x] Limiar: max(10% da média do saldo absoluto, R$500) — feito por codex
+- [x] Tooltip explicativo no card de tendência — feito por codex
 
 ### Fase 8 — Indicadores
 
@@ -435,9 +435,9 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [ ] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB)
 - [ ] Fallback para última cotação quando API falhar
 
-#### 10.2 — Cache Agressivo
-- [ ] Cache de cotações de 1h (atualmente 5 min)
-- [ ] Persistir última cotação válida para uso offline
+#### 10.2 — Cache Agressivo (feito por codex)
+- [x] Cache de cotações de 1h (atualmente 5 min) — feito por codex
+- [x] Persistir última cotação válida para uso offline — feito por codex
 
 ### Fase 11 — Observabilidade (Prioridade Média)
 
@@ -565,6 +565,7 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-27:** Schema Supabase + RLS aplicados. Auth Magic Link. Sync offline-first definido.
 - **2026-01-28:** Deploy Vercel. Fase 5 e 6 concluídas. Bot funcional.
 - **2026-01-29:** Fase 4 descongelada e concluída. Fase 7.1 e 7.2 implementadas.
-- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA), 7.4 (Bot multilíngue) e 7.5 (Dashboard com tendências) implementadas.
+- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA), 7.4 (Bot multilíngue) e 7.5 (Dashboard com tendências — feito por codex) implementadas.
+- **2026-01-30:** Fase 10.2 (Cache Agressivo — feito por codex): cache de cotações em 1h + persistência da última cotação válida offline.
 
 > Histórico detalhado disponível no git.

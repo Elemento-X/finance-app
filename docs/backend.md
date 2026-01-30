@@ -165,6 +165,13 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 - `supabase_sync_queue` - Operações pendentes
 - `supabase_last_sync` - Timestamp da última sync
 
+## 4.1 Cache de Cotações (Market Data) — feito por codex
+
+**Arquivo:** `services/market-data.ts`
+
+- Cache de cotações por 1h (`market_data_cache`) — feito por codex
+- Última cotação válida persistida para uso offline (`market_data_last_valid`) — feito por codex
+
 ## 5. BCB (Banco Central)
 
 **Arquivo:** `services/bcb.ts`
