@@ -44,30 +44,37 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
   addAsset: (assetData) => {
     const newAsset: Asset = {
       ...assetData,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: crypto.randomUUID(),
       createdAt: Date.now(),
     }
     investmentsStorageService.addAsset(newAsset)
     syncService.queueAsset('create', newAsset)
-    set({ assets: investmentsStorageService.getAssets() })
+    set(state => ({ assets: [...state.assets, newAsset] }))
     get().refreshMarketData()
   },
 
   updateAsset: (id, updates) => {
+    const { assets } = get()
+    const existingAsset = assets.find(a => a.id === id)
+    if (!existingAsset) return
+
+    const updatedAsset = { ...existingAsset, ...updates }
     investmentsStorageService.updateAsset(id, updates)
     syncService.queueAsset('update', { id, ...updates })
-    set({ assets: investmentsStorageService.getAssets() })
+    set(state => ({
+      assets: state.assets.map(a => a.id === id ? updatedAsset : a)
+    }))
     get().refreshMarketData()
   },
 
   deleteAsset: (id) => {
-    const assets = investmentsStorageService.getAssets()
+    const { assets } = get()
     const asset = assets.find(a => a.id === id)
     investmentsStorageService.deleteAsset(id)
     if (asset) {
       syncService.queueAsset('delete', asset)
     }
-    set({ assets: investmentsStorageService.getAssets() })
+    set(state => ({ assets: state.assets.filter(a => a.id !== id) }))
     get().refreshMarketData()
   },
 

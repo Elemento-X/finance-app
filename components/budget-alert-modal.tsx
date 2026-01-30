@@ -61,7 +61,7 @@ export function BudgetAlertModal({
     setIsSaving(true)
 
     const alert: BudgetAlert = {
-      id: existingAlert?.id || `budget_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      id: existingAlert?.id || crypto.randomUUID(),
       category: category.id,
       monthlyLimit: limit,
       alertThreshold,

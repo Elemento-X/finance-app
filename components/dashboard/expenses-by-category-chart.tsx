@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useFinanceStore } from "@/hooks/use-finance-store"
@@ -28,29 +29,33 @@ function ExpensesByCategoryChartSkeleton() {
 }
 
 export function ExpensesByCategoryChart() {
-  const { getExpensesByCategory, categories, profile, isHydrated } = useFinanceStore()
+  const { getExpensesByCategory, categories, profile, isHydrated, transactions, filterPeriod } = useFinanceStore()
   const t = useTranslation()
+
+  // Memoize expensive calculations
+  const { data, total } = useMemo(() => {
+    const expensesByCategory = getExpensesByCategory()
+    const totalAmount = Object.values(expensesByCategory).reduce((sum, value) => sum + value, 0)
+
+    const chartData = Object.entries(expensesByCategory)
+      .map(([categoryId, value]) => {
+        const category = categories.find((c) => c.id === categoryId)
+        const percentage = totalAmount > 0 ? (value / totalAmount) * 100 : 0
+        return {
+          name: category ? category.name : categoryId,
+          value,
+          percentage,
+          icon: category?.icon,
+        }
+      })
+      .sort((a, b) => b.value - a.value)
+
+    return { data: chartData, total: totalAmount }
+  }, [transactions, filterPeriod, categories, getExpensesByCategory])
 
   if (!isHydrated) {
     return <ExpensesByCategoryChartSkeleton />
   }
-
-  const expensesByCategory = getExpensesByCategory()
-
-  const total = Object.values(expensesByCategory).reduce((sum, value) => sum + value, 0)
-
-  const data = Object.entries(expensesByCategory)
-    .map(([categoryId, value]) => {
-      const category = categories.find((c) => c.id === categoryId)
-      const percentage = total > 0 ? (value / total) * 100 : 0
-      return {
-        name: category ? category.name : categoryId,
-        value,
-        percentage,
-        icon: category?.icon,
-      }
-    })
-    .sort((a, b) => b.value - a.value)
 
   if (data.length === 0) {
     return (

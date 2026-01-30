@@ -486,6 +486,13 @@ export const translations = {
     "migration.failed": "failed",
     "migration.note": "This is a one-time upload. After this, all changes sync automatically.",
     "investments.myAssets": "Assets",
+
+    // Macro Indicators
+    "macro.selic": "Selic Rate",
+    "macro.perYear": "p.a.",
+    "macro.ipca12m": "Inflation (12m)",
+    "macro.ipcaMonth": "IPCA month",
+    "macro.realRate": "Real Rate",
   },
   pt: {
     // Navigation
@@ -971,6 +978,13 @@ export const translations = {
     "migration.failed": "falharam",
     "migration.note": "Este é um envio único. Após isso, todas as alterações sincronizam automaticamente.",
     "investments.myAssets": "Ativos",
+
+    // Macro Indicators
+    "macro.selic": "Taxa Selic",
+    "macro.perYear": "a.a.",
+    "macro.ipca12m": "Inflação (12m)",
+    "macro.ipcaMonth": "IPCA mês",
+    "macro.realRate": "Taxa Real",
   },
 } as const
 

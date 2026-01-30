@@ -2,6 +2,8 @@
 // Free tier: 15,000 requests/month
 // Docs: https://brapi.dev/docs
 
+import { logger } from "@/lib/logger"
+
 const API_KEY = process.env.NEXT_PUBLIC_BRAPI_API_KEY
 const BASE_URL = "https://brapi.dev/api"
 const CACHE_KEY = "brapi_stocks_cache"
@@ -126,7 +128,7 @@ function saveCache(stocks: StockData[]): void {
     }
     localStorage.setItem(CACHE_KEY, JSON.stringify(data))
   } catch (error) {
-    console.error("[Brapi] Failed to save cache:", error)
+    logger.brapi.error("Failed to save cache:", error)
   }
 }
 
@@ -145,14 +147,14 @@ async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
     const response = await fetch(url, { headers })
 
     if (!response.ok) {
-      console.error(`[Brapi] HTTP error for ${symbol}:`, response.status)
+      logger.brapi.error(`HTTP error for ${symbol}:`, response.status)
       return null
     }
 
     const data = await response.json()
 
     if (!data.results || data.results.length === 0) {
-      console.warn(`[Brapi] No data for ${symbol}`)
+      logger.brapi.warn(`No data for ${symbol}`)
       return null
     }
 
@@ -183,7 +185,7 @@ async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
       lastUpdate: Date.now(),
     }
   } catch (error) {
-    console.error(`[Brapi] Error fetching ${symbol}:`, error)
+    logger.brapi.error(`Error fetching ${symbol}:`, error)
     return null
   }
 }
@@ -222,11 +224,8 @@ function createErrorStock(symbol: string): StockData {
 export async function fetchRadarStocks(): Promise<StockData[]> {
   const cached = loadCache()
   if (cached) {
-    console.log("[Brapi] Using cached data")
     return cached.stocks
   }
-
-  console.log("[Brapi] Fetching fresh data...")
 
   const results: StockData[] = []
 
@@ -235,10 +234,9 @@ export async function fetchRadarStocks(): Promise<StockData[]> {
 
     if (stockData) {
       results.push(stockData)
-      console.log(`[Brapi] ✓ ${symbol}: R$ ${stockData.currentPrice}`)
     } else {
       results.push(createErrorStock(symbol))
-      console.warn(`[Brapi] ✗ ${symbol}: Failed to fetch`)
+      logger.brapi.warn(`Failed to fetch ${symbol}`)
     }
 
     // Delay to respect rate limits (500ms between requests)
