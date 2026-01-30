@@ -22,6 +22,7 @@ export const translations = {
     'common.refresh': 'Refresh',
     'common.today': 'Today',
     'common.update': 'Update',
+    'sync.retrying': 'Sync failed. Retrying in {{seconds}}s.',
 
     // Home page
     'home.title': 'Financial Control',
@@ -558,6 +559,7 @@ export const translations = {
     'common.refresh': 'Atualizar',
     'common.today': 'Hoje',
     'common.update': 'Atualizar',
+    'sync.retrying': 'Falha ao sincronizar. Tentando novamente em {{seconds}}s.',
 
     // Home page
     'home.title': 'Controle Financeiro',

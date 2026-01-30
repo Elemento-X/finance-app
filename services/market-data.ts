@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger'
 const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 const CACHE_KEY = 'market_data_cache'
 const LAST_VALID_CACHE_KEY = 'market_data_last_valid'
+const REQUEST_TIMEOUT_MS = 10 * 1000
 
 // Retry configuration
 const MAX_RETRIES = 3
@@ -29,11 +30,21 @@ async function fetchWithRetry(
   let lastError: Error | null = null
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     try {
-      const response = await fetch(url, options)
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      })
       // Return response even if not ok - let caller handle HTTP errors
       return response
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.marketData.warn(
+          `Fetch attempt ${attempt}/${maxRetries} timed out.`,
+        )
+      }
       lastError = error instanceof Error ? error : new Error(String(error))
       logger.marketData.warn(
         `Fetch attempt ${attempt}/${maxRetries} failed:`,
@@ -45,6 +56,8 @@ async function fetchWithRetry(
         const delay = INITIAL_RETRY_DELAY * attempt // 1s, 2s, 3s
         await sleep(delay)
       }
+    } finally {
+      clearTimeout(timeout)
     }
   }
 

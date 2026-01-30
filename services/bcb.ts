@@ -5,6 +5,7 @@
 import { logger } from '@/lib/logger'
 
 const BASE_URL = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs'
+const REQUEST_TIMEOUT_MS = 10 * 1000
 
 // Series codes
 const SELIC_SERIES = 432 // Taxa Selic Meta
@@ -37,6 +38,16 @@ interface BCBDataPoint {
 interface CacheEntry<T> {
   data: T
   timestamp: number
+}
+
+async function fetchWithTimeout(url: string): Promise<Response> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    return await fetch(url, { signal: controller.signal })
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 /**
@@ -88,7 +99,7 @@ async function fetchSelic(): Promise<MacroData['selic']> {
   }
 
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${BASE_URL}.${SELIC_SERIES}/dados/ultimos/1?formato=json`,
     )
 
@@ -128,7 +139,7 @@ async function fetchIPCA(): Promise<MacroData['ipca']> {
   }
 
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${BASE_URL}.${IPCA_SERIES}/dados/ultimos/12?formato=json`,
     )
 

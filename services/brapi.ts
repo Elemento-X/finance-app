@@ -8,6 +8,7 @@ const API_KEY = process.env.NEXT_PUBLIC_BRAPI_API_KEY
 const BASE_URL = 'https://brapi.dev/api'
 const CACHE_KEY = 'brapi_stocks_cache'
 const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const REQUEST_TIMEOUT_MS = 10 * 1000
 
 // List of 15 Brazilian stocks to display in the radar
 export const RADAR_STOCKS = [
@@ -136,15 +137,17 @@ function saveCache(stocks: StockData[]): void {
  * Fetch stock data from Brapi.dev
  */
 async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
+  const url = `${BASE_URL}/quote/${symbol}`
+  const headers: HeadersInit = {}
+  if (API_KEY) {
+    headers.Authorization = `Bearer ${API_KEY}`
+  }
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
   try {
-    const url = `${BASE_URL}/quote/${symbol}`
-
-    const headers: HeadersInit = {}
-    if (API_KEY) {
-      headers.Authorization = `Bearer ${API_KEY}`
-    }
-
-    const response = await fetch(url, { headers })
+    const response = await fetch(url, { headers, signal: controller.signal })
 
     if (!response.ok) {
       logger.brapi.error(`HTTP error for ${symbol}:`, response.status)
@@ -185,8 +188,13 @@ async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
       lastUpdate: Date.now(),
     }
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logger.brapi.warn(`Request timed out for ${symbol}`)
+    }
     logger.brapi.error(`Error fetching ${symbol}:`, error)
     return null
+  } finally {
+    clearTimeout(timeout)
   }
 }
 
