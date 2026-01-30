@@ -45,6 +45,15 @@ export interface Goal {
 
 export type RecurringFrequency = "weekly" | "monthly" | "yearly"
 
+export interface BudgetAlert {
+  id: string
+  category: string
+  monthlyLimit: number      // Limite mensal em R$
+  alertThreshold: number    // % para alertar (ex: 80)
+  isActive: boolean
+  createdAt: string
+}
+
 export interface RecurringTransaction {
   id: string
   type: TransactionType

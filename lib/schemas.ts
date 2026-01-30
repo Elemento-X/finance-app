@@ -85,6 +85,18 @@ export const RecurringTransactionSchema = z.object({
 
 export type ValidatedRecurringTransaction = z.infer<typeof RecurringTransactionSchema>
 
+// BudgetAlert Schema
+export const BudgetAlertSchema = z.object({
+  id: z.string(),
+  category: z.string(),
+  monthlyLimit: z.number().positive(),
+  alertThreshold: z.number().min(1).max(100),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+})
+
+export type ValidatedBudgetAlert = z.infer<typeof BudgetAlertSchema>
+
 // Validation result type
 export interface ValidationResult<T> {
   valid: T[]
