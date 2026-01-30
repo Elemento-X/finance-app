@@ -87,7 +87,7 @@ export function TransactionForm({ open, onOpenChange, transaction, mode = "creat
     }
 
     const transactionData: Transaction = {
-      id: transaction?.id || `${Date.now()}-${Math.random()}`,
+      id: transaction?.id || crypto.randomUUID(),
       type,
       amount: parsedAmount,
       category,
@@ -108,7 +108,7 @@ export function TransactionForm({ open, onOpenChange, transaction, mode = "creat
       if (isRecurring) {
         const categoryName = categories.find(c => c.id === category)?.name || category
         const recurringData: RecurringTransaction = {
-          id: `recurring-${Date.now()}`,
+          id: crypto.randomUUID(),
           type,
           amount: parsedAmount,
           category: categoryName,

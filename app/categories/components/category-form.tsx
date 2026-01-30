@@ -59,7 +59,7 @@ export function CategoryForm({ open, onOpenChange, category, mode = "create" }: 
     }
 
     const categoryData: Category = {
-      id: category?.id || `cat-${Date.now()}-${Math.random()}`,
+      id: category?.id || crypto.randomUUID(),
       name: name.trim(),
       type,
       icon,
