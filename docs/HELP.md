@@ -128,6 +128,11 @@ logger.sync.error('Falha crítica')  // Sempre aparece
 curl "https://controlec.vercel.app/api/health"
 ```
 
+## Métricas de Uso (feito por codex)
+
+- Supabase registra contagem diária de mensagens do Telegram e transações criadas.
+- View: `usage_daily_metrics`
+
 ## Links Úteis
 
 - [Vercel Dashboard](https://vercel.com/)

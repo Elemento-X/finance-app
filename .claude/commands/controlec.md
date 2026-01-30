@@ -228,6 +228,18 @@ docs/                   → Documentação
 }
 ```
 
+**UsageEvent:**
+```typescript
+{
+  id: string
+  userId: string
+  metric: 'transaction_created' | 'telegram_message'
+  day: string // YYYY-MM-DD
+  source?: 'web' | 'telegram' | 'recurring'
+  createdAt: string
+}
+```
+
 **UserProfile:**
 ```typescript
 {
@@ -431,7 +443,6 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 
 ### Fase 10 — Resiliência (Prioridade Média)
 
-#### 10.1 — Retry e Fallback
 #### 10.1 — Retry e Fallback (feito por codex)
 - [x] Exponential backoff no sync offline com notificação visual — feito por codex
 - [x] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB) — feito por codex
@@ -450,7 +461,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [ ] (Opcional) Relatório interno/cron de indisponibilidade do Radar (RADAR_STOCKS)
 
 #### 11.2 — Métricas de Uso
-- [ ] Contador de mensagens/transações por dia no Supabase
+- [x] Contador de mensagens/transações por dia no Supabase — feito por codex
 - [ ] Dashboard de uso do bot (opcional)
 
 #### 11.3 — Alertas Proativos
@@ -506,6 +517,11 @@ App (client):
 Cron jobs:
 - Validar se estao ativos em Vercel > Cron Jobs
 - Confirmar se houve execucao nas ultimas 24h
+
+Radar (Brapi) - Logs na Vercel:
+1. Vercel Dashboard > Project > Functions > Logs
+2. Filtrar por "brapi" ou "Radar stocks unavailable"
+3. Verificar mensagens do logger: "RADAR_STOCKS has duplicated symbols" e "Radar stocks unavailable (Dados Indisponíveis)"
 
  TESTES
 
@@ -574,5 +590,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-30:** Fase 11.1 (Health Check — feito por codex): `/api/health` com status do Supabase e conectividade de serviços externos.
 - **2026-01-30:** Fase 10.1 (Retry e Fallback — feito por codex): retry com backoff no sync + timeouts de 10s em APIs externas.
 - **2026-01-30:** Investimentos: removido botão manual de atualização; mantido auto-refresh a cada 5 min — feito por codex.
+- **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): contador de mensagens/transações por dia no Supabase.
 
 > Histórico detalhado disponível no git.

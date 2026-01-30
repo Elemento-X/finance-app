@@ -67,6 +67,7 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | `services/migrations.ts` | Migrações de dados (usa `logger.migrations`) |
 | `services/bcb.ts` | API Banco Central (Selic, IPCA) |
 | `services/brapi.ts` | API Brapi.dev com timeout de 10s |
+| `services/usage-metrics.ts` | Registro de métricas de uso (mensagens/transações) |
 | `components/dashboard/trend-chart.tsx` | Card de tendência (saldo 6 meses + previsão) |
 | `utils/formatters.ts` | Formatação de moeda por locale (BRL/USD/EUR) |
 | `lib/supabase.ts` | Client Supabase (browser) |
@@ -144,6 +145,7 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 | `assets` | Ativos de investimento |
 | `recurring_transactions` | Transações recorrentes |
 | `budget_alerts` | Limites de orçamento por categoria |
+| `usage_events` | Eventos de uso (mensagens/transactions) por dia |
 
 **RLS:** Todas as tabelas usam `auth.uid() = user_id`. API Routes com service role ignoram RLS.
 
@@ -326,6 +328,14 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 1. Dashboard > Project > Functions
 2. Selecione a função (ex: `api/cron/generate-recurring`)
 3. Aba "Logs"
+
+### 9.3 Métricas de Uso (feito por codex)
+
+- Eventos de uso são registrados em `usage_events`.
+- View disponível: `usage_daily_metrics` (contagem por usuário, métrica e dia).
+- Métricas atuais:
+  - `telegram_message` (mensagens recebidas)
+  - `transaction_created` (transações criadas: web, telegram, recorrentes)
 
 ## 11. Segurança
 
