@@ -38,6 +38,15 @@ type TransactionRow = {
   date: string
 }
 
+type BudgetAlertRow = {
+  id: string
+  user_id: string
+  category: string
+  monthly_limit: number
+  alert_threshold: number
+  is_active: boolean
+}
+
 async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   if (!telegramToken) {
     console.error("[Telegram] Missing TELEGRAM_BOT_TOKEN")
@@ -268,6 +277,12 @@ export async function POST(req: Request) {
     const confirmation = `${typeEmoji} ${typeLabel} registrada!\n${formattedAmount} — ${transaction.category} — ${formattedDate}`
 
     await sendTelegramMessage(chatId, confirmation)
+
+    // Check budget alerts for expense transactions
+    if (transaction.type === "expense") {
+      await checkBudgetAlert(supabase, userId, chatId, transaction.category)
+    }
+
     return NextResponse.json({ ok: true })
   }
 
@@ -339,5 +354,78 @@ async function getFinancialData(
     balance,
     topCategories,
     recentTransactions,
+  }
+}
+
+// =============================================================================
+// Helper: Check Budget Alerts
+// =============================================================================
+
+async function checkBudgetAlert(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  chatId: number,
+  category: string
+) {
+  // Get budget alert for this category
+  const { data: alertData } = await supabase
+    .from("budget_alerts")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("category", category)
+    .eq("is_active", true)
+    .maybeSingle()
+
+  if (!alertData) return
+
+  const alert = alertData as BudgetAlertRow
+
+  // Calculate total spent this month in this category
+  const now = new Date()
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]
+
+  const { data: transactionsData } = await supabase
+    .from("transactions")
+    .select("amount")
+    .eq("user_id", userId)
+    .eq("category", category)
+    .eq("type", "expense")
+    .gte("date", startOfMonth)
+    .lte("date", endOfMonth)
+
+  const transactions = transactionsData as { amount: number }[] | null
+  if (!transactions || transactions.length === 0) return
+
+  const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0)
+  const percentUsed = (totalSpent / alert.monthly_limit) * 100
+
+  // Check if we should send an alert
+  if (percentUsed >= 100) {
+    const formattedLimit = alert.monthly_limit.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
+    const formattedSpent = totalSpent.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
+    await sendTelegramMessage(
+      chatId,
+      `⚠️ Orçamento excedido!\n\n${category}: ${formattedSpent} de ${formattedLimit} (${percentUsed.toFixed(0)}%)`
+    )
+  } else if (percentUsed >= alert.alert_threshold) {
+    const formattedLimit = alert.monthly_limit.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
+    const formattedSpent = totalSpent.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    })
+    await sendTelegramMessage(
+      chatId,
+      `📊 Alerta de orçamento!\n\n${category}: ${formattedSpent} de ${formattedLimit} (${percentUsed.toFixed(0)}%)`
+    )
   }
 }
