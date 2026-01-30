@@ -29,6 +29,39 @@ export const RADAR_STOCKS = [
   'ABEV3', // Ambev
 ]
 
+function logRadarListIssues(): void {
+  const seen = new Set<string>()
+  const duplicates = new Set<string>()
+  const invalid: string[] = []
+
+  for (const symbol of RADAR_STOCKS) {
+    const trimmed = symbol.trim()
+    if (!trimmed) {
+      invalid.push(symbol)
+      continue
+    }
+
+    if (seen.has(trimmed)) {
+      duplicates.add(trimmed)
+    } else {
+      seen.add(trimmed)
+    }
+  }
+
+  if (invalid.length > 0) {
+    logger.brapi.warn('RADAR_STOCKS has empty/invalid symbols:', invalid)
+  }
+
+  if (duplicates.size > 0) {
+    logger.brapi.warn(
+      'RADAR_STOCKS has duplicated symbols:',
+      Array.from(duplicates),
+    )
+  }
+}
+
+logRadarListIssues()
+
 // Interface with ALL data available in free tier
 export interface StockData {
   // Identification
@@ -253,6 +286,16 @@ export async function fetchRadarStocks(): Promise<StockData[]> {
 
   if (results.some((r) => !r.error)) {
     saveCache(results)
+  }
+
+  const unavailableSymbols = results
+    .filter((stock) => stock.error)
+    .map((stock) => stock.symbol)
+  if (unavailableSymbols.length > 0) {
+    logger.brapi.warn(
+      'Radar stocks unavailable (Dados Indisponíveis):',
+      unavailableSymbols,
+    )
   }
 
   return results

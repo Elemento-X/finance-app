@@ -446,6 +446,8 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 #### 11.1 — Health Check (feito por codex)
 - [x] Endpoint `/api/health` retornando status do Supabase — feito por codex
 - [x] Verificação de conectividade com serviços externos — feito por codex
+- [x] Log de indisponibilidade no Radar (RADAR_STOCKS) — feito por codex
+- [ ] (Opcional) Relatório interno/cron de indisponibilidade do Radar (RADAR_STOCKS)
 
 #### 11.2 — Métricas de Uso
 - [ ] Contador de mensagens/transações por dia no Supabase

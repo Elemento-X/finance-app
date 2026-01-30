@@ -311,6 +311,9 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 - Em `development`: todos os níveis aparecem no console
 - Em `production`: apenas `error` aparece
 
+**Radar (Brapi):**
+- O Radar registra um aviso com a lista de ativos com “Dados indisponíveis” (RADAR_STOCKS) — feito por codex
+
 ### 9.2 Monitoramento em Produção
 
 | Ferramenta | O que monitora |
