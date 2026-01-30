@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
+import { recordUsageEvent } from '@/services/usage-metrics'
 
 // =============================================================================
 // Types
@@ -191,6 +192,13 @@ export async function GET(request: NextRequest) {
         errors++
         continue
       }
+
+      await recordUsageEvent(supabase, {
+        id: transactionId,
+        userId: recurring.user_id,
+        metric: 'transaction_created',
+        source: 'recurring',
+      })
 
       // Update last_generated_date
       const { error: updateError } = await supabase

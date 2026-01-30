@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { parseMessage, formatQueryResponse, Locale } from '@/services/groq'
 import { logger } from '@/lib/logger'
+import { recordUsageEvent } from '@/services/usage-metrics'
 import {
   checkRateLimit,
   sanitizeInput,
@@ -341,6 +342,14 @@ export async function POST(req: Request) {
   const locale = getLocale(userProfile.language)
   const currency = userProfile.currency ?? 'BRL'
   const msg = MESSAGES[locale]
+  const messageEventId = `tg_msg_${chatId}_${message?.message_id ?? crypto.randomUUID()}`
+
+  await recordUsageEvent(supabase, {
+    id: messageEventId,
+    userId,
+    metric: 'telegram_message',
+    source: 'telegram',
+  })
 
   // Get user's categories for better matching
   const { data: categoriesData } = await supabase
@@ -408,6 +417,13 @@ export async function POST(req: Request) {
       await sendTelegramMessage(chatId, msg.saveError)
       return NextResponse.json({ ok: true })
     }
+
+    await recordUsageEvent(supabase, {
+      id: transactionId,
+      userId,
+      metric: 'transaction_created',
+      source: 'telegram',
+    })
 
     // Format confirmation message (multilingual)
     const typeEmoji =
