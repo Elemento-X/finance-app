@@ -32,6 +32,7 @@ export const UserProfileSchema = z.object({
   defaultMonth: z.string(),
   language: z.enum(["en", "pt"]).optional(),
   telegramChatId: z.number().nullable().optional(),
+  telegramSummaryEnabled: z.boolean().optional(),
 })
 
 export type ValidatedUserProfile = z.infer<typeof UserProfileSchema>
@@ -40,6 +41,9 @@ export type ValidatedUserProfile = z.infer<typeof UserProfileSchema>
 export const GoalSchema = z.object({
   id: z.string(),
   title: z.string(),
+  targetAmount: z.number().positive().optional(),
+  currentAmount: z.number().min(0).optional(),
+  deadline: z.string().optional(),
   completed: z.boolean(),
   createdAt: z.string(),
 })
@@ -60,6 +64,38 @@ export const AssetSchema = z.object({
 })
 
 export type ValidatedAsset = z.infer<typeof AssetSchema>
+
+// RecurringTransaction Schema
+export const RecurringTransactionSchema = z.object({
+  id: z.string(),
+  type: z.enum(["income", "expense", "investment"]),
+  amount: z.number().positive(),
+  category: z.string(),
+  description: z.string().optional(),
+  frequency: z.enum(["weekly", "monthly", "yearly"]),
+  dayOfMonth: z.number().min(1).max(28).optional(),
+  dayOfWeek: z.number().min(0).max(6).optional(),
+  monthOfYear: z.number().min(1).max(12).optional(),
+  startDate: z.string(),
+  endDate: z.string().nullable().optional(),
+  lastGeneratedDate: z.string().optional(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+})
+
+export type ValidatedRecurringTransaction = z.infer<typeof RecurringTransactionSchema>
+
+// BudgetAlert Schema
+export const BudgetAlertSchema = z.object({
+  id: z.string(),
+  category: z.string(),
+  monthlyLimit: z.number().positive(),
+  alertThreshold: z.number().min(1).max(100),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+})
+
+export type ValidatedBudgetAlert = z.infer<typeof BudgetAlertSchema>
 
 // Validation result type
 export interface ValidationResult<T> {

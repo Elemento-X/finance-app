@@ -1,6 +1,6 @@
 // Supabase CRUD Service - Mirrors storage.ts interface for cloud persistence
 import { supabase } from "@/lib/supabase"
-import type { Transaction, Category, UserProfile, Goal } from "@/lib/types"
+import type { Transaction, Category, UserProfile, Goal, RecurringTransaction, BudgetAlert } from "@/lib/types"
 import type { Asset } from "@/lib/investment-types"
 
 // =============================================================================
@@ -87,15 +87,17 @@ interface ProfileRow {
   language: string
   default_month: string | null
   telegram_chat_id: number | null
+  telegram_summary_enabled: boolean | null
 }
 
-function profileToRow(p: UserProfile, userId: string): Omit<ProfileRow, 'telegram_chat_id'> {
+function profileToRow(p: UserProfile, userId: string): Omit<ProfileRow, 'telegram_chat_id' | 'telegram_summary_enabled'> & { telegram_summary_enabled?: boolean } {
   return {
     id: userId,
     name: p.name || null,
     currency: p.currency,
     language: p.language,
     default_month: p.defaultMonth || null,
+    telegram_summary_enabled: p.telegramSummaryEnabled ?? false,
   }
 }
 
@@ -106,6 +108,7 @@ function rowToProfile(row: ProfileRow): UserProfile {
     defaultMonth: row.default_month ?? new Date().toISOString().slice(0, 7),
     language: (row.language as 'en' | 'pt') || 'pt',
     telegramChatId: row.telegram_chat_id ?? null,
+    telegramSummaryEnabled: row.telegram_summary_enabled ?? false,
   }
 }
 
@@ -114,6 +117,9 @@ interface GoalRow {
   id: string
   user_id: string
   title: string
+  target_amount: number | null
+  current_amount: number | null
+  deadline: string | null
   completed: boolean
   created_at: string
 }
@@ -123,6 +129,9 @@ function goalToRow(g: Goal, userId: string): Omit<GoalRow, 'created_at'> {
     id: g.id,
     user_id: userId,
     title: g.title,
+    target_amount: g.targetAmount ?? null,
+    current_amount: g.currentAmount ?? null,
+    deadline: g.deadline ?? null,
     completed: g.completed,
   }
 }
@@ -131,6 +140,9 @@ function rowToGoal(row: GoalRow): Goal {
   return {
     id: row.id,
     title: row.title,
+    targetAmount: row.target_amount ?? undefined,
+    currentAmount: row.current_amount ?? undefined,
+    deadline: row.deadline ?? undefined,
     completed: row.completed,
     createdAt: row.created_at,
   }
@@ -178,6 +190,96 @@ function rowToAsset(row: AssetRow): Asset {
   }
 }
 
+// RecurringTransaction
+interface RecurringTransactionRow {
+  id: string
+  user_id: string
+  type: string
+  amount: number
+  category: string
+  description: string | null
+  frequency: string
+  day_of_month: number | null
+  day_of_week: number | null
+  month_of_year: number | null
+  start_date: string
+  end_date: string | null
+  last_generated_date: string | null
+  is_active: boolean
+  created_at: string
+}
+
+function recurringTransactionToRow(r: RecurringTransaction, userId: string): Omit<RecurringTransactionRow, 'created_at'> {
+  return {
+    id: r.id,
+    user_id: userId,
+    type: r.type,
+    amount: r.amount,
+    category: r.category,
+    description: r.description ?? null,
+    frequency: r.frequency,
+    day_of_month: r.dayOfMonth ?? null,
+    day_of_week: r.dayOfWeek ?? null,
+    month_of_year: r.monthOfYear ?? null,
+    start_date: r.startDate,
+    end_date: r.endDate ?? null,
+    last_generated_date: r.lastGeneratedDate ?? null,
+    is_active: r.isActive,
+  }
+}
+
+function rowToRecurringTransaction(row: RecurringTransactionRow): RecurringTransaction {
+  return {
+    id: row.id,
+    type: row.type as RecurringTransaction['type'],
+    amount: row.amount,
+    category: row.category,
+    description: row.description ?? undefined,
+    frequency: row.frequency as RecurringTransaction['frequency'],
+    dayOfMonth: row.day_of_month ?? undefined,
+    dayOfWeek: row.day_of_week ?? undefined,
+    monthOfYear: row.month_of_year ?? undefined,
+    startDate: row.start_date,
+    endDate: row.end_date ?? undefined,
+    lastGeneratedDate: row.last_generated_date ?? undefined,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+  }
+}
+
+// BudgetAlert
+interface BudgetAlertRow {
+  id: string
+  user_id: string
+  category: string
+  monthly_limit: number
+  alert_threshold: number
+  is_active: boolean
+  created_at: string
+}
+
+function budgetAlertToRow(b: BudgetAlert, userId: string): Omit<BudgetAlertRow, 'created_at'> {
+  return {
+    id: b.id,
+    user_id: userId,
+    category: b.category,
+    monthly_limit: b.monthlyLimit,
+    alert_threshold: b.alertThreshold,
+    is_active: b.isActive,
+  }
+}
+
+function rowToBudgetAlert(row: BudgetAlertRow): BudgetAlert {
+  return {
+    id: row.id,
+    category: row.category,
+    monthlyLimit: row.monthly_limit,
+    alertThreshold: row.alert_threshold,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+  }
+}
+
 // =============================================================================
 // Helper: Get current user ID
 // =============================================================================
@@ -215,14 +317,32 @@ export const supabaseService = {
 
   async addTransaction(transaction: Transaction): Promise<boolean> {
     const userId = await getCurrentUserId()
-    if (!userId) return false
+    if (!userId) {
+      console.warn('[Supabase] No user ID, skipping transaction sync')
+      return false
+    }
 
+    const row = transactionToRow(transaction, userId)
+
+    // Use upsert to handle potential duplicate key conflicts gracefully
     const { error } = await supabase
       .from('transactions')
-      .insert(transactionToRow(transaction, userId))
+      .upsert(row, { onConflict: 'id' })
 
     if (error) {
-      console.error('Error adding transaction:', error)
+      // Only log as error if it's not a known recoverable issue
+      if (error.code === '42501') {
+        // RLS policy violation - likely auth issue
+        console.warn('[Supabase] Transaction sync failed (auth):', error.message)
+      } else {
+        console.error('[Supabase] Error adding transaction:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          transaction: { id: transaction.id, type: transaction.type, category: transaction.category },
+        })
+      }
       return false
     }
 
@@ -395,6 +515,23 @@ export const supabaseService = {
     return true
   },
 
+  async updateTelegramSummaryEnabled(enabled: boolean): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ telegram_summary_enabled: enabled })
+      .eq('id', userId)
+
+    if (error) {
+      console.error('Error updating telegram summary enabled:', error)
+      return false
+    }
+
+    return true
+  },
+
   // ---------------------------------------------------------------------------
   // Goals
   // ---------------------------------------------------------------------------
@@ -546,6 +683,228 @@ export const supabaseService = {
 
     if (error) {
       console.error('Error deleting asset:', error)
+      return false
+    }
+
+    return true
+  },
+
+  // ---------------------------------------------------------------------------
+  // Recurring Transactions
+  // ---------------------------------------------------------------------------
+  async getRecurringTransactions(): Promise<RecurringTransaction[]> {
+    const userId = await getCurrentUserId()
+    if (!userId) return []
+
+    const { data, error } = await supabase
+      .from('recurring_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching recurring transactions:', error)
+      return []
+    }
+
+    return (data as RecurringTransactionRow[]).map(rowToRecurringTransaction)
+  },
+
+  async getActiveRecurringTransactions(): Promise<RecurringTransaction[]> {
+    const userId = await getCurrentUserId()
+    if (!userId) return []
+
+    const { data, error } = await supabase
+      .from('recurring_transactions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching active recurring transactions:', error)
+      return []
+    }
+
+    return (data as RecurringTransactionRow[]).map(rowToRecurringTransaction)
+  },
+
+  async addRecurringTransaction(recurringTransaction: RecurringTransaction): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) {
+      console.warn('[Supabase] No user ID, skipping recurring transaction sync')
+      return false
+    }
+
+    const row = recurringTransactionToRow(recurringTransaction, userId)
+
+    // Use upsert to handle potential duplicate key conflicts gracefully
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .upsert(row, { onConflict: 'id' })
+
+    if (error) {
+      if (error.code === '42501') {
+        console.warn('[Supabase] Recurring transaction sync failed (auth):', error.message)
+      } else {
+        console.error('[Supabase] Error adding recurring transaction:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          recurringTransaction: { id: recurringTransaction.id, type: recurringTransaction.type, frequency: recurringTransaction.frequency },
+        })
+      }
+      return false
+    }
+
+    return true
+  },
+
+  async updateRecurringTransaction(id: string, recurringTransaction: RecurringTransaction): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const row = recurringTransactionToRow(recurringTransaction, userId)
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .update(row)
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating recurring transaction:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateRecurringTransactionLastGenerated(id: string, lastGeneratedDate: string): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .update({ last_generated_date: lastGeneratedDate })
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating recurring transaction last generated date:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async deleteRecurringTransaction(id: string): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('recurring_transactions')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error deleting recurring transaction:', error)
+      return false
+    }
+
+    return true
+  },
+
+  // ---------------------------------------------------------------------------
+  // Budget Alerts
+  // ---------------------------------------------------------------------------
+  async getBudgetAlerts(): Promise<BudgetAlert[]> {
+    const userId = await getCurrentUserId()
+    if (!userId) return []
+
+    const { data, error } = await supabase
+      .from('budget_alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching budget alerts:', error)
+      return []
+    }
+
+    return (data as BudgetAlertRow[]).map(rowToBudgetAlert)
+  },
+
+  async getBudgetAlertByCategory(category: string): Promise<BudgetAlert | null> {
+    const userId = await getCurrentUserId()
+    if (!userId) return null
+
+    const { data, error } = await supabase
+      .from('budget_alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', category)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error fetching budget alert:', error)
+      return null
+    }
+
+    return data ? rowToBudgetAlert(data as BudgetAlertRow) : null
+  },
+
+  async addBudgetAlert(alert: BudgetAlert): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const row = budgetAlertToRow(alert, userId)
+    const { error } = await supabase
+      .from('budget_alerts')
+      .upsert(row, { onConflict: 'user_id,category' })
+
+    if (error) {
+      console.error('Error adding budget alert:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateBudgetAlert(id: string, alert: BudgetAlert): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const row = budgetAlertToRow(alert, userId)
+    const { error } = await supabase
+      .from('budget_alerts')
+      .update(row)
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating budget alert:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async deleteBudgetAlert(id: string): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('budget_alerts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error deleting budget alert:', error)
       return false
     }
 

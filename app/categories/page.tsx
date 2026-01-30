@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useFinanceStore } from "@/hooks/use-finance-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,10 +16,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { CategoryForm } from "@/app/categories/components/category-form"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import { BudgetAlertModal } from "@/components/budget-alert-modal"
+import { Plus, Pencil, Trash2, Bell, BellOff } from "lucide-react"
 import { toast } from "sonner"
-import type { Category } from "@/lib/types"
+import type { Category, BudgetAlert } from "@/lib/types"
 import { useTranslation } from "@/lib/i18n"
+import { supabaseService } from "@/services/supabase"
 
 export default function CategoriesPage() {
   const { categories, deleteCategory, transactions } = useFinanceStore()
@@ -27,6 +29,22 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
+  const [budgetAlerts, setBudgetAlerts] = useState<BudgetAlert[]>([])
+  const [budgetModalOpen, setBudgetModalOpen] = useState(false)
+  const [budgetCategory, setBudgetCategory] = useState<Category | null>(null)
+
+  const loadBudgetAlerts = useCallback(async () => {
+    const alerts = await supabaseService.getBudgetAlerts()
+    setBudgetAlerts(alerts)
+  }, [])
+
+  useEffect(() => {
+    loadBudgetAlerts()
+  }, [loadBudgetAlerts])
+
+  const getBudgetAlert = (categoryId: string): BudgetAlert | null => {
+    return budgetAlerts.find((a) => a.category === categoryId && a.isActive) || null
+  }
 
   const handleDelete = () => {
     if (deletingId) {
@@ -105,9 +123,33 @@ export default function CategoriesPage() {
                           {usageCount === 1 ? t("categories.transaction") : t("categories.transactions")}
                         </p>
                       )}
+
+                      {getBudgetAlert(category.id) && (
+                        <p className="text-xs text-primary">
+                          {t("budget.monthlyLimit")}: {getBudgetAlert(category.id)!.monthlyLimit.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex gap-1">
+                      {(category.type === "expense" || category.type === "mixed") && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className={`size-8 ${getBudgetAlert(category.id) ? "text-primary" : ""}`}
+                          onClick={() => {
+                            setBudgetCategory(category)
+                            setBudgetModalOpen(true)
+                          }}
+                          title={t("budget.setLimit")}
+                        >
+                          {getBudgetAlert(category.id) ? (
+                            <Bell className="size-4" />
+                          ) : (
+                            <BellOff className="size-4" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"
@@ -171,6 +213,14 @@ export default function CategoriesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BudgetAlertModal
+        open={budgetModalOpen}
+        onOpenChange={setBudgetModalOpen}
+        category={budgetCategory}
+        existingAlert={budgetCategory ? getBudgetAlert(budgetCategory.id) : null}
+        onSave={loadBudgetAlerts}
+      />
     </div>
   )
 }

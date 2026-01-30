@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Transaction, Category, UserProfile, FilterPeriod, Goal } from "@/lib/types"
+import type { Transaction, Category, UserProfile, FilterPeriod, Goal, RecurringTransaction } from "@/lib/types"
 import { storageService } from "@/services/storage"
 import { calculationsService } from "@/services/calculations"
 import { runMigrations } from "@/services/migrations"
@@ -11,6 +11,7 @@ interface FinanceStore {
   profile: UserProfile
   filterPeriod: FilterPeriod
   goals: Goal[]
+  recurringTransactions: RecurringTransaction[]
   isHydrated: boolean
   isSyncing: boolean
 
@@ -33,10 +34,17 @@ interface FinanceStore {
   // Filter
   setFilterPeriod: (period: FilterPeriod) => void
 
+  // Goals
   addGoal: (goal: Goal) => void
   updateGoal: (id: string, goal: Goal) => void
   deleteGoal: (id: string) => void
   toggleGoal: (id: string) => void
+
+  // Recurring Transactions
+  addRecurringTransaction: (recurring: RecurringTransaction) => void
+  updateRecurringTransaction: (id: string, recurring: RecurringTransaction) => void
+  deleteRecurringTransaction: (id: string) => void
+  toggleRecurringTransaction: (id: string) => void
 
   // Computed
   getFilteredTransactions: () => Transaction[]
@@ -60,6 +68,7 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   },
   filterPeriod: { type: "month", date: new Date() },
   goals: [],
+  recurringTransactions: [],
   isHydrated: false,
   isSyncing: false,
 
@@ -76,6 +85,7 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
       categories: storageService.getCategories(),
       profile: storageService.getProfile(),
       goals: storageService.getGoals(),
+      recurringTransactions: storageService.getRecurringTransactions(),
       isHydrated: true,
     })
 
@@ -89,6 +99,7 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
         categories: storageService.getCategories(),
         profile: storageService.getProfile(),
         goals: storageService.getGoals(),
+        recurringTransactions: storageService.getRecurringTransactions(),
       })
     } finally {
       set({ isSyncing: false })
@@ -179,6 +190,39 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
       storageService.updateGoal(id, updatedGoal)
       syncService.queueGoal('update', updatedGoal)
       set({ goals: storageService.getGoals() })
+    }
+  },
+
+  addRecurringTransaction: (recurring) => {
+    storageService.addRecurringTransaction(recurring)
+    syncService.queueRecurringTransaction('create', recurring)
+    set({ recurringTransactions: storageService.getRecurringTransactions() })
+  },
+
+  updateRecurringTransaction: (id, recurring) => {
+    storageService.updateRecurringTransaction(id, recurring)
+    syncService.queueRecurringTransaction('update', recurring)
+    set({ recurringTransactions: storageService.getRecurringTransactions() })
+  },
+
+  deleteRecurringTransaction: (id) => {
+    const recurringTransactions = storageService.getRecurringTransactions()
+    const recurring = recurringTransactions.find(r => r.id === id)
+    storageService.deleteRecurringTransaction(id)
+    if (recurring) {
+      syncService.queueRecurringTransaction('delete', recurring)
+    }
+    set({ recurringTransactions: storageService.getRecurringTransactions() })
+  },
+
+  toggleRecurringTransaction: (id) => {
+    const recurringTransactions = storageService.getRecurringTransactions()
+    const recurring = recurringTransactions.find((r) => r.id === id)
+    if (recurring) {
+      const updated = { ...recurring, isActive: !recurring.isActive }
+      storageService.updateRecurringTransaction(id, updated)
+      syncService.queueRecurringTransaction('update', updated)
+      set({ recurringTransactions: storageService.getRecurringTransactions() })
     }
   },
 
