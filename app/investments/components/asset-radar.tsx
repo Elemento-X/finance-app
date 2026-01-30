@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -395,6 +395,11 @@ function BrazilianStocksTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number | null>(null)
+  const tRef = useRef(t)
+
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
 
   const formatPercent = (value: number) => {
     if (value == null || isNaN(value)) return '0,00%'
@@ -410,7 +415,7 @@ function BrazilianStocksTab() {
     })
   }
 
-  const loadStocks = async (forceRefresh: boolean = false) => {
+  const loadStocks = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoading(true)
     setError(null)
 
@@ -423,12 +428,12 @@ function BrazilianStocksTab() {
       setStocks(data)
       setCacheAge(getCacheAge())
     } catch (err) {
-      setError(t('radar.error'))
+      setError(tRef.current('radar.error'))
       console.error('Failed to fetch stocks:', err)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadStocks()
