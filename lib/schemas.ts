@@ -32,6 +32,7 @@ export const UserProfileSchema = z.object({
   defaultMonth: z.string(),
   language: z.enum(["en", "pt"]).optional(),
   telegramChatId: z.number().nullable().optional(),
+  telegramSummaryEnabled: z.boolean().optional(),
 })
 
 export type ValidatedUserProfile = z.infer<typeof UserProfileSchema>

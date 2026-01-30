@@ -25,6 +25,7 @@ export interface UserProfile {
   defaultMonth: string
   language: "en" | "pt" // Added language field
   telegramChatId?: number | null
+  telegramSummaryEnabled?: boolean // Opt-in for automatic summaries
 }
 
 export interface FilterPeriod {
