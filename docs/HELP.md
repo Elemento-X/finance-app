@@ -13,13 +13,12 @@
 | 5 | Supabase: auth, CRUD, sync offline-first |
 | 6 | Telegram Bot: vinculação, parsing IA, transações |
 | 7.1-7.2 | Resumos automáticos, alertas de orçamento |
+| 7.3-7.4 | Categorização automática (IA), bot multilíngue (PT/EN) |
 | 8.1 | MacroBar: indicadores econômicos (Selic, IPCA, taxa real) |
 | 9 | Segurança: rate limiting, sanitização, auditoria RLS |
 
 ### Em Andamento
 
-- 7.3: Categorização automática via IA
-- 7.4: Bot multilíngue
 - 7.5: Dashboard com tendências
 
 ### Planejadas
@@ -77,6 +76,17 @@ CRON_SECRET=
 # Configurar webhook
 curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://controlec.vercel.app/api/telegram&secret_token=<SECRET>"
 ```
+
+### Novidades 7.3 e 7.4
+
+- Categorizacao automatica: tenta casar categoria localmente (keywords) e usa IA como fallback.
+- Bot multilingue: respostas em pt/en conforme idioma do perfil do usuario.
+- Idioma do bot: definido pelo campo `language` do profile (pt ou en).
+- Rate limiting: 10 mensagens/min por chat (memoria local).
+- Sanitizacao: remove HTML e caracteres de controle, limita tamanho de mensagem.
+- Exemplos:
+  - PT: "gastei 50 no mercado" -> registra despesa.
+  - EN: "spent 50 on groceries" -> registers expense.
 
 ## Logging
 
