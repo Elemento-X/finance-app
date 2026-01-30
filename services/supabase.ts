@@ -1,6 +1,6 @@
 // Supabase CRUD Service - Mirrors storage.ts interface for cloud persistence
 import { supabase } from "@/lib/supabase"
-import type { Transaction, Category, UserProfile, Goal, RecurringTransaction } from "@/lib/types"
+import type { Transaction, Category, UserProfile, Goal, RecurringTransaction, BudgetAlert } from "@/lib/types"
 import type { Asset } from "@/lib/investment-types"
 
 // =============================================================================
@@ -242,6 +242,39 @@ function rowToRecurringTransaction(row: RecurringTransactionRow): RecurringTrans
     startDate: row.start_date,
     endDate: row.end_date ?? undefined,
     lastGeneratedDate: row.last_generated_date ?? undefined,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+  }
+}
+
+// BudgetAlert
+interface BudgetAlertRow {
+  id: string
+  user_id: string
+  category: string
+  monthly_limit: number
+  alert_threshold: number
+  is_active: boolean
+  created_at: string
+}
+
+function budgetAlertToRow(b: BudgetAlert, userId: string): Omit<BudgetAlertRow, 'created_at'> {
+  return {
+    id: b.id,
+    user_id: userId,
+    category: b.category,
+    monthly_limit: b.monthlyLimit,
+    alert_threshold: b.alertThreshold,
+    is_active: b.isActive,
+  }
+}
+
+function rowToBudgetAlert(row: BudgetAlertRow): BudgetAlert {
+  return {
+    id: row.id,
+    category: row.category,
+    monthlyLimit: row.monthly_limit,
+    alertThreshold: row.alert_threshold,
     isActive: row.is_active,
     createdAt: row.created_at,
   }
@@ -777,6 +810,101 @@ export const supabaseService = {
 
     if (error) {
       console.error('Error deleting recurring transaction:', error)
+      return false
+    }
+
+    return true
+  },
+
+  // ---------------------------------------------------------------------------
+  // Budget Alerts
+  // ---------------------------------------------------------------------------
+  async getBudgetAlerts(): Promise<BudgetAlert[]> {
+    const userId = await getCurrentUserId()
+    if (!userId) return []
+
+    const { data, error } = await supabase
+      .from('budget_alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching budget alerts:', error)
+      return []
+    }
+
+    return (data as BudgetAlertRow[]).map(rowToBudgetAlert)
+  },
+
+  async getBudgetAlertByCategory(category: string): Promise<BudgetAlert | null> {
+    const userId = await getCurrentUserId()
+    if (!userId) return null
+
+    const { data, error } = await supabase
+      .from('budget_alerts')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('category', category)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Error fetching budget alert:', error)
+      return null
+    }
+
+    return data ? rowToBudgetAlert(data as BudgetAlertRow) : null
+  },
+
+  async addBudgetAlert(alert: BudgetAlert): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const row = budgetAlertToRow(alert, userId)
+    const { error } = await supabase
+      .from('budget_alerts')
+      .upsert(row, { onConflict: 'user_id,category' })
+
+    if (error) {
+      console.error('Error adding budget alert:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async updateBudgetAlert(id: string, alert: BudgetAlert): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const row = budgetAlertToRow(alert, userId)
+    const { error } = await supabase
+      .from('budget_alerts')
+      .update(row)
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating budget alert:', error)
+      return false
+    }
+
+    return true
+  },
+
+  async deleteBudgetAlert(id: string): Promise<boolean> {
+    const userId = await getCurrentUserId()
+    if (!userId) return false
+
+    const { error } = await supabase
+      .from('budget_alerts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error deleting budget alert:', error)
       return false
     }
 
