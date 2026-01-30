@@ -109,45 +109,49 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   addTransaction: (transaction) => {
     storageService.addTransaction(transaction)
     syncService.queueTransaction('create', transaction)
-    set({ transactions: storageService.getTransactions() })
+    set(state => ({ transactions: [...state.transactions, transaction] }))
   },
 
   updateTransaction: (id, transaction) => {
     storageService.updateTransaction(id, transaction)
     syncService.queueTransaction('update', transaction)
-    set({ transactions: storageService.getTransactions() })
+    set(state => ({
+      transactions: state.transactions.map(t => t.id === id ? transaction : t)
+    }))
   },
 
   deleteTransaction: (id) => {
-    const transactions = storageService.getTransactions()
+    const { transactions } = get()
     const transaction = transactions.find(t => t.id === id)
     storageService.deleteTransaction(id)
     if (transaction) {
       syncService.queueTransaction('delete', transaction)
     }
-    set({ transactions: storageService.getTransactions() })
+    set(state => ({ transactions: state.transactions.filter(t => t.id !== id) }))
   },
 
   addCategory: (category) => {
     storageService.addCategory(category)
     syncService.queueCategory('create', category)
-    set({ categories: storageService.getCategories() })
+    set(state => ({ categories: [...state.categories, category] }))
   },
 
   updateCategory: (id, category) => {
     storageService.updateCategory(id, category)
     syncService.queueCategory('update', category)
-    set({ categories: storageService.getCategories() })
+    set(state => ({
+      categories: state.categories.map(c => c.id === id ? category : c)
+    }))
   },
 
   deleteCategory: (id) => {
-    const categories = storageService.getCategories()
+    const { categories } = get()
     const category = categories.find(c => c.id === id)
     storageService.deleteCategory(id)
     if (category) {
       syncService.queueCategory('delete', category)
     }
-    set({ categories: storageService.getCategories() })
+    set(state => ({ categories: state.categories.filter(c => c.id !== id) }))
   },
 
   updateProfile: (profile) => {
@@ -163,66 +167,74 @@ export const useFinanceStore = create<FinanceStore>((set, get) => ({
   addGoal: (goal) => {
     storageService.addGoal(goal)
     syncService.queueGoal('create', goal)
-    set({ goals: storageService.getGoals() })
+    set(state => ({ goals: [...state.goals, goal] }))
   },
 
   updateGoal: (id, goal) => {
     storageService.updateGoal(id, goal)
     syncService.queueGoal('update', goal)
-    set({ goals: storageService.getGoals() })
+    set(state => ({
+      goals: state.goals.map(g => g.id === id ? goal : g)
+    }))
   },
 
   deleteGoal: (id) => {
-    const goals = storageService.getGoals()
+    const { goals } = get()
     const goal = goals.find(g => g.id === id)
     storageService.deleteGoal(id)
     if (goal) {
       syncService.queueGoal('delete', goal)
     }
-    set({ goals: storageService.getGoals() })
+    set(state => ({ goals: state.goals.filter(g => g.id !== id) }))
   },
 
   toggleGoal: (id) => {
-    const goals = storageService.getGoals()
+    const { goals } = get()
     const goal = goals.find((g) => g.id === id)
     if (goal) {
       const updatedGoal = { ...goal, completed: !goal.completed }
       storageService.updateGoal(id, updatedGoal)
       syncService.queueGoal('update', updatedGoal)
-      set({ goals: storageService.getGoals() })
+      set(state => ({
+        goals: state.goals.map(g => g.id === id ? updatedGoal : g)
+      }))
     }
   },
 
   addRecurringTransaction: (recurring) => {
     storageService.addRecurringTransaction(recurring)
     syncService.queueRecurringTransaction('create', recurring)
-    set({ recurringTransactions: storageService.getRecurringTransactions() })
+    set(state => ({ recurringTransactions: [...state.recurringTransactions, recurring] }))
   },
 
   updateRecurringTransaction: (id, recurring) => {
     storageService.updateRecurringTransaction(id, recurring)
     syncService.queueRecurringTransaction('update', recurring)
-    set({ recurringTransactions: storageService.getRecurringTransactions() })
+    set(state => ({
+      recurringTransactions: state.recurringTransactions.map(r => r.id === id ? recurring : r)
+    }))
   },
 
   deleteRecurringTransaction: (id) => {
-    const recurringTransactions = storageService.getRecurringTransactions()
+    const { recurringTransactions } = get()
     const recurring = recurringTransactions.find(r => r.id === id)
     storageService.deleteRecurringTransaction(id)
     if (recurring) {
       syncService.queueRecurringTransaction('delete', recurring)
     }
-    set({ recurringTransactions: storageService.getRecurringTransactions() })
+    set(state => ({ recurringTransactions: state.recurringTransactions.filter(r => r.id !== id) }))
   },
 
   toggleRecurringTransaction: (id) => {
-    const recurringTransactions = storageService.getRecurringTransactions()
+    const { recurringTransactions } = get()
     const recurring = recurringTransactions.find((r) => r.id === id)
     if (recurring) {
       const updated = { ...recurring, isActive: !recurring.isActive }
       storageService.updateRecurringTransaction(id, updated)
       syncService.queueRecurringTransaction('update', updated)
-      set({ recurringTransactions: storageService.getRecurringTransactions() })
+      set(state => ({
+        recurringTransactions: state.recurringTransactions.map(r => r.id === id ? updated : r)
+      }))
     }
   },
 

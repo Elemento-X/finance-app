@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useFinanceStore } from "@/hooks/use-finance-store"
@@ -27,17 +28,20 @@ function FinancialSummarySkeleton() {
 }
 
 export function FinancialSummary() {
-  const { getBalance, getTotalIncome, getTotalExpense, getTotalInvestment, profile, isHydrated } = useFinanceStore()
+  const { getBalance, getTotalIncome, getTotalExpense, getTotalInvestment, profile, isHydrated, transactions, filterPeriod } = useFinanceStore()
   const t = useTranslation()
+
+  // Memoize expensive calculations - only recalculate when transactions or filter change
+  const { balance, income, expense, investment } = useMemo(() => ({
+    balance: getBalance(),
+    income: getTotalIncome(),
+    expense: getTotalExpense(),
+    investment: getTotalInvestment(),
+  }), [transactions, filterPeriod, getBalance, getTotalIncome, getTotalExpense, getTotalInvestment])
 
   if (!isHydrated) {
     return <FinancialSummarySkeleton />
   }
-
-  const balance = getBalance()
-  const income = getTotalIncome()
-  const expense = getTotalExpense()
-  const investment = getTotalInvestment()
 
   const summaryCards = [
     {
