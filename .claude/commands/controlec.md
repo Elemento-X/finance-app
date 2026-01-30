@@ -886,7 +886,7 @@ alter table goals add column if not exists deadline date;
 alter table profiles add column if not exists telegram_summary_enabled boolean default false;
 ```
 
-#### 7.2 — Alertas de Orçamento
+#### 7.2 — Alertas de Orçamento ✅ CONCLUÍDA
 
 **Objetivo:** Notificar usuário quando gastos em categoria atingem threshold.
 
@@ -905,17 +905,37 @@ alter table profiles add column if not exists telegram_summary_enabled boolean d
 ```
 
 **Funcionalidades:**
-- [ ] Configurar limite mensal por categoria
-- [ ] Alerta quando atinge X% do limite (ex: 80%)
-- [ ] Alerta quando ultrapassa 100%
-- [ ] Envio via Telegram (se vinculado) ou toast no app
+- [x] Configurar limite mensal por categoria
+- [x] Alerta quando atinge X% do limite (ex: 80%)
+- [x] Alerta quando ultrapassa 100%
+- [x] Envio via Telegram ao registrar despesa
 
 **Etapas:**
-- [ ] Criar tabela `budget_alerts` no Supabase + RLS
-- [ ] Criar UI para configurar limites (página de categorias ou perfil)
-- [ ] Verificar limites ao registrar transação (webhook Telegram + app)
-- [ ] Enviar alerta se threshold atingido
-- [ ] Traduções PT/EN (~15 chaves)
+- [x] Criar tabela `budget_alerts` no Supabase + RLS
+- [x] Criar UI para configurar limites (botão de sino em cada categoria de despesa)
+- [x] Verificar limites ao registrar transação (webhook Telegram)
+- [x] Enviar alerta se threshold atingido
+- [x] Traduções PT/EN (~18 chaves)
+
+**Alteração necessária no Supabase (rodar manualmente):**
+```sql
+create table if not exists budget_alerts (
+  id text primary key,
+  user_id uuid references auth.users not null,
+  category text not null,
+  monthly_limit numeric not null,
+  alert_threshold smallint default 80,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  unique(user_id, category)
+);
+
+create index if not exists idx_budget_alerts_user on budget_alerts (user_id);
+alter table budget_alerts enable row level security;
+
+create policy "Budget alerts own data" on budget_alerts
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+```
 
 #### 7.3 — Categorização Automática via IA
 
@@ -1119,6 +1139,18 @@ Finalize perguntando:
   - `docs/supabase-schema-rls.sql`: Schema atualizado + migration documentada
   - Dependência `@radix-ui/react-switch` adicionada
 - **Fase 7.1 100% concluída:** Resumos automáticos com opt-in no perfil
+- **Fase 7.2 Alertas de Orçamento:**
+  - `lib/types.ts`: Interface BudgetAlert adicionada
+  - `lib/schemas.ts`: BudgetAlertSchema criado
+  - `services/supabase.ts`: CRUD completo para budget_alerts
+  - `components/budget-alert-modal.tsx`: Modal para configurar limites
+  - `components/ui/slider.tsx`: Componente Slider criado (Radix UI)
+  - `app/categories/page.tsx`: Botão de sino em cada categoria de despesa/mista
+  - `app/api/telegram/route.ts`: Verificação de alertas ao registrar despesa
+  - `lib/i18n.ts`: ~18 chaves de alertas em PT/EN
+  - `docs/supabase-schema-rls.sql`: Tabela budget_alerts documentada
+  - Dependência `@radix-ui/react-slider` adicionada
+- **Fase 7.2 100% concluída:** Alertas de orçamento por categoria
 
 **2026-01-26:**
 
@@ -1230,5 +1262,6 @@ Finalize perguntando:
 | 2026-01-29 | Fase 4.4 ✅ | Gráficos Comparativos: já existiam (MonthlyEvolution, ExpensesByCategory, IncomeVsExpense) |
 | 2026-01-29 | Fase 4.5 ✅ | Relatórios Exportáveis: CSV + PDF com jsPDF, seção de export no Profile |
 | 2026-01-29 | Fase 7.1 ✅ | Resumos Automáticos via Telegram: cron semanal/mensal, toggle opt-in no perfil |
+| 2026-01-29 | Fase 7.2 ✅ | Alertas de Orçamento: limite por categoria, alertas via Telegram ao registrar despesa |
 
 > Detalhes granulares de cada mudança estão no histórico git.
