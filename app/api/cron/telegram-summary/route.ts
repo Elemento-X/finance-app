@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase-admin"
+import { logger } from "@/lib/logger"
 
 // =============================================================================
 // Types
@@ -37,7 +38,7 @@ const telegramToken = process.env.TELEGRAM_BOT_TOKEN
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<boolean> {
   if (!telegramToken) {
-    console.error("[TelegramSummary] Missing TELEGRAM_BOT_TOKEN")
+    logger.cron.error("Missing TELEGRAM_BOT_TOKEN")
     return false
   }
 
@@ -54,13 +55,13 @@ async function sendTelegramMessage(chatId: number, text: string): Promise<boolea
 
     if (!response.ok) {
       const errorData = await response.json()
-      console.error(`[TelegramSummary] Failed to send message to ${chatId}:`, errorData)
+      logger.cron.error(`Failed to send message to chat ${chatId}:`, errorData)
       return false
     }
 
     return true
   } catch (error) {
-    console.error(`[TelegramSummary] Error sending message to ${chatId}:`, error)
+    logger.cron.error(`Error sending message to chat ${chatId}:`, error)
     return false
   }
 }
@@ -320,12 +321,12 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret) {
-      console.error("[TelegramSummary] CRON_SECRET not configured")
+      logger.cron.error("CRON_SECRET not configured")
       return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
     }
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error("[TelegramSummary] Invalid authorization")
+      logger.cron.warn("Invalid authorization attempt")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -335,7 +336,7 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdmin()
     const now = new Date()
 
-    console.log(`[TelegramSummary] Starting ${summaryType} summary generation at ${now.toISOString()}`)
+    logger.cron.info(`Starting ${summaryType} summary generation`)
 
     // Fetch all users with telegram enabled and summary opted-in
     const { data: profiles, error: fetchError } = await supabase
@@ -345,16 +346,16 @@ export async function GET(request: NextRequest) {
       .eq("telegram_summary_enabled", true)
 
     if (fetchError) {
-      console.error("[TelegramSummary] Error fetching profiles:", fetchError)
+      logger.cron.error("Error fetching profiles:", fetchError)
       return NextResponse.json({ error: "Database error" }, { status: 500 })
     }
 
     if (!profiles || profiles.length === 0) {
-      console.log("[TelegramSummary] No users with telegram summaries enabled")
+      logger.cron.info("No users with telegram summaries enabled")
       return NextResponse.json({ sent: 0, skipped: 0 })
     }
 
-    console.log(`[TelegramSummary] Found ${profiles.length} users with summaries enabled`)
+    logger.cron.info(`Found ${profiles.length} users with summaries enabled`)
 
     let sent = 0
     let failed = 0
@@ -396,14 +397,14 @@ export async function GET(request: NextRequest) {
 
       if (success) {
         sent++
-        console.log(`[TelegramSummary] Sent ${summaryType} summary to user ${profile.id}`)
+        logger.cron.info(`Sent ${summaryType} summary to user ${profile.id}`)
       } else {
         failed++
-        console.error(`[TelegramSummary] Failed to send to user ${profile.id}`)
+        logger.cron.error(`Failed to send to user ${profile.id}`)
       }
     }
 
-    console.log(`[TelegramSummary] Complete: ${sent} sent, ${failed} failed`)
+    logger.cron.info(`Complete: ${sent} sent, ${failed} failed`)
 
     return NextResponse.json({
       type: summaryType,
@@ -413,7 +414,7 @@ export async function GET(request: NextRequest) {
       timestamp: now.toISOString(),
     })
   } catch (error) {
-    console.error("[TelegramSummary] Unexpected error:", error)
+    logger.cron.error("Unexpected error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

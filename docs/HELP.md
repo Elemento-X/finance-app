@@ -13,12 +13,22 @@
 | 5 | Supabase: auth, CRUD, sync offline-first |
 | 6 | Telegram Bot: vinculação, parsing IA, transações |
 | 7.1-7.2 | Resumos automáticos, alertas de orçamento |
+| 8.1 | MacroBar: indicadores econômicos (Selic, IPCA, taxa real) |
+| 9 | Segurança: rate limiting, sanitização, auditoria RLS |
 
 ### Em Andamento
 
 - 7.3: Categorização automática via IA
 - 7.4: Bot multilíngue
 - 7.5: Dashboard com tendências
+
+### Planejadas
+
+- 8.2: Expandir indicadores de ativos
+- 10: Resiliência (retry, fallback, cache)
+- 11: Observabilidade (health check, métricas, alertas)
+- 12: Performance (bundle size, queries)
+- 13: DX (testes E2E, seed data)
 
 ## Documentação
 

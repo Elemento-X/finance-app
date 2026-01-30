@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase-admin"
 import { parseMessage, formatQueryResponse } from "@/services/groq"
+import { logger } from "@/lib/logger"
+import {
+  checkRateLimit,
+  sanitizeInput,
+  validateInput,
+  TELEGRAM_RATE_LIMIT,
+  MAX_MESSAGE_LENGTH,
+} from "@/lib/security"
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN
 const telegramSecret = process.env.TELEGRAM_WEBHOOK_SECRET
@@ -49,7 +57,7 @@ type BudgetAlertRow = {
 
 async function sendTelegramMessage(chatId: number, text: string): Promise<boolean> {
   if (!telegramToken) {
-    console.error("[Telegram] Missing TELEGRAM_BOT_TOKEN")
+    logger.telegram.error("Missing TELEGRAM_BOT_TOKEN")
     return false
   }
 
@@ -61,19 +69,19 @@ async function sendTelegramMessage(chatId: number, text: string): Promise<boolea
     })
 
     if (!response.ok) {
-      console.error("[Telegram] Failed to send message:", response.status)
+      logger.telegram.error("Failed to send message:", response.status)
       return false
     }
     return true
   } catch (error) {
-    console.error("[Telegram] Error sending message:", error)
+    logger.telegram.error("Error sending message:", error)
     return false
   }
 }
 
 export async function POST(req: Request) {
   if (!telegramSecret) {
-    console.error("[Telegram] Missing TELEGRAM_WEBHOOK_SECRET")
+    logger.telegram.error("Missing TELEGRAM_WEBHOOK_SECRET")
     return new NextResponse("Server misconfigured", { status: 500 })
   }
 
@@ -86,16 +94,43 @@ export async function POST(req: Request) {
   try {
     update = (await req.json()) as TelegramUpdate
   } catch (error) {
-    console.error("[Telegram] Invalid JSON", error)
+    logger.telegram.error("Invalid JSON", error)
     return NextResponse.json({ ok: true })
   }
 
   const message = update?.message ?? update?.edited_message
-  const text = message?.text?.trim()
+  const rawText = message?.text?.trim()
   const chatId = message?.chat?.id
 
-  if (!text || !chatId) {
+  if (!rawText || !chatId) {
     return NextResponse.json({ ok: true })
+  }
+
+  // Rate limiting: 10 messages per minute per chat
+  const rateLimitKey = `telegram:${chatId}`
+  const rateLimitResult = checkRateLimit(rateLimitKey, TELEGRAM_RATE_LIMIT)
+
+  if (!rateLimitResult.allowed) {
+    logger.telegram.warn(`Rate limit exceeded for chat ${chatId}`)
+    const waitSeconds = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)
+    await sendTelegramMessage(
+      chatId,
+      `⏳ Muitas mensagens! Aguarde ${waitSeconds} segundos.`
+    )
+    return NextResponse.json({ ok: true })
+  }
+
+  // Sanitize and validate input
+  const text = sanitizeInput(rawText, { maxLength: MAX_MESSAGE_LENGTH })
+
+  // Skip validation for /start command
+  if (!text.startsWith("/start")) {
+    const validation = validateInput(text)
+    if (!validation.valid) {
+      logger.telegram.warn(`Invalid input from chat ${chatId}: ${validation.error}`)
+      await sendTelegramMessage(chatId, "Não entendi. Tenta reformular? 🤔")
+      return NextResponse.json({ ok: true })
+    }
   }
 
   if (text.startsWith("/start")) {
@@ -139,7 +174,7 @@ export async function POST(req: Request) {
       .maybeSingle<Pick<ProfileRow, "telegram_chat_id">>()
 
     if (profileError) {
-      console.error("[Telegram] Failed to load profile:", profileError)
+      logger.telegram.error("Failed to load profile:", profileError)
       await sendTelegramMessage(chatId, "Erro ao conectar. Tente novamente.")
       return NextResponse.json({ ok: true })
     }
@@ -179,7 +214,7 @@ export async function POST(req: Request) {
       .is("telegram_chat_id", null)
 
     if (updateError) {
-      console.error("[Telegram] Failed to update profile:", updateError)
+      logger.telegram.error("Failed to update profile:", updateError)
       await sendTelegramMessage(chatId, "Erro ao conectar. Tente novamente.")
       return NextResponse.json({ ok: true })
     }
@@ -268,7 +303,7 @@ export async function POST(req: Request) {
     })
 
     if (insertError) {
-      console.error("[Telegram] Failed to insert transaction:", insertError)
+      logger.telegram.error("Failed to insert transaction:", insertError)
       await sendTelegramMessage(chatId, "Erro ao salvar. Tente novamente. 😕")
       return NextResponse.json({ ok: true })
     }

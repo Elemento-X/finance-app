@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabase-admin"
+import { logger } from "@/lib/logger"
 
 // =============================================================================
 // Types
@@ -97,12 +98,12 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret) {
-      console.error("[Cron] CRON_SECRET not configured")
+      logger.cron.error("CRON_SECRET not configured")
       return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
     }
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-      console.error("[Cron] Invalid authorization")
+      logger.cron.warn("Invalid authorization attempt")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
     const today = new Date()
     const todayStr = getTodayDateString()
 
-    console.log(`[Cron] Starting recurring transactions generation for ${todayStr}`)
+    logger.cron.info(`Starting recurring transactions generation for ${todayStr}`)
 
     // Fetch all active recurring transactions
     const { data: recurringList, error: fetchError } = await supabase
@@ -119,16 +120,16 @@ export async function GET(request: NextRequest) {
       .eq("is_active", true)
 
     if (fetchError) {
-      console.error("[Cron] Error fetching recurring transactions:", fetchError)
+      logger.cron.error("Error fetching recurring transactions:", fetchError)
       return NextResponse.json({ error: "Database error" }, { status: 500 })
     }
 
     if (!recurringList || recurringList.length === 0) {
-      console.log("[Cron] No active recurring transactions found")
+      logger.cron.info("No active recurring transactions found")
       return NextResponse.json({ generated: 0, skipped: 0 })
     }
 
-    console.log(`[Cron] Found ${recurringList.length} active recurring transactions`)
+    logger.cron.info(`Found ${recurringList.length} active recurring transactions`)
 
     let generated = 0
     let skipped = 0
@@ -159,7 +160,7 @@ export async function GET(request: NextRequest) {
         .insert(transactionData as never)
 
       if (insertError) {
-        console.error(`[Cron] Error inserting transaction for recurring ${recurring.id}:`, insertError)
+        logger.cron.error(`Error inserting transaction for recurring ${recurring.id}:`, insertError)
         errors++
         continue
       }
@@ -171,15 +172,15 @@ export async function GET(request: NextRequest) {
         .eq("id", recurring.id)
 
       if (updateError) {
-        console.error(`[Cron] Error updating last_generated_date for ${recurring.id}:`, updateError)
+        logger.cron.error(`Error updating last_generated_date for ${recurring.id}:`, updateError)
         // Transaction was created, so count as generated even if update failed
       }
 
-      console.log(`[Cron] Generated transaction for recurring ${recurring.id} (${recurring.category})`)
+      logger.cron.info(`Generated transaction for recurring ${recurring.id} (${recurring.category})`)
       generated++
     }
 
-    console.log(`[Cron] Complete: ${generated} generated, ${skipped} skipped, ${errors} errors`)
+    logger.cron.info(`Complete: ${generated} generated, ${skipped} skipped, ${errors} errors`)
 
     return NextResponse.json({
       generated,
@@ -188,7 +189,7 @@ export async function GET(request: NextRequest) {
       date: todayStr,
     })
   } catch (error) {
-    console.error("[Cron] Unexpected error:", error)
+    logger.cron.error("Unexpected error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

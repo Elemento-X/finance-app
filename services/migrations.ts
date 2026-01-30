@@ -4,6 +4,7 @@
  * This module handles versioning and migrations for localStorage data.
  * When the data structure changes, add a new migration function and increment CURRENT_VERSION.
  */
+import { logger } from "@/lib/logger"
 
 const STORAGE_VERSION_KEY = "finance_data_version"
 const CURRENT_VERSION = 2
@@ -63,7 +64,7 @@ const migrations: Record<number, MigrationFn> = {
 
         if (transactionsModified) {
           localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(migratedTransactions))
-          console.log("[ControleC] Migrated unexpected transactions to isUnexpected flag")
+          logger.migrations.info("Migrated unexpected transactions to isUnexpected flag")
         }
       }
 
@@ -83,11 +84,11 @@ const migrations: Record<number, MigrationFn> = {
 
         if (categoriesModified) {
           localStorage.setItem(CATEGORIES_KEY, JSON.stringify(migratedCategories))
-          console.log("[ControleC] Migrated unexpected categories to expense type")
+          logger.migrations.info("Migrated unexpected categories to expense type")
         }
       }
     } catch (error) {
-      console.error("[ControleC] Migration v2 failed:", error)
+      logger.migrations.error("Migration v2 failed:", error)
       throw error
     }
   },
@@ -123,17 +124,17 @@ export function runMigrations(): void {
     return // Already up to date
   }
 
-  console.log(`[ControleC] Running migrations from v${storedVersion} to v${CURRENT_VERSION}`)
+  logger.migrations.info(`Running migrations from v${storedVersion} to v${CURRENT_VERSION}`)
 
   // Run each migration in order
   for (let version = storedVersion + 1; version <= CURRENT_VERSION; version++) {
     const migration = migrations[version]
     if (migration) {
       try {
-        console.log(`[ControleC] Running migration to v${version}`)
+        logger.migrations.info(`Running migration to v${version}`)
         migration()
       } catch (error) {
-        console.error(`[ControleC] Migration to v${version} failed:`, error)
+        logger.migrations.error(`Migration to v${version} failed:`, error)
         // Don't update version on failure - will retry next time
         return
       }
@@ -141,7 +142,7 @@ export function runMigrations(): void {
   }
 
   setStoredVersion(CURRENT_VERSION)
-  console.log(`[ControleC] Migrations complete. Now at v${CURRENT_VERSION}`)
+  logger.migrations.info(`Migrations complete. Now at v${CURRENT_VERSION}`)
 }
 
 /**
@@ -168,7 +169,7 @@ export function safeGetItem<T>(key: string, defaultValue: T): T {
     if (!data) return defaultValue
     return JSON.parse(data) as T
   } catch (error) {
-    console.error(`[ControleC] Failed to parse ${key}:`, error)
+    logger.migrations.error(`Failed to parse ${key}:`, error)
     return defaultValue
   }
 }
@@ -181,6 +182,6 @@ export function safeSetItem(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch (error) {
-    console.error(`[ControleC] Failed to save ${key}:`, error)
+    logger.migrations.error(`Failed to save ${key}:`, error)
   }
 }

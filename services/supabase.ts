@@ -1,5 +1,6 @@
 // Supabase CRUD Service - Mirrors storage.ts interface for cloud persistence
 import { supabase } from "@/lib/supabase"
+import { logger } from "@/lib/logger"
 import type { Transaction, Category, UserProfile, Goal, RecurringTransaction, BudgetAlert } from "@/lib/types"
 import type { Asset } from "@/lib/investment-types"
 
@@ -308,7 +309,7 @@ export const supabaseService = {
       .order('date', { ascending: false })
 
     if (error) {
-      console.error('Error fetching transactions:', error)
+      logger.supabase.error('Error fetching transactions:', error)
       return []
     }
 
@@ -318,7 +319,7 @@ export const supabaseService = {
   async addTransaction(transaction: Transaction): Promise<boolean> {
     const userId = await getCurrentUserId()
     if (!userId) {
-      console.warn('[Supabase] No user ID, skipping transaction sync')
+      logger.supabase.warn('No user ID, skipping transaction sync')
       return false
     }
 
@@ -333,9 +334,9 @@ export const supabaseService = {
       // Only log as error if it's not a known recoverable issue
       if (error.code === '42501') {
         // RLS policy violation - likely auth issue
-        console.warn('[Supabase] Transaction sync failed (auth):', error.message)
+        logger.supabase.warn('Transaction sync failed (auth):', error.message)
       } else {
-        console.error('[Supabase] Error adding transaction:', {
+        logger.supabase.error('Error adding transaction:', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -361,7 +362,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating transaction:', error)
+      logger.supabase.error('Error updating transaction:', error)
       return false
     }
 
@@ -379,7 +380,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error deleting transaction:', error)
+      logger.supabase.error('Error deleting transaction:', error)
       return false
     }
 
@@ -400,7 +401,7 @@ export const supabaseService = {
       .order('name', { ascending: true })
 
     if (error) {
-      console.error('Error fetching categories:', error)
+      logger.supabase.error('Error fetching categories:', error)
       return []
     }
 
@@ -416,7 +417,7 @@ export const supabaseService = {
       .insert(categoryToRow(category, userId))
 
     if (error) {
-      console.error('Error adding category:', error)
+      logger.supabase.error('Error adding category:', error)
       return false
     }
 
@@ -435,7 +436,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating category:', error)
+      logger.supabase.error('Error updating category:', error)
       return false
     }
 
@@ -453,7 +454,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error deleting category:', error)
+      logger.supabase.error('Error deleting category:', error)
       return false
     }
 
@@ -474,7 +475,7 @@ export const supabaseService = {
       .single()
 
     if (error) {
-      console.error('Error fetching profile:', error)
+      logger.supabase.error('Error fetching profile:', error)
       return null
     }
 
@@ -491,7 +492,7 @@ export const supabaseService = {
       .upsert(row, { onConflict: 'id' })
 
     if (error) {
-      console.error('Error saving profile:', error)
+      logger.supabase.error('Error saving profile:', error)
       return false
     }
 
@@ -508,7 +509,7 @@ export const supabaseService = {
       .eq('id', userId)
 
     if (error) {
-      console.error('Error updating telegram chat id:', error)
+      logger.supabase.error('Error updating telegram chat id:', error)
       return false
     }
 
@@ -525,7 +526,7 @@ export const supabaseService = {
       .eq('id', userId)
 
     if (error) {
-      console.error('Error updating telegram summary enabled:', error)
+      logger.supabase.error('Error updating telegram summary enabled:', error)
       return false
     }
 
@@ -546,7 +547,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching goals:', error)
+      logger.supabase.error('Error fetching goals:', error)
       return []
     }
 
@@ -562,7 +563,7 @@ export const supabaseService = {
       .insert(goalToRow(goal, userId))
 
     if (error) {
-      console.error('Error adding goal:', error)
+      logger.supabase.error('Error adding goal:', error)
       return false
     }
 
@@ -581,7 +582,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating goal:', error)
+      logger.supabase.error('Error updating goal:', error)
       return false
     }
 
@@ -599,7 +600,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error deleting goal:', error)
+      logger.supabase.error('Error deleting goal:', error)
       return false
     }
 
@@ -620,7 +621,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching assets:', error)
+      logger.supabase.error('Error fetching assets:', error)
       return []
     }
 
@@ -636,7 +637,7 @@ export const supabaseService = {
       .insert(assetToRow(asset, userId))
 
     if (error) {
-      console.error('Error adding asset:', error)
+      logger.supabase.error('Error adding asset:', error)
       return false
     }
 
@@ -664,7 +665,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating asset:', error)
+      logger.supabase.error('Error updating asset:', error)
       return false
     }
 
@@ -682,7 +683,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error deleting asset:', error)
+      logger.supabase.error('Error deleting asset:', error)
       return false
     }
 
@@ -703,7 +704,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching recurring transactions:', error)
+      logger.supabase.error('Error fetching recurring transactions:', error)
       return []
     }
 
@@ -722,7 +723,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching active recurring transactions:', error)
+      logger.supabase.error('Error fetching active recurring transactions:', error)
       return []
     }
 
@@ -732,7 +733,7 @@ export const supabaseService = {
   async addRecurringTransaction(recurringTransaction: RecurringTransaction): Promise<boolean> {
     const userId = await getCurrentUserId()
     if (!userId) {
-      console.warn('[Supabase] No user ID, skipping recurring transaction sync')
+      logger.supabase.warn('No user ID, skipping recurring transaction sync')
       return false
     }
 
@@ -745,9 +746,9 @@ export const supabaseService = {
 
     if (error) {
       if (error.code === '42501') {
-        console.warn('[Supabase] Recurring transaction sync failed (auth):', error.message)
+        logger.supabase.warn('Recurring transaction sync failed (auth):', error.message)
       } else {
-        console.error('[Supabase] Error adding recurring transaction:', {
+        logger.supabase.error('Error adding recurring transaction:', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -773,7 +774,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating recurring transaction:', error)
+      logger.supabase.error('Error updating recurring transaction:', error)
       return false
     }
 
@@ -791,7 +792,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating recurring transaction last generated date:', error)
+      logger.supabase.error('Error updating recurring transaction last generated date:', error)
       return false
     }
 
@@ -809,7 +810,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error deleting recurring transaction:', error)
+      logger.supabase.error('Error deleting recurring transaction:', error)
       return false
     }
 
@@ -830,7 +831,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching budget alerts:', error)
+      logger.supabase.error('Error fetching budget alerts:', error)
       return []
     }
 
@@ -850,7 +851,7 @@ export const supabaseService = {
       .maybeSingle()
 
     if (error) {
-      console.error('Error fetching budget alert:', error)
+      logger.supabase.error('Error fetching budget alert:', error)
       return null
     }
 
@@ -867,7 +868,7 @@ export const supabaseService = {
       .upsert(row, { onConflict: 'user_id,category' })
 
     if (error) {
-      console.error('Error adding budget alert:', error)
+      logger.supabase.error('Error adding budget alert:', error)
       return false
     }
 
@@ -886,7 +887,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error updating budget alert:', error)
+      logger.supabase.error('Error updating budget alert:', error)
       return false
     }
 
@@ -904,7 +905,7 @@ export const supabaseService = {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Error deleting budget alert:', error)
+      logger.supabase.error('Error deleting budget alert:', error)
       return false
     }
 

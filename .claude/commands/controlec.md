@@ -128,6 +128,7 @@ lib/                    → Tipos, constantes, utilitários
 ├── constants.ts        → Categorias default, moedas
 ├── i18n.ts             → Traduções PT/EN (~970 chaves)
 ├── logger.ts           → Logger com níveis (debug/info/warn/error)
+├── security.ts         → Rate limiting, sanitização, validação de input
 └── utils.ts            → Utilitários gerais
 
 docs/                   → Documentação
@@ -369,8 +370,9 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 | 6 | Telegram Bot: vinculação, parsing IA, transações, consultas |
 | 7.1 | Resumos Automáticos via Telegram (semanal/mensal) |
 | 7.2 | Alertas de Orçamento por categoria |
+| 9 | Segurança: rate limiting, validação de input, auditoria |
 
-### Fase 7 — Em Andamento
+### Fase 7 — Funcionalidades Bot (Em Andamento)
 
 #### 7.3 — Categorização Automática via IA
 - [ ] Sugerir categoria baseado na descrição
@@ -384,7 +386,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [ ] Previsão: "Se continuar assim, terminará com R$X"
 - [ ] Indicadores visuais: ↑ ↓ →
 
-### Fase 8 — Planejada
+### Fase 8 — Indicadores
 
 #### 8.1 — MacroBar (Indicadores Econômicos) ✅
 - [x] Exibir Selic atual (API BCB, cache 24h)
@@ -393,13 +395,104 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Taxa real (Selic - IPCA)
 - [x] Componente visível no dashboard e investimentos
 
-#### 8.2 — Expandir Indicadores de Ativos (futuro)
+#### 8.2 — Expandir Indicadores de Ativos
 - [ ] Exibir mais indicadores do Brapi (P/VP, ROE, DY) no Radar
 - [ ] Insights contextuais: "DY acima da Selic", "P/L abaixo da média"
 - [ ] Score simples de qualidade por ativo
 
+### Fase 9 — Segurança ✅
+
+#### 9.1 — Rate Limiting ✅
+- [x] Implementar rate limit no webhook Telegram (10 msg/min por chatId)
+- [x] Proteção contra abuso do bot
+
+#### 9.2 — Validação de Input ✅
+- [x] Sanitizar mensagens antes de enviar para Groq (prompt injection)
+- [x] Validar tamanho máximo de mensagem (1000 chars)
+- [x] Detecção de padrões de prompt injection
+
+#### 9.3 — Auditoria de Segurança ✅
+- [x] Verificar que CRON_SECRET não está sendo logado (apenas "not configured")
+- [x] RLS ativo em todas as tabelas (profiles, transactions, categories, goals, assets, recurring_transactions, budget_alerts, telegram_link_tokens)
+- [x] Variáveis NEXT_PUBLIC_* revisadas (apenas URLs e chaves públicas expostas)
+- [x] Migração de console.* para logger em todas as API Routes
+
+### Fase 10 — Resiliência (Prioridade Média)
+
+#### 10.1 — Retry e Fallback
+- [ ] Exponential backoff no sync offline com notificação visual
+- [ ] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB)
+- [ ] Fallback para última cotação quando API falhar
+
+#### 10.2 — Cache Agressivo
+- [ ] Cache de cotações de 1h (atualmente 5 min)
+- [ ] Persistir última cotação válida para uso offline
+
+### Fase 11 — Observabilidade (Prioridade Média)
+
+#### 11.1 — Health Check
+- [ ] Endpoint `/api/health` retornando status do Supabase
+- [ ] Verificação de conectividade com serviços externos
+
+#### 11.2 — Métricas de Uso
+- [ ] Contador de mensagens/transações por dia no Supabase
+- [ ] Dashboard de uso do bot (opcional)
+
+#### 11.3 — Alertas Proativos
+- [ ] Webhook para Telegram pessoal quando cron falhar
+- [ ] Alerta quando sync offline acumular muitas operações
+
+### Fase 12 — Performance (Prioridade Baixa)
+
+#### 12.1 — Bundle Size
+- [ ] Lazy load de Recharts (gráficos)
+- [ ] Lazy load de jsPDF (export)
+- [ ] Analisar bundle com `@next/bundle-analyzer`
+
+#### 12.2 — Otimizações de Query
+- [ ] Batch requests onde possível
+- [ ] Memoizar `useTranslation` por idioma
+
+### Fase 13 — Developer Experience
+
+#### 13.1 — Testes
+- [ ] Testes E2E com Playwright (login, transação, sync)
+- [ ] Expandir cobertura de testes unitários para sync.ts e groq.ts
+
+#### 13.2 — Ferramentas de Dev
+- [ ] Script de seed data para popular Supabase com dados de teste
+- [ ] Documentação OpenAPI/Swagger para as 3 rotas de API
+
 ================================================================
-🧪 TESTES
+🧪================================================================
+CHECKLIST DE OBSERVABILIDADE (minimo)
+
+Objetivo: garantir visibilidade rapida de erros em producao sem tooling pesado.
+
+Vercel (API Routes + Crons):
+- Ver logs em: Dashboard > Project > Functions > Logs
+- Verificar execucoes recentes de:
+  - api/telegram
+  - api/cron/generate-recurring
+  - api/cron/telegram-summary
+- Procurar por status 500, timeout e mensagens de erro
+
+Telegram Webhook:
+- Conferir status via getWebhookInfo
+- Se last_error_message existir, cruzar com logs do api/telegram
+
+Supabase:
+- Dashboard > Logs para erros de RLS/queries
+- Verificar Auth logs (Magic Link)
+
+App (client):
+- Console do browser em prod para erros criticos (logger.error)
+
+Cron jobs:
+- Validar se estao ativos em Vercel > Cron Jobs
+- Confirmar se houve execucao nas ultimas 24h
+
+ TESTES
 
 **Framework:** Vitest 4.0.17
 **Cobertura:** 35 testes (calculations.ts + migrations.ts)
@@ -437,8 +530,22 @@ Finalize perguntando:
 | Services | `services/storage.ts`, `services/supabase.ts`, `services/sync.ts`, `services/groq.ts`, `services/calculations.ts`, `services/export.ts` |
 | API | `app/api/telegram/route.ts`, `app/api/cron/*/route.ts` |
 | Tipos | `lib/types.ts`, `lib/investment-types.ts`, `lib/schemas.ts` |
-| Docs | `docs/backend.md`, `docs/supabase-schema-rls.sql` |
+| Docs | `docs/backend.md`, `docs/supabase-schema-rls.sql`, `docs/HELP.md` |
 | Config | `vercel.json` (crons), `.env.example` |
+
+================================================================
+📖 DOCUMENTAÇÃO COMPLEMENTAR
+
+Para contexto técnico aprofundado, leia os seguintes arquivos:
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `docs/backend.md` | Arquitetura completa do backend serverless, fluxos de API, cron jobs e integrações |
+| `docs/HELP.md` | Guia de uso do sistema para usuários finais |
+| `docs/supabase-schema-rls.sql` | Schema completo do banco + políticas RLS (Row Level Security) |
+| `docs/supabase-profile-trigger.sql` | Trigger para auto-criação de perfil no signup |
+
+> **Instrução:** Antes de modificar APIs, sync ou banco de dados, leia `docs/backend.md` e os arquivos SQL.
 
 ================================================================
 🗣️ DECISÕES HISTÓRICAS (resumo)
@@ -447,6 +554,6 @@ Finalize perguntando:
 - **2026-01-27:** Schema Supabase + RLS aplicados. Auth Magic Link. Sync offline-first definido.
 - **2026-01-28:** Deploy Vercel. Fase 5 e 6 concluídas. Bot funcional.
 - **2026-01-29:** Fase 4 descongelada e concluída. Fase 7.1 e 7.2 implementadas.
-- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID.
+- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS.
 
 > Histórico detalhado disponível no git.

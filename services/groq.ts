@@ -1,4 +1,5 @@
 // Groq API Service - Financial Assistant with Llama 3
+import { logger } from "@/lib/logger"
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 const GROQ_MODEL = "llama-3.3-70b-versatile"
@@ -99,7 +100,7 @@ export async function parseMessage(
   const apiKey = process.env.GROQ_API_KEY
 
   if (!apiKey) {
-    console.error("[Groq] Missing GROQ_API_KEY")
+    logger.telegram.error("Missing GROQ_API_KEY")
     return { success: false, error: "Serviço de IA não configurado" }
   }
 
@@ -135,7 +136,7 @@ export async function parseMessage(
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error("[Groq] API error:", response.status, errorText)
+      logger.telegram.error("Groq API error:", response.status, errorText)
       return { success: false, error: "Erro ao processar mensagem" }
     }
 
@@ -152,7 +153,7 @@ export async function parseMessage(
       const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim()
       parsed = JSON.parse(cleanContent)
     } catch {
-      console.error("[Groq] Invalid JSON response:", content)
+      logger.telegram.error("Groq invalid JSON response:", content)
       // If JSON parsing fails, treat as conversation
       return {
         success: true,
@@ -200,7 +201,7 @@ export async function parseMessage(
 
     return { success: true, response: parsed }
   } catch (error) {
-    console.error("[Groq] Request failed:", error)
+    logger.telegram.error("Groq request failed:", error)
     return { success: false, error: "Erro de conexão. Tenta de novo? 🔄" }
   }
 }
