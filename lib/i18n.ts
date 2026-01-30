@@ -41,6 +41,15 @@ export const translations = {
     'chart.expensesByCategory': 'Expenses by Category',
     'chart.incomeVsExpenses': 'Income vs Expenses vs Investments',
     'chart.monthlyEvolution': 'Monthly Evolution (last 6 months)',
+    'chart.trendTitle': 'Trend (last 6 months)',
+    'chart.trendSubtitle': 'Balance trend over the last 6 months',
+    'chart.trendInfo':
+      'Uses the last 6 months of balance to estimate a simple trend and next month projection (threshold = max(10% of average absolute balance, 500)).',
+    'chart.trendUp': 'Uptrend',
+    'chart.trendDown': 'Downtrend',
+    'chart.trendFlat': 'Stable trend',
+    'chart.trendPrediction':
+      'If you keep this pace, next month ends at {{amount}}',
     'chart.noExpenses': 'No expenses recorded',
     'chart.noData': 'No data available',
 
@@ -568,6 +577,15 @@ export const translations = {
     'chart.expensesByCategory': 'Despesas por Categoria',
     'chart.incomeVsExpenses': 'Receitas vs Despesas vs Investimentos',
     'chart.monthlyEvolution': 'Evolução Mensal (últimos 6 meses)',
+    'chart.trendTitle': 'Tendência (últimos 6 meses)',
+    'chart.trendSubtitle': 'Tendência do saldo nos últimos 6 meses',
+    'chart.trendInfo':
+      'Usa os últimos 6 meses de saldo para estimar uma tendência simples e a projeção do próximo mês (limiar = max(10% da média do saldo absoluto, 500)).',
+    'chart.trendUp': 'Tendência de alta',
+    'chart.trendDown': 'Tendência de baixa',
+    'chart.trendFlat': 'Tendência estável',
+    'chart.trendPrediction':
+      'Se continuar assim, o próximo mês termina em {{amount}}',
     'chart.noExpenses': 'Nenhuma despesa registrada',
     'chart.noData': 'Nenhum dado disponível',
 

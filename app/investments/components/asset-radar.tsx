@@ -26,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useTranslation } from '@/lib/i18n'
 import { useFinanceStore } from '@/hooks/use-finance-store'
+import { formatCurrency } from '@/utils/formatters'
 import {
   fetchRadarStocks,
   clearRadarCache,
@@ -395,11 +396,6 @@ function BrazilianStocksTab() {
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number | null>(null)
 
-  const formatCurrency = (value: number) => {
-    if (value == null || isNaN(value)) return 'R$ 0,00'
-    return value.toLocaleString(locale, { style: 'currency', currency: 'BRL' })
-  }
-
   const formatPercent = (value: number) => {
     if (value == null || isNaN(value)) return '0,00%'
     const sign = value >= 0 ? '+' : ''
@@ -554,7 +550,10 @@ function BrazilianStocksTab() {
                           {t('radar.currentPrice')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.currentPrice)}
+                          {formatCurrency(
+                            stock.currentPrice,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -564,7 +563,10 @@ function BrazilianStocksTab() {
                           {t('radar.previousClose')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.previousClose)}
+                          {formatCurrency(
+                            stock.previousClose,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -574,7 +576,7 @@ function BrazilianStocksTab() {
                           {t('radar.open')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.open)}
+                          {formatCurrency(stock.open, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -587,7 +589,7 @@ function BrazilianStocksTab() {
                           className={`font-medium ${stock.change >= 0 ? 'text-income' : 'text-expense'}`}
                         >
                           {stock.change >= 0 ? '+' : ''}
-                          {formatCurrency(stock.change)}
+                          {formatCurrency(stock.change, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -597,7 +599,7 @@ function BrazilianStocksTab() {
                           {t('radar.dayHigh')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.dayHigh)}
+                          {formatCurrency(stock.dayHigh, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -607,7 +609,7 @@ function BrazilianStocksTab() {
                           {t('radar.dayLow')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.dayLow)}
+                          {formatCurrency(stock.dayLow, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -617,7 +619,10 @@ function BrazilianStocksTab() {
                           {t('radar.weekHigh52')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.weekHigh52)}
+                          {formatCurrency(
+                            stock.weekHigh52,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -627,7 +632,10 @@ function BrazilianStocksTab() {
                           {t('radar.weekLow52')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.weekLow52)}
+                          {formatCurrency(
+                            stock.weekLow52,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -669,7 +677,9 @@ function BrazilianStocksTab() {
                           {t('radar.eps')}
                         </span>
                         <p className="font-medium">
-                          {stock.eps !== 0 ? formatCurrency(stock.eps) : 'N/A'}
+                          {stock.eps !== 0
+                            ? formatCurrency(stock.eps, stock.currency || 'BRL')
+                            : 'N/A'}
                         </p>
                       </div>
                     </div>
