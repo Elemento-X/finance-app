@@ -65,6 +65,8 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | `services/groq.ts` | Parsing de mensagens com IA (usa `logger.telegram`) |
 | `services/migrations.ts` | Migrações de dados (usa `logger.migrations`) |
 | `services/bcb.ts` | API Banco Central (Selic, IPCA) |
+| `components/dashboard/trend-chart.tsx` | Card de tendência (saldo 6 meses + previsão) |
+| `utils/formatters.ts` | Formatação de moeda por locale (BRL/USD/EUR) |
 | `lib/supabase.ts` | Client Supabase (browser) |
 | `lib/supabase-admin.ts` | Client Supabase (service role) |
 | `lib/security.ts` | Rate limiting, sanitização, validação |

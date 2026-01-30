@@ -350,6 +350,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 4. **Cron jobs Vercel:** Transações recorrentes e resumos automáticos.
 5. **Stack 100% free tier:** Telegram, Vercel, Supabase, Groq — R$0/mês.
 6. **Logging:** Logger condicional (`lib/logger.ts`) - logs aparecem apenas em dev, erros sempre visíveis.
+7. **Moeda por preferência:** Formatação de valores segue `profile.currency` (BRL/USD/EUR) com locale correto.
 
 ================================================================
 🚧 STATUS DAS FASES
@@ -372,6 +373,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 | 7.2 | Alertas de Orçamento por categoria |
 | 7.3 | Categorização Automática via IA (matching local + Groq fallback) |
 | 7.4 | Bot Multilíngue (PT/EN baseado no perfil) |
+| 7.5 | Dashboard com Tendências (gráfico + previsão) |
 | 9 | Segurança: rate limiting, validação de input, auditoria |
 
 ### Fase 7 — Funcionalidades Bot
@@ -389,9 +391,11 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Formatação de moeda baseada no perfil
 
 #### 7.5 — Dashboard com Tendências
-- [ ] Gráfico de tendência (últimos 6 meses)
-- [ ] Previsão: "Se continuar assim, terminará com R$X"
-- [ ] Indicadores visuais: ↑ ↓ →
+- [x] Gráfico de tendência (últimos 6 meses)
+- [x] Previsão: "Se continuar assim, terminará com R$X"
+- [x] Indicadores visuais: ↑ ↓ →
+- [x] Limiar: max(10% da média do saldo absoluto, R$500)
+- [x] Tooltip explicativo no card de tendência
 
 ### Fase 8 — Indicadores
 
@@ -561,6 +565,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-27:** Schema Supabase + RLS aplicados. Auth Magic Link. Sync offline-first definido.
 - **2026-01-28:** Deploy Vercel. Fase 5 e 6 concluídas. Bot funcional.
 - **2026-01-29:** Fase 4 descongelada e concluída. Fase 7.1 e 7.2 implementadas.
-- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA) e 7.4 (Bot multilíngue) implementadas.
+- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA), 7.4 (Bot multilíngue) e 7.5 (Dashboard com tendências) implementadas.
 
 > Histórico detalhado disponível no git.

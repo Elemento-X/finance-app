@@ -14,12 +14,19 @@
 | 6 | Telegram Bot: vinculação, parsing IA, transações |
 | 7.1-7.2 | Resumos automáticos, alertas de orçamento |
 | 7.3-7.4 | Categorização automática (IA), bot multilíngue (PT/EN) |
+| 7.5 | Dashboard com tendências (gráfico + previsão) |
 | 8.1 | MacroBar: indicadores econômicos (Selic, IPCA, taxa real) |
 | 9 | Segurança: rate limiting, sanitização, auditoria RLS |
 
 ### Em Andamento
 
-- 7.5: Dashboard com tendências
+- —
+
+### Novidade (Dashboard)
+
+- Tendência (últimos 6 meses): indicador ↑ ↓ → + previsão do próximo mês
+- Limiar: max(10% da média do saldo absoluto, R$500)
+- Moeda segue preferência do perfil (BRL/USD/EUR) com formatação correta
 
 ### Planejadas
 
