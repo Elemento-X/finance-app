@@ -17,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Save, Trash2, User, DollarSign, Database, LogOut, MessageCircle, Link2Off } from "lucide-react"
+import { Save, Trash2, User, DollarSign, Database, LogOut, MessageCircle, Link2Off, Bell } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { CURRENCY_OPTIONS, LANGUAGE_OPTIONS } from "@/lib/constants"
 import { useTranslation, type Locale } from "@/lib/i18n"
@@ -40,6 +41,8 @@ export default function ProfilePage() {
   const [storageSize, setStorageSize] = useState("0.00")
   const [isLinking, setIsLinking] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
+  const [summaryEnabled, setSummaryEnabled] = useState(false)
+  const [isUpdatingSummary, setIsUpdatingSummary] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -61,6 +64,7 @@ export default function ProfilePage() {
     setName(profile.name)
     setCurrency(profile.currency)
     setLanguage(profile.language || "en")
+    setSummaryEnabled(profile.telegramSummaryEnabled || false)
   }, [profile])
 
   useEffect(() => {
@@ -156,6 +160,20 @@ export default function ProfilePage() {
       toast.error(t("telegram.disconnectError"))
     }
     setIsDisconnecting(false)
+  }
+
+  const handleToggleSummary = async (enabled: boolean) => {
+    setIsUpdatingSummary(true)
+    setSummaryEnabled(enabled)
+    const result = await supabaseService.updateTelegramSummaryEnabled(enabled)
+    if (result) {
+      updateProfile({ ...profile, telegramSummaryEnabled: enabled })
+      toast.success(enabled ? t("telegram.summaryEnabled") : t("telegram.summaryDisabled"))
+    } else {
+      setSummaryEnabled(!enabled) // Revert on error
+      toast.error(t("telegram.summaryError"))
+    }
+    setIsUpdatingSummary(false)
   }
 
   return (
@@ -316,6 +334,23 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
+
+            {profile.telegramChatId && (
+              <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border">
+                <div className="flex items-center gap-3">
+                  <Bell className="size-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">{t("telegram.summaryTitle")}</p>
+                    <p className="text-sm text-muted-foreground">{t("telegram.summaryDesc")}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={summaryEnabled}
+                  onCheckedChange={handleToggleSummary}
+                  disabled={isUpdatingSummary}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
