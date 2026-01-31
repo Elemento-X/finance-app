@@ -352,6 +352,13 @@ export const translations = {
     'profile.telegramRefresh': 'Refresh status',
     'profile.telegramHint':
       'Click the button to open Telegram and link your account.',
+    'profile.usageTitle': 'Usage Metrics',
+    'profile.usageDesc': 'Daily counts from Telegram and transactions',
+    'profile.usagePeriod': 'Last 7 days',
+    'profile.usageTelegram': 'Telegram messages',
+    'profile.usageTransactions': 'Transactions created',
+    'profile.usageEmpty': 'No activity recorded yet.',
+    'profile.usageUnavailable': 'Usage metrics unavailable.',
 
     // Telegram
     'telegram.authRequired': 'Sign in to connect Telegram',
@@ -895,6 +902,13 @@ export const translations = {
     'profile.telegramRefresh': 'Atualizar status',
     'profile.telegramHint':
       'Clique no botão para abrir o Telegram e vincular sua conta.',
+    'profile.usageTitle': 'Métricas de Uso',
+    'profile.usageDesc': 'Contagem diária de mensagens e transações',
+    'profile.usagePeriod': 'Últimos 7 dias',
+    'profile.usageTelegram': 'Mensagens do Telegram',
+    'profile.usageTransactions': 'Transações criadas',
+    'profile.usageEmpty': 'Sem atividade registrada ainda.',
+    'profile.usageUnavailable': 'Métricas indisponíveis.',
 
     // Telegram
     'telegram.authRequired': 'Faça login para conectar o Telegram',

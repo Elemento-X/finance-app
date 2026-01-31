@@ -39,6 +39,7 @@ import {
   MessageCircle,
   Link2Off,
   Bell,
+  BarChart3,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -65,6 +66,12 @@ export function ProfileContent() {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [summaryEnabled, setSummaryEnabled] = useState(false)
   const [isUpdatingSummary, setIsUpdatingSummary] = useState(false)
+  const [usageTotals, setUsageTotals] = useState({
+    telegramMessages: 0,
+    transactions: 0,
+  })
+  const [usageLoading, setUsageLoading] = useState(false)
+  const [usageError, setUsageError] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -101,6 +108,50 @@ export function ProfileContent() {
       setStorageSize((total / 1024).toFixed(2))
     }
   }, [transactions])
+
+  useEffect(() => {
+    const loadUsageMetrics = async () => {
+      if (!user) return
+      setUsageLoading(true)
+      setUsageError(false)
+
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - 6)
+      const startDay = startDate.toISOString().split('T')[0]
+
+      const { data, error } = await supabase
+        .from('usage_daily_metrics')
+        .select('metric, day, total')
+        .eq('user_id', user.id)
+        .gte('day', startDay)
+
+      if (error) {
+        setUsageError(true)
+        setUsageLoading(false)
+        return
+      }
+
+      let telegramMessages = 0
+      let transactionsCreated = 0
+
+      for (const row of data ?? []) {
+        if (row.metric === 'telegram_message') {
+          telegramMessages += Number(row.total) || 0
+        }
+        if (row.metric === 'transaction_created') {
+          transactionsCreated += Number(row.total) || 0
+        }
+      }
+
+      setUsageTotals({
+        telegramMessages,
+        transactions: transactionsCreated,
+      })
+      setUsageLoading(false)
+    }
+
+    loadUsageMetrics()
+  }, [user])
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -412,6 +463,65 @@ export function ProfileContent() {
                   disabled={isUpdatingSummary}
                 />
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BarChart3 className="size-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>{t('profile.usageTitle')}</CardTitle>
+                <CardDescription>{t('profile.usageDesc')}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {usageLoading && (
+              <p className="text-sm text-muted-foreground">
+                {t('common.loading')}
+              </p>
+            )}
+
+            {!usageLoading && usageError && (
+              <p className="text-sm text-muted-foreground">
+                {t('profile.usageUnavailable')}
+              </p>
+            )}
+
+            {!usageLoading && !usageError && (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.usagePeriod')}
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border border-border">
+                    <p className="text-2xl font-bold">
+                      {usageTotals.telegramMessages}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.usageTelegram')}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg border border-border">
+                    <p className="text-2xl font-bold">
+                      {usageTotals.transactions}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.usageTransactions')}
+                    </p>
+                  </div>
+                </div>
+                {usageTotals.telegramMessages === 0 &&
+                  usageTotals.transactions === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.usageEmpty')}
+                    </p>
+                  )}
+              </>
             )}
           </CardContent>
         </Card>
