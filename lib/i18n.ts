@@ -22,6 +22,7 @@ export const translations = {
     'common.refresh': 'Refresh',
     'common.today': 'Today',
     'common.update': 'Update',
+    'sync.retrying': 'Sync failed. Retrying in {{seconds}}s.',
 
     // Home page
     'home.title': 'Financial Control',
@@ -41,6 +42,15 @@ export const translations = {
     'chart.expensesByCategory': 'Expenses by Category',
     'chart.incomeVsExpenses': 'Income vs Expenses vs Investments',
     'chart.monthlyEvolution': 'Monthly Evolution (last 6 months)',
+    'chart.trendTitle': 'Trend (last 6 months)',
+    'chart.trendSubtitle': 'Balance trend over the last 6 months',
+    'chart.trendInfo':
+      'Uses the last 6 months of balance to estimate a simple trend and next month projection (threshold = max(10% of average absolute balance, 500)).',
+    'chart.trendUp': 'Uptrend',
+    'chart.trendDown': 'Downtrend',
+    'chart.trendFlat': 'Stable trend',
+    'chart.trendPrediction':
+      'If you keep this pace, next month ends at {{amount}}',
     'chart.noExpenses': 'No expenses recorded',
     'chart.noData': 'No data available',
 
@@ -342,6 +352,18 @@ export const translations = {
     'profile.telegramRefresh': 'Refresh status',
     'profile.telegramHint':
       'Click the button to open Telegram and link your account.',
+    'profile.usageTitle': 'Usage Metrics',
+    'profile.usageDesc': 'Daily counts from Telegram and transactions',
+    'profile.usagePeriod': 'Last 7 days',
+    'profile.usageTelegram': 'Telegram messages',
+    'profile.usageTransactions': 'Transactions created',
+    'profile.usageEmpty': 'No activity recorded yet.',
+    'profile.adminMetricsTitle': 'Infrastructure Metrics',
+    'profile.adminMetricsDesc': 'Admin-only: API usage and system health',
+    'profile.usageApiCalls': 'API calls (quotes)',
+    'profile.usageApiCallsHint':
+      'Above 200/week → consider implementing Supabase cache for quotes',
+    'profile.usageUnavailable': 'Usage metrics unavailable.',
 
     // Telegram
     'telegram.authRequired': 'Sign in to connect Telegram',
@@ -549,6 +571,7 @@ export const translations = {
     'common.refresh': 'Atualizar',
     'common.today': 'Hoje',
     'common.update': 'Atualizar',
+    'sync.retrying': 'Falha ao sincronizar. Tentando novamente em {{seconds}}s.',
 
     // Home page
     'home.title': 'Controle Financeiro',
@@ -568,6 +591,15 @@ export const translations = {
     'chart.expensesByCategory': 'Despesas por Categoria',
     'chart.incomeVsExpenses': 'Receitas vs Despesas vs Investimentos',
     'chart.monthlyEvolution': 'Evolução Mensal (últimos 6 meses)',
+    'chart.trendTitle': 'Tendência (últimos 6 meses)',
+    'chart.trendSubtitle': 'Tendência do saldo nos últimos 6 meses',
+    'chart.trendInfo':
+      'Usa os últimos 6 meses de saldo para estimar uma tendência simples e a projeção do próximo mês (limiar = max(10% da média do saldo absoluto, 500)).',
+    'chart.trendUp': 'Tendência de alta',
+    'chart.trendDown': 'Tendência de baixa',
+    'chart.trendFlat': 'Tendência estável',
+    'chart.trendPrediction':
+      'Se continuar assim, o próximo mês termina em {{amount}}',
     'chart.noExpenses': 'Nenhuma despesa registrada',
     'chart.noData': 'Nenhum dado disponível',
 
@@ -875,6 +907,18 @@ export const translations = {
     'profile.telegramRefresh': 'Atualizar status',
     'profile.telegramHint':
       'Clique no botão para abrir o Telegram e vincular sua conta.',
+    'profile.usageTitle': 'Métricas de Uso',
+    'profile.usageDesc': 'Contagem diária de mensagens e transações',
+    'profile.usagePeriod': 'Últimos 7 dias',
+    'profile.usageTelegram': 'Mensagens do Telegram',
+    'profile.usageTransactions': 'Transações criadas',
+    'profile.usageEmpty': 'Sem atividade registrada ainda.',
+    'profile.adminMetricsTitle': 'Métricas de Infraestrutura',
+    'profile.adminMetricsDesc': 'Admin: uso de APIs e saúde do sistema',
+    'profile.usageApiCalls': 'Chamadas API (cotações)',
+    'profile.usageApiCallsHint':
+      'Acima de 200/semana → considerar cache no Supabase para cotações',
+    'profile.usageUnavailable': 'Métricas indisponíveis.',
 
     // Telegram
     'telegram.authRequired': 'Faça login para conectar o Telegram',

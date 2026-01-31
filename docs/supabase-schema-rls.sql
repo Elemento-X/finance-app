@@ -42,6 +42,15 @@ create table if not exists transactions (
   created_at timestamptz default now()
 );
 
+create table if not exists usage_events (
+  id text primary key,
+  user_id uuid references auth.users not null,
+  metric text not null,
+  day date not null,
+  source text,
+  created_at timestamptz default now()
+);
+
 create table if not exists goals (
   id text primary key,
   user_id uuid references auth.users not null,
@@ -103,8 +112,18 @@ create table if not exists budget_alerts (
   unique(user_id, category)              -- apenas 1 alerta por categoria por usuário
 );
 
+-- Rate limiting for Telegram webhook (persisted across cold starts)
+create table if not exists rate_limit_entries (
+  key text primary key,
+  count smallint not null default 1,
+  reset_at timestamptz not null,
+  updated_at timestamptz default now()
+);
+
 -- 2) Indexes
 create index if not exists idx_transactions_user_date on transactions (user_id, date);
+create index if not exists idx_usage_events_user_day on usage_events (user_id, day);
+create index if not exists idx_usage_events_metric_day on usage_events (metric, day);
 create index if not exists idx_goals_user_created on goals (user_id, created_at);
 create index if not exists idx_assets_user_created on assets (user_id, created_at);
 create index if not exists idx_categories_user_name on categories (user_id, name);
@@ -112,12 +131,16 @@ create index if not exists idx_telegram_tokens_code on telegram_link_tokens (cod
 create index if not exists idx_telegram_tokens_user on telegram_link_tokens (user_id);
 create index if not exists idx_recurring_user_active on recurring_transactions (user_id, is_active);
 create index if not exists idx_budget_alerts_user on budget_alerts (user_id);
+create index if not exists idx_rate_limit_reset on rate_limit_entries (reset_at);
+-- Optimized index for usage_events queries in Profile
+create index if not exists idx_usage_events_user_day_metric on usage_events (user_id, day, metric);
 
 -- 3) RLS enable
 alter table profiles enable row level security;
 alter table telegram_link_tokens enable row level security;
 alter table categories enable row level security;
 alter table transactions enable row level security;
+alter table usage_events enable row level security;
 alter table goals enable row level security;
 alter table assets enable row level security;
 alter table recurring_transactions enable row level security;
@@ -135,6 +158,14 @@ create policy "Categories own data" on categories
 
 create policy "Transactions own data" on transactions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "Usage events own data" on usage_events
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create or replace view usage_daily_metrics as
+select user_id, metric, day, count(*) as total
+from usage_events
+group by user_id, metric, day;
 
 create policy "Goals own data" on goals
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

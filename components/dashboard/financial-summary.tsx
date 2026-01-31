@@ -114,7 +114,12 @@ export function FinancialSummary() {
             </CardHeader>
             <CardContent>
               <div className={cn('text-2xl font-bold', card.color)}>
-                {formatCurrency(Math.abs(card.value), profile.currency)}
+                {formatCurrency(
+                  card.title === t('summary.balance')
+                    ? card.value
+                    : Math.abs(card.value),
+                  profile.currency,
+                )}
               </div>
               {card.title === t('summary.balance') && balance < 0 && (
                 <p className="text-xs text-muted-foreground mt-1">

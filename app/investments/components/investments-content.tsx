@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useInvestmentsStore } from '@/hooks/use-investments-store'
 import { PortfolioOverview } from './portfolio-overview'
 import { AssetsList } from './assets-list'
@@ -39,16 +39,12 @@ export function InvestmentsContent() {
     return () => clearInterval(interval)
   }, [refreshMarketData])
 
-  const handleRefresh = () => {
-    refreshMarketData()
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
         <MacroBar />
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-end">
           <div>
             {lastUpdate && (
               <p className="text-sm text-muted-foreground mt-1">
@@ -57,17 +53,6 @@ export function InvestmentsContent() {
               </p>
             )}
           </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            size="sm"
-            variant="outline"
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`}
-            />
-            {t('investments.refresh')}
-          </Button>
         </div>
 
         <AlertsList />

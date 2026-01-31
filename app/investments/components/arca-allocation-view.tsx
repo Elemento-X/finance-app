@@ -14,6 +14,7 @@ import { TrendingDown, TrendingUp, CheckCircle2, Info } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useTranslation } from '@/lib/i18n'
+import { formatCurrency } from '@/utils/formatters'
 
 function ARCAAllocationSkeleton() {
   return (
@@ -101,14 +102,6 @@ export function ARCAAllocationView({ isLoading }: ARCAAllocationViewProps) {
   const { portfolioSummary } = useInvestmentsStore()
   const { profile } = useFinanceStore()
   const t = useTranslation()
-  const locale = profile.language === 'pt' ? 'pt-BR' : 'en-US'
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   const getArcaLabel = (category: ARCACategory) => {
     return t(
@@ -330,8 +323,8 @@ export function ARCAAllocationView({ isLoading }: ARCAAllocationViewProps) {
                   {status === 'below' ? t('arca.isBelow') : t('arca.isAbove')}{' '}
                   {Math.abs(difference).toFixed(1)}%.{' '}
                   {status === 'below'
-                    ? `${t('arca.considerInvesting')} ${profile.currency} ${formatCurrency(Math.abs(adjustment))} ${t('arca.more')}.`
-                    : `${t('arca.considerReducing')} ${profile.currency} ${formatCurrency(Math.abs(adjustment))}.`}
+                    ? `${t('arca.considerInvesting')} ${formatCurrency(Math.abs(adjustment), profile.currency)} ${t('arca.more')}.`
+                    : `${t('arca.considerReducing')} ${formatCurrency(Math.abs(adjustment), profile.currency)}.`}
                 </AlertDescription>
               </Alert>
             )

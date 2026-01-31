@@ -75,6 +75,7 @@ app/                    → Páginas (Next.js App Router)
 
 app/api/                → API Routes serverless (Vercel)
 ├── telegram/route.ts   → Webhook handler do Telegram Bot
+├── health/route.ts     → Health check (Supabase + serviços externos)
 └── cron/
     ├── generate-recurring/route.ts → Gera transações recorrentes (diário 03:05 UTC)
     └── telegram-summary/route.ts   → Resumos semanais/mensais (segunda 12h, dia 1 12h)
@@ -227,6 +228,18 @@ docs/                   → Documentação
 }
 ```
 
+**UsageEvent:**
+```typescript
+{
+  id: string
+  userId: string
+  metric: 'transaction_created' | 'telegram_message'
+  day: string // YYYY-MM-DD
+  source?: 'web' | 'telegram' | 'recurring'
+  createdAt: string
+}
+```
+
 **UserProfile:**
 ```typescript
 {
@@ -350,6 +363,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 4. **Cron jobs Vercel:** Transações recorrentes e resumos automáticos.
 5. **Stack 100% free tier:** Telegram, Vercel, Supabase, Groq — R$0/mês.
 6. **Logging:** Logger condicional (`lib/logger.ts`) - logs aparecem apenas em dev, erros sempre visíveis.
+7. **Moeda por preferência:** Formatação de valores segue `profile.currency` (BRL/USD/EUR) com locale correto.
 
 ================================================================
 🚧 STATUS DAS FASES
@@ -372,6 +386,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 | 7.2 | Alertas de Orçamento por categoria |
 | 7.3 | Categorização Automática via IA (matching local + Groq fallback) |
 | 7.4 | Bot Multilíngue (PT/EN baseado no perfil) |
+| 7.5 | Dashboard com Tendências (gráfico + previsão) — feito por codex |
 | 9 | Segurança: rate limiting, validação de input, auditoria |
 
 ### Fase 7 — Funcionalidades Bot
@@ -388,10 +403,13 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Mensagens de erro e feedback multilíngues
 - [x] Formatação de moeda baseada no perfil
 
-#### 7.5 — Dashboard com Tendências
-- [ ] Gráfico de tendência (últimos 6 meses)
-- [ ] Previsão: "Se continuar assim, terminará com R$X"
-- [ ] Indicadores visuais: ↑ ↓ →
+#### 7.5 — Dashboard com Tendências (feito por codex) ✅
+- [x] Gráfico de tendência (últimos 6 meses) — feito por codex
+- [x] Previsão: "Se continuar assim, terminará com R$X" — feito por codex
+- [x] Indicadores visuais: ↑ ↓ → — feito por codex
+- [x] Limiar: max(10% da média do saldo absoluto, R$500) — feito por codex
+- [x] Tooltip explicativo no card de tendência — feito por codex
+- [x] Refatorar previsão: usar média móvel (3 meses) em vez de regressão linear
 
 ### Fase 8 — Indicadores
 
@@ -412,6 +430,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 #### 9.1 — Rate Limiting ✅
 - [x] Implementar rate limit no webhook Telegram (10 msg/min por chatId)
 - [x] Proteção contra abuso do bot
+- [x] Persistir rate limit (evitar reset em cold start) — tabela rate_limit_entries no Supabase
 
 #### 9.2 — Validação de Input ✅
 - [x] Sanitizar mensagens antes de enviar para Groq (prompt injection)
@@ -423,27 +442,37 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] RLS ativo em todas as tabelas (profiles, transactions, categories, goals, assets, recurring_transactions, budget_alerts, telegram_link_tokens)
 - [x] Variáveis NEXT_PUBLIC_* revisadas (apenas URLs e chaves públicas expostas)
 - [x] Migração de console.* para logger em todas as API Routes
+- [x] Corrigir console.error restante em use-investments-store.ts
 
 ### Fase 10 — Resiliência (Prioridade Média)
 
-#### 10.1 — Retry e Fallback
-- [ ] Exponential backoff no sync offline com notificação visual
-- [ ] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB)
-- [ ] Fallback para última cotação quando API falhar
+#### 10.1 — Retry e Fallback (feito por codex) ✅
+- [x] Exponential backoff no sync offline com notificação visual — feito por codex
+- [x] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB) — feito por codex
+- [x] Fallback para última cotação quando API falhar — feito por codex
+- [x] Centralizar timeouts em lib/constants.ts
+- [x] Corrigir tipagem `as never` em generate-recurring/route.ts
 
-#### 10.2 — Cache Agressivo
-- [ ] Cache de cotações de 1h (atualmente 5 min)
-- [ ] Persistir última cotação válida para uso offline
+#### 10.2 — Cache Agressivo (feito por codex)
+- [x] Cache de cotações de 1h (atualmente 5 min) — feito por codex
+- [x] Persistir última cotação válida para uso offline — feito por codex
 
 ### Fase 11 — Observabilidade (Prioridade Média)
 
-#### 11.1 — Health Check
-- [ ] Endpoint `/api/health` retornando status do Supabase
-- [ ] Verificação de conectividade com serviços externos
+#### 11.1 — Health Check (feito por codex) ✅
+- [x] Endpoint `/api/health` retornando status do Supabase — feito por codex
+- [x] Verificação de conectividade com serviços externos — feito por codex
+- [x] Log de indisponibilidade no Radar (RADAR_STOCKS) — feito por codex
+- [ ] (Opcional) Relatório interno/cron de indisponibilidade do Radar (RADAR_STOCKS)
+- [x] Cache de 30s no health check para evitar abuso
 
-#### 11.2 — Métricas de Uso
-- [ ] Contador de mensagens/transações por dia no Supabase
-- [ ] Dashboard de uso do bot (opcional)
+#### 11.2 — Métricas de Uso ✅
+- [x] Contador de mensagens/transações por dia no Supabase — feito por codex
+- [x] Dashboard de uso do bot (opcional) — feito por codex
+- [x] Índice composto otimizado para usage_events (user_id, day, metric)
+- [x] Cron mensal para cleanup de usage_events (retenção 90 dias)
+- [x] Métrica de chamadas API (cotações) com card admin-only
+- [x] Variável NEXT_PUBLIC_ADMIN_EMAILS para controle de visibilidade
 
 #### 11.3 — Alertas Proativos
 - [ ] Webhook para Telegram pessoal quando cron falhar
@@ -498,6 +527,11 @@ App (client):
 Cron jobs:
 - Validar se estao ativos em Vercel > Cron Jobs
 - Confirmar se houve execucao nas ultimas 24h
+
+Radar (Brapi) - Logs na Vercel:
+1. Vercel Dashboard > Project > Functions > Logs
+2. Filtrar por "brapi" ou "Radar stocks unavailable"
+3. Verificar mensagens do logger: "RADAR_STOCKS has duplicated symbols" e "Radar stocks unavailable (Dados Indisponíveis)"
 
  TESTES
 
@@ -561,6 +595,13 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-27:** Schema Supabase + RLS aplicados. Auth Magic Link. Sync offline-first definido.
 - **2026-01-28:** Deploy Vercel. Fase 5 e 6 concluídas. Bot funcional.
 - **2026-01-29:** Fase 4 descongelada e concluída. Fase 7.1 e 7.2 implementadas.
-- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA) e 7.4 (Bot multilíngue) implementadas.
+- **2026-01-30:** Refatoração técnica: logger centralizado, otimizações de performance (useMemo, stores), crypto.randomUUID. Migração completa de console.* para logger em supabase.ts, groq.ts, migrations.ts. Roadmap expandido com fases 9-13. Fase 9 (Segurança) implementada: rate limiting (10 msg/min), sanitização de input, detecção de prompt injection, auditoria RLS. ESLint configurado com @rocketseat/eslint-config. Fases 7.3 (Categorização automática via IA), 7.4 (Bot multilíngue) e 7.5 (Dashboard com tendências — feito por codex) implementadas.
+- **2026-01-30:** Fase 10.2 (Cache Agressivo — feito por codex): cache de cotações em 1h + persistência da última cotação válida offline.
+- **2026-01-30:** Fase 11.1 (Health Check — feito por codex): `/api/health` com status do Supabase e conectividade de serviços externos.
+- **2026-01-30:** Fase 10.1 (Retry e Fallback — feito por codex): retry com backoff no sync + timeouts de 10s em APIs externas.
+- **2026-01-30:** Investimentos: removido botão manual de atualização; mantido auto-refresh a cada 5 min — feito por codex.
+- **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): contador de mensagens/transações por dia no Supabase.
+- **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): dashboard simples no Profile.
+- **2026-01-30:** Revisão técnica do trabalho do Codex: (1) Timeouts centralizados em lib/constants.ts, (2) Rate limit persistido no Supabase (evita reset em cold start), (3) Trend chart refatorado para usar média móvel, (4) Health check com cache de 30s, (5) Índice otimizado para usage_events, (6) Cron mensal para cleanup de usage_events (90 dias), (7) Métricas de API calls com card admin-only (NEXT_PUBLIC_ADMIN_EMAILS), (8) Correção de console.error e tipagem `as never`. TODO: criar email oficial ControleC.
 
 > Histórico detalhado disponível no git.

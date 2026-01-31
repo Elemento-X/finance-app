@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -26,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useTranslation } from '@/lib/i18n'
 import { useFinanceStore } from '@/hooks/use-finance-store'
+import { formatCurrency } from '@/utils/formatters'
 import {
   fetchRadarStocks,
   clearRadarCache,
@@ -394,11 +395,11 @@ function BrazilianStocksTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [cacheAge, setCacheAge] = useState<number | null>(null)
+  const tRef = useRef(t)
 
-  const formatCurrency = (value: number) => {
-    if (value == null || isNaN(value)) return 'R$ 0,00'
-    return value.toLocaleString(locale, { style: 'currency', currency: 'BRL' })
-  }
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
 
   const formatPercent = (value: number) => {
     if (value == null || isNaN(value)) return '0,00%'
@@ -414,7 +415,7 @@ function BrazilianStocksTab() {
     })
   }
 
-  const loadStocks = async (forceRefresh: boolean = false) => {
+  const loadStocks = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoading(true)
     setError(null)
 
@@ -427,12 +428,12 @@ function BrazilianStocksTab() {
       setStocks(data)
       setCacheAge(getCacheAge())
     } catch (err) {
-      setError(t('radar.error'))
+      setError(tRef.current('radar.error'))
       console.error('Failed to fetch stocks:', err)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     loadStocks()
@@ -554,7 +555,10 @@ function BrazilianStocksTab() {
                           {t('radar.currentPrice')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.currentPrice)}
+                          {formatCurrency(
+                            stock.currentPrice,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -564,7 +568,10 @@ function BrazilianStocksTab() {
                           {t('radar.previousClose')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.previousClose)}
+                          {formatCurrency(
+                            stock.previousClose,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -574,7 +581,7 @@ function BrazilianStocksTab() {
                           {t('radar.open')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.open)}
+                          {formatCurrency(stock.open, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -587,7 +594,7 @@ function BrazilianStocksTab() {
                           className={`font-medium ${stock.change >= 0 ? 'text-income' : 'text-expense'}`}
                         >
                           {stock.change >= 0 ? '+' : ''}
-                          {formatCurrency(stock.change)}
+                          {formatCurrency(stock.change, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -597,7 +604,7 @@ function BrazilianStocksTab() {
                           {t('radar.dayHigh')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.dayHigh)}
+                          {formatCurrency(stock.dayHigh, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -607,7 +614,7 @@ function BrazilianStocksTab() {
                           {t('radar.dayLow')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.dayLow)}
+                          {formatCurrency(stock.dayLow, stock.currency || 'BRL')}
                         </p>
                       </div>
 
@@ -617,7 +624,10 @@ function BrazilianStocksTab() {
                           {t('radar.weekHigh52')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.weekHigh52)}
+                          {formatCurrency(
+                            stock.weekHigh52,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -627,7 +637,10 @@ function BrazilianStocksTab() {
                           {t('radar.weekLow52')}
                         </span>
                         <p className="font-medium">
-                          {formatCurrency(stock.weekLow52)}
+                          {formatCurrency(
+                            stock.weekLow52,
+                            stock.currency || 'BRL',
+                          )}
                         </p>
                       </div>
 
@@ -669,7 +682,9 @@ function BrazilianStocksTab() {
                           {t('radar.eps')}
                         </span>
                         <p className="font-medium">
-                          {stock.eps !== 0 ? formatCurrency(stock.eps) : 'N/A'}
+                          {stock.eps !== 0
+                            ? formatCurrency(stock.eps, stock.currency || 'BRL')
+                            : 'N/A'}
                         </p>
                       </div>
                     </div>

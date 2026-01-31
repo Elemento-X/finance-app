@@ -10,6 +10,7 @@ import { useFinanceStore } from '@/hooks/use-finance-store'
 import type { AssetClass } from '@/lib/investment-types'
 import { AssetForm } from './asset-form'
 import { useTranslation } from '@/lib/i18n'
+import { formatCurrency } from '@/utils/formatters'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,13 +80,6 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
   const filteredAssets = assetsWithMarket.filter(
     (a) => a.assetClass === assetClass,
   )
-
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
 
   if (isLoading) {
     return <AssetsListSkeleton />
@@ -158,7 +152,7 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                         {t('assets.avgPrice')}
                       </span>
                       <p className="font-medium">
-                        {profile.currency} {formatCurrency(asset.averagePrice)}
+                        {formatCurrency(asset.averagePrice, profile.currency)}
                       </p>
                     </div>
                     <div>
@@ -166,10 +160,12 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                         {t('assets.currentPrice')}
                       </span>
                       <p className="font-medium">
-                        {profile.currency}{' '}
                         {hasMarketData
-                          ? formatCurrency(asset.marketData!.currentPrice)
-                          : formatCurrency(asset.averagePrice)}
+                          ? formatCurrency(
+                              asset.marketData!.currentPrice,
+                              profile.currency,
+                            )
+                          : formatCurrency(asset.averagePrice, profile.currency)}
                       </p>
                     </div>
                     <div>
@@ -177,7 +173,7 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                         {t('assets.invested')}
                       </span>
                       <p className="font-medium">
-                        {profile.currency} {formatCurrency(asset.totalInvested)}
+                        {formatCurrency(asset.totalInvested, profile.currency)}
                       </p>
                     </div>
                     <div>
@@ -185,7 +181,7 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                         {t('assets.currentValue')}
                       </span>
                       <p className="font-medium">
-                        {profile.currency} {formatCurrency(asset.currentValue)}
+                        {formatCurrency(asset.currentValue, profile.currency)}
                       </p>
                     </div>
                     <div>
@@ -195,7 +191,7 @@ export function AssetsList({ assetClass, isLoading }: AssetsListProps) {
                       <p
                         className={`font-medium ${isProfit ? 'text-income' : 'text-expense'}`}
                       >
-                        {profile.currency} {formatCurrency(asset.capitalGain)}
+                        {formatCurrency(asset.capitalGain, profile.currency)}
                       </p>
                     </div>
                     <div>

@@ -1,9 +1,13 @@
 // Market Data Service - Fetches real-time market data from external APIs
 import type { AssetClass, MarketData } from '@/lib/investment-types'
 import { logger } from '@/lib/logger'
+import { API_TIMEOUT_MS, MARKET_DATA_CACHE_MS } from '@/lib/constants'
+import { recordApiCall } from './usage-metrics'
 
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = MARKET_DATA_CACHE_MS
 const CACHE_KEY = 'market_data_cache'
+const LAST_VALID_CACHE_KEY = 'market_data_last_valid'
+const REQUEST_TIMEOUT_MS = API_TIMEOUT_MS
 
 // Retry configuration
 const MAX_RETRIES = 3
@@ -28,11 +32,21 @@ async function fetchWithRetry(
   let lastError: Error | null = null
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
     try {
-      const response = await fetch(url, options)
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      })
       // Return response even if not ok - let caller handle HTTP errors
       return response
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.marketData.warn(
+          `Fetch attempt ${attempt}/${maxRetries} timed out.`,
+        )
+      }
       lastError = error instanceof Error ? error : new Error(String(error))
       logger.marketData.warn(
         `Fetch attempt ${attempt}/${maxRetries} failed:`,
@@ -44,6 +58,8 @@ async function fetchWithRetry(
         const delay = INITIAL_RETRY_DELAY * attempt // 1s, 2s, 3s
         await sleep(delay)
       }
+    } finally {
+      clearTimeout(timeout)
     }
   }
 
@@ -57,6 +73,7 @@ interface CacheEntry {
 }
 
 type MarketDataCache = Record<string, CacheEntry>
+type LastValidCache = Record<string, MarketData>
 
 export interface MarketDataResult {
   data: MarketData | null
@@ -113,6 +130,7 @@ function formatYahooSymbol(symbol: string, assetClass: AssetClass): string {
 
 class MarketDataService {
   private cache: MarketDataCache = {}
+  private lastValidCache: LastValidCache = {}
   private failedSymbols: Set<string> = new Set()
 
   constructor() {
@@ -126,6 +144,10 @@ class MarketDataService {
       if (cached) {
         this.cache = JSON.parse(cached)
       }
+      const lastValid = localStorage.getItem(LAST_VALID_CACHE_KEY)
+      if (lastValid) {
+        this.lastValidCache = JSON.parse(lastValid)
+      }
     } catch (error) {
       logger.marketData.error('Failed to load cache:', error)
     }
@@ -135,6 +157,10 @@ class MarketDataService {
     if (typeof window === 'undefined') return
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify(this.cache))
+      localStorage.setItem(
+        LAST_VALID_CACHE_KEY,
+        JSON.stringify(this.lastValidCache),
+      )
     } catch (error) {
       logger.marketData.error('Failed to save cache:', error)
     }
@@ -148,6 +174,10 @@ class MarketDataService {
 
   private getCachedData(symbol: string): MarketData | null {
     return this.cache[symbol]?.data || null
+  }
+
+  private getLastValidData(symbol: string): MarketData | null {
+    return this.lastValidCache[symbol] || null
   }
 
   async fetchStockData(
@@ -171,7 +201,8 @@ class MarketDataService {
       )
 
       if (!response.ok) {
-        const cachedData = this.getCachedData(cacheKey)
+        const cachedData =
+          this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
         this.failedSymbols.add(symbol)
         return {
           data: cachedData,
@@ -183,7 +214,8 @@ class MarketDataService {
       const data = await response.json()
 
       if (!data.chart?.result?.[0]) {
-        const cachedData = this.getCachedData(cacheKey)
+        const cachedData =
+          this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
         this.failedSymbols.add(symbol)
         return {
           data: cachedData,
@@ -198,7 +230,8 @@ class MarketDataService {
       const previousClose = meta.previousClose
 
       if (!currentPrice || !previousClose) {
-        const cachedData = this.getCachedData(cacheKey)
+        const cachedData =
+          this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
         return {
           data: cachedData,
           error: { type: 'invalid_response', symbol },
@@ -217,13 +250,18 @@ class MarketDataService {
       }
 
       this.cache[cacheKey] = { data: marketData, timestamp: Date.now() }
+      this.lastValidCache[cacheKey] = marketData
       this.saveCache()
       this.failedSymbols.delete(symbol)
+
+      // Record API call metric (non-blocking)
+      recordApiCall('yahoo').catch(() => {})
 
       return { data: marketData }
     } catch (error) {
       logger.marketData.error(`Failed to fetch ${symbol}:`, error)
-      const cachedData = this.getCachedData(cacheKey)
+      const cachedData =
+        this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
       this.failedSymbols.add(symbol)
       return {
         data: cachedData,
@@ -250,7 +288,8 @@ class MarketDataService {
       )
 
       if (!response.ok) {
-        const cachedData = this.getCachedData(cacheKey)
+        const cachedData =
+          this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
         this.failedSymbols.add(symbol)
         return {
           data: cachedData,
@@ -263,7 +302,8 @@ class MarketDataService {
       const coinData = data[coinId]
 
       if (!coinData || coinData.brl === undefined) {
-        const cachedData = this.getCachedData(cacheKey)
+        const cachedData =
+          this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
         this.failedSymbols.add(symbol)
         return {
           data: cachedData,
@@ -281,13 +321,18 @@ class MarketDataService {
       }
 
       this.cache[cacheKey] = { data: marketData, timestamp: Date.now() }
+      this.lastValidCache[cacheKey] = marketData
       this.saveCache()
       this.failedSymbols.delete(symbol)
+
+      // Record API call metric (non-blocking)
+      recordApiCall('coingecko').catch(() => {})
 
       return { data: marketData }
     } catch (error) {
       logger.marketData.error(`Failed to fetch crypto ${symbol}:`, error)
-      const cachedData = this.getCachedData(cacheKey)
+      const cachedData =
+        this.getCachedData(cacheKey) || this.getLastValidData(cacheKey)
       this.failedSymbols.add(symbol)
       return {
         data: cachedData,
@@ -347,6 +392,7 @@ class MarketDataService {
 
   clearCache() {
     this.cache = {}
+    this.lastValidCache = {}
     this.failedSymbols.clear()
     this.saveCache()
   }

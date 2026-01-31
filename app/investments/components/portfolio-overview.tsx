@@ -6,6 +6,7 @@ import { useInvestmentsStore } from '@/hooks/use-investments-store'
 import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react'
 import { useFinanceStore } from '@/hooks/use-finance-store'
 import { useTranslation } from '@/lib/i18n'
+import { formatCurrency } from '@/utils/formatters'
 
 function PortfolioOverviewSkeleton() {
   return (
@@ -31,8 +32,6 @@ export function PortfolioOverview({ isLoading }: PortfolioOverviewProps) {
   const { portfolioSummary } = useInvestmentsStore()
   const { profile } = useFinanceStore()
   const t = useTranslation()
-  const currency = profile.currency
-  const locale = profile.language === 'pt' ? 'pt-BR' : 'en-US'
 
   if (isLoading) {
     return <PortfolioOverviewSkeleton />
@@ -50,13 +49,6 @@ export function PortfolioOverview({ isLoading }: PortfolioOverviewProps) {
 
   const isProfit = portfolioSummary.totalGain >= 0
 
-  const formatCurrency = (value: number) => {
-    return value.toLocaleString(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-4">
       <Card className="p-6">
@@ -67,7 +59,7 @@ export function PortfolioOverview({ isLoading }: PortfolioOverviewProps) {
           </span>
         </div>
         <p className="text-2xl font-bold">
-          {currency} {formatCurrency(portfolioSummary.totalInvested)}
+          {formatCurrency(portfolioSummary.totalInvested, profile.currency)}
         </p>
       </Card>
 
@@ -79,7 +71,7 @@ export function PortfolioOverview({ isLoading }: PortfolioOverviewProps) {
           </span>
         </div>
         <p className="text-2xl font-bold">
-          {currency} {formatCurrency(portfolioSummary.currentValue)}
+          {formatCurrency(portfolioSummary.currentValue, profile.currency)}
         </p>
       </Card>
 
@@ -97,7 +89,7 @@ export function PortfolioOverview({ isLoading }: PortfolioOverviewProps) {
         <p
           className={`text-2xl font-bold ${isProfit ? 'text-income' : 'text-expense'}`}
         >
-          {currency} {formatCurrency(portfolioSummary.totalGain)}
+          {formatCurrency(portfolioSummary.totalGain, profile.currency)}
         </p>
       </Card>
 

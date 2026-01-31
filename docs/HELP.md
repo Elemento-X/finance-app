@@ -14,18 +14,42 @@
 | 6 | Telegram Bot: vinculação, parsing IA, transações |
 | 7.1-7.2 | Resumos automáticos, alertas de orçamento |
 | 7.3-7.4 | Categorização automática (IA), bot multilíngue (PT/EN) |
+| 7.5 | Dashboard com tendências (gráfico + previsão, média móvel) |
 | 8.1 | MacroBar: indicadores econômicos (Selic, IPCA, taxa real) |
-| 9 | Segurança: rate limiting, sanitização, auditoria RLS |
+| 9 | Segurança: rate limiting persistido, sanitização, auditoria RLS |
+| 10 | Resiliência: timeouts centralizados, retry, fallback, cache |
+| 11 | Observabilidade: health check com cache, métricas de uso, cleanup automático |
 
 ### Em Andamento
 
-- 7.5: Dashboard com tendências
+- —
+
+### Novidade (Dashboard)
+
+- Tendência (últimos 6 meses): usa média móvel (3 meses) para previsão mais estável
+- Indicadores visuais: ↑ ↓ →
+- Moeda segue preferência do perfil (BRL/USD/EUR) com formatação correta
+
+### Investimentos (UI)
+
+- Atualização automática das cotações a cada 5 minutos (sem botão manual)
+
+### Resiliência
+
+- Timeouts centralizados em lib/constants.ts
+- Cotações com cache de 1h + fallback para última cotação válida
+- Sync offline com retry exponencial e aviso visual
+
+### Observabilidade
+
+- Health check com cache de 30s (`/api/health`)
+- Métricas de uso: mensagens Telegram, transações, chamadas API
+- Card admin-only para monitorar chamadas API (NEXT_PUBLIC_ADMIN_EMAILS)
+- Cron mensal para cleanup de usage_events (retenção 90 dias)
 
 ### Planejadas
 
 - 8.2: Expandir indicadores de ativos
-- 10: Resiliência (retry, fallback, cache)
-- 11: Observabilidade (health check, métricas, alertas)
 - 12: Performance (bundle size, queries)
 - 13: DX (testes E2E, seed data)
 
@@ -100,6 +124,18 @@ logger.sync.error('Falha crítica')  // Sempre aparece
 ```
 
 **Ver logs em produção:** Vercel > Functions > Logs
+
+## Health Check (feito por codex)
+
+```bash
+curl "https://controlec.vercel.app/api/health"
+```
+
+## Métricas de Uso (feito por codex)
+
+- Supabase registra contagem diária de mensagens do Telegram e transações criadas.
+- View: `usage_daily_metrics`
+- Card no Profile mostra os últimos 7 dias — feito por codex
 
 ## Links Úteis
 
