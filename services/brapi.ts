@@ -3,11 +3,13 @@
 // Docs: https://brapi.dev/docs
 
 import { logger } from '@/lib/logger'
+import { API_TIMEOUT_MS, BRAPI_CACHE_MS } from '@/lib/constants'
 
 const API_KEY = process.env.NEXT_PUBLIC_BRAPI_API_KEY
 const BASE_URL = 'https://brapi.dev/api'
 const CACHE_KEY = 'brapi_stocks_cache'
-const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const CACHE_TTL = BRAPI_CACHE_MS
+const REQUEST_TIMEOUT_MS = API_TIMEOUT_MS
 
 // List of 15 Brazilian stocks to display in the radar
 export const RADAR_STOCKS = [
@@ -27,6 +29,39 @@ export const RADAR_STOCKS = [
   'BBAS3',
   'ABEV3', // Ambev
 ]
+
+function logRadarListIssues(): void {
+  const seen = new Set<string>()
+  const duplicates = new Set<string>()
+  const invalid: string[] = []
+
+  for (const symbol of RADAR_STOCKS) {
+    const trimmed = symbol.trim()
+    if (!trimmed) {
+      invalid.push(symbol)
+      continue
+    }
+
+    if (seen.has(trimmed)) {
+      duplicates.add(trimmed)
+    } else {
+      seen.add(trimmed)
+    }
+  }
+
+  if (invalid.length > 0) {
+    logger.brapi.warn('RADAR_STOCKS has empty/invalid symbols:', invalid)
+  }
+
+  if (duplicates.size > 0) {
+    logger.brapi.warn(
+      'RADAR_STOCKS has duplicated symbols:',
+      Array.from(duplicates),
+    )
+  }
+}
+
+logRadarListIssues()
 
 // Interface with ALL data available in free tier
 export interface StockData {
@@ -136,15 +171,17 @@ function saveCache(stocks: StockData[]): void {
  * Fetch stock data from Brapi.dev
  */
 async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
+  const url = `${BASE_URL}/quote/${symbol}`
+  const headers: HeadersInit = {}
+  if (API_KEY) {
+    headers.Authorization = `Bearer ${API_KEY}`
+  }
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
   try {
-    const url = `${BASE_URL}/quote/${symbol}`
-
-    const headers: HeadersInit = {}
-    if (API_KEY) {
-      headers.Authorization = `Bearer ${API_KEY}`
-    }
-
-    const response = await fetch(url, { headers })
+    const response = await fetch(url, { headers, signal: controller.signal })
 
     if (!response.ok) {
       logger.brapi.error(`HTTP error for ${symbol}:`, response.status)
@@ -185,8 +222,13 @@ async function fetchStockFromBrapi(symbol: string): Promise<StockData | null> {
       lastUpdate: Date.now(),
     }
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logger.brapi.warn(`Request timed out for ${symbol}`)
+    }
     logger.brapi.error(`Error fetching ${symbol}:`, error)
     return null
+  } finally {
+    clearTimeout(timeout)
   }
 }
 
@@ -245,6 +287,16 @@ export async function fetchRadarStocks(): Promise<StockData[]> {
 
   if (results.some((r) => !r.error)) {
     saveCache(results)
+  }
+
+  const unavailableSymbols = results
+    .filter((stock) => stock.error)
+    .map((stock) => stock.symbol)
+  if (unavailableSymbols.length > 0) {
+    logger.brapi.warn(
+      'Radar stocks unavailable (Dados Indisponíveis):',
+      unavailableSymbols,
+    )
   }
 
   return results

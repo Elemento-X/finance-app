@@ -10,6 +10,7 @@ import type {
   BudgetAlert,
 } from '@/lib/types'
 import type { Asset } from '@/lib/investment-types'
+import { recordUsageEvent } from '@/services/usage-metrics'
 
 // =============================================================================
 // Type Converters (camelCase ↔ snake_case)
@@ -375,6 +376,13 @@ export const supabaseService = {
       }
       return false
     }
+
+    await recordUsageEvent(supabase, {
+      id: transaction.id,
+      userId,
+      metric: 'transaction_created',
+      source: 'web',
+    })
 
     return true
   },

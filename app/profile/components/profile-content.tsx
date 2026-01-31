@@ -39,6 +39,7 @@ import {
   MessageCircle,
   Link2Off,
   Bell,
+  BarChart3,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
@@ -51,6 +52,9 @@ import { ExportManager } from '@/components/export-manager'
 import { useAuth } from '@/components/auth-provider'
 import { supabase } from '@/lib/supabase'
 import { supabaseService } from '@/services/supabase'
+
+// Check if user is admin (for admin-only features)
+const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') ?? []
 
 export function ProfileContent() {
   const { loadData, profile, updateProfile, transactions } = useFinanceStore()
@@ -65,6 +69,15 @@ export function ProfileContent() {
   const [isDisconnecting, setIsDisconnecting] = useState(false)
   const [summaryEnabled, setSummaryEnabled] = useState(false)
   const [isUpdatingSummary, setIsUpdatingSummary] = useState(false)
+  const [usageTotals, setUsageTotals] = useState({
+    telegramMessages: 0,
+    transactions: 0,
+  })
+  const [apiCalls, setApiCalls] = useState(0)
+  const [usageLoading, setUsageLoading] = useState(false)
+  const [usageError, setUsageError] = useState(false)
+
+  const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
 
   useEffect(() => {
     loadData()
@@ -101,6 +114,55 @@ export function ProfileContent() {
       setStorageSize((total / 1024).toFixed(2))
     }
   }, [transactions])
+
+  useEffect(() => {
+    const loadUsageMetrics = async () => {
+      if (!user) return
+      setUsageLoading(true)
+      setUsageError(false)
+
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - 6)
+      const startDay = startDate.toISOString().split('T')[0]
+
+      const { data, error } = await supabase
+        .from('usage_daily_metrics')
+        .select('metric, day, total')
+        .eq('user_id', user.id)
+        .gte('day', startDay)
+
+      if (error) {
+        setUsageError(true)
+        setUsageLoading(false)
+        return
+      }
+
+      let telegramMessages = 0
+      let transactionsCreated = 0
+      let apiCallsTotal = 0
+
+      for (const row of data ?? []) {
+        if (row.metric === 'telegram_message') {
+          telegramMessages += Number(row.total) || 0
+        }
+        if (row.metric === 'transaction_created') {
+          transactionsCreated += Number(row.total) || 0
+        }
+        if (row.metric === 'api_call') {
+          apiCallsTotal += Number(row.total) || 0
+        }
+      }
+
+      setUsageTotals({
+        telegramMessages,
+        transactions: transactionsCreated,
+      })
+      setApiCalls(apiCallsTotal)
+      setUsageLoading(false)
+    }
+
+    loadUsageMetrics()
+  }, [user])
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -415,6 +477,100 @@ export function ProfileContent() {
             )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <BarChart3 className="size-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>{t('profile.usageTitle')}</CardTitle>
+                <CardDescription>{t('profile.usageDesc')}</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {usageLoading && (
+              <p className="text-sm text-muted-foreground">
+                {t('common.loading')}
+              </p>
+            )}
+
+            {!usageLoading && usageError && (
+              <p className="text-sm text-muted-foreground">
+                {t('profile.usageUnavailable')}
+              </p>
+            )}
+
+            {!usageLoading && !usageError && (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  {t('profile.usagePeriod')}
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border border-border">
+                    <p className="text-2xl font-bold">
+                      {usageTotals.telegramMessages}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.usageTelegram')}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg border border-border">
+                    <p className="text-2xl font-bold">
+                      {usageTotals.transactions}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.usageTransactions')}
+                    </p>
+                  </div>
+                </div>
+                {usageTotals.telegramMessages === 0 &&
+                  usageTotals.transactions === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('profile.usageEmpty')}
+                    </p>
+                  )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Admin-only: Infrastructure metrics */}
+        {isAdmin && (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <BarChart3 className="size-5 text-amber-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-amber-500">
+                    {t('profile.adminMetricsTitle')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('profile.adminMetricsDesc')}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {t('profile.usagePeriod')}
+              </p>
+              <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <p className="text-2xl font-bold text-amber-500">{apiCalls}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('profile.usageApiCalls')}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('profile.usageApiCallsHint')}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <RecurringManager />
 

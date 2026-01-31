@@ -32,3 +32,39 @@ export const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
   { value: 'pt', label: 'Português' },
 ]
+
+// =============================================================================
+// API Timeouts (milliseconds)
+// =============================================================================
+
+/** Timeout for external API calls (Yahoo, CoinGecko, Brapi, BCB) */
+export const API_TIMEOUT_MS = 10_000 // 10 seconds
+
+/** Timeout for health check service verification */
+export const HEALTH_CHECK_TIMEOUT_MS = 5_000 // 5 seconds
+
+/** Cache duration for health check responses */
+export const HEALTH_CHECK_CACHE_MS = 30_000 // 30 seconds
+
+/** Cache duration for market data quotes */
+export const MARKET_DATA_CACHE_MS = 60 * 60 * 1000 // 1 hour
+
+/** Cache duration for Brapi radar stocks */
+export const BRAPI_CACHE_MS = 24 * 60 * 60 * 1000 // 24 hours
+
+// =============================================================================
+// Rate Limiting
+// =============================================================================
+
+/** Rate limit window for Telegram webhook */
+export const TELEGRAM_RATE_LIMIT_WINDOW_MS = 60_000 // 1 minute
+
+/** Max requests per window for Telegram webhook */
+export const TELEGRAM_RATE_LIMIT_MAX_REQUESTS = 10
+
+// =============================================================================
+// Data Retention
+// =============================================================================
+
+/** Retention period for usage_events in days */
+export const USAGE_EVENTS_RETENTION_DAYS = 90

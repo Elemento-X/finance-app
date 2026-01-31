@@ -1,12 +1,23 @@
-export function formatCurrency(value: number, currency = 'BRL'): string {
-  const currencySymbols: Record<string, string> = {
-    BRL: 'R$',
-    USD: '$',
-    EUR: '€',
+function getLocaleForCurrency(currency: string): string {
+  switch (currency) {
+    case 'USD':
+      return 'en-US'
+    case 'EUR':
+      return 'de-DE'
+    case 'BRL':
+    default:
+      return 'pt-BR'
   }
+}
 
-  const symbol = currencySymbols[currency] || 'R$'
-  return `${symbol} ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+export function formatCurrency(value: number, currency = 'BRL'): string {
+  const locale = getLocaleForCurrency(currency)
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 }
 
 export function parseCurrencyInput(value: string): number {
@@ -18,29 +29,22 @@ export function parseCurrencyInput(value: string): number {
 }
 
 export function formatCurrencyInput(value: string, currency = 'BRL'): string {
-  const currencySymbols: Record<string, string> = {
-    BRL: 'R$',
-    USD: '$',
-    EUR: '€',
-  }
-
-  const symbol = currencySymbols[currency] || 'R$'
+  const locale = getLocaleForCurrency(currency)
 
   // Remove non-numeric characters
   const cleaned = value.replace(/[^\d]/g, '')
 
   if (cleaned === '') return ''
 
-  // Convert to number and format with comma as decimal separator (Brazilian format)
+  // Convert to number (2 decimal places)
   const number = Number.parseInt(cleaned, 10) / 100
 
-  // Format: 1.234,56 (Brazilian style)
-  const formatted = number.toLocaleString('pt-BR', {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })
-
-  return `${symbol} ${formatted}`
+  }).format(number)
 }
 
 export function formatDate(date: string | Date): string {

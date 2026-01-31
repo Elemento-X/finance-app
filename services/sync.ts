@@ -3,6 +3,8 @@ import { supabaseService } from './supabase'
 import { storageService } from './storage'
 import { investmentsStorageService } from './investments-storage'
 import { logger } from '@/lib/logger'
+import { toast } from 'sonner'
+import { getTranslation } from '@/lib/i18n'
 import type {
   Transaction,
   Category,
@@ -55,6 +57,8 @@ interface SyncState {
 const SYNC_QUEUE_KEY = 'supabase_sync_queue'
 const LAST_SYNC_KEY = 'supabase_last_sync'
 const SYNC_INTERVAL_MS = 15 * 60 * 1000 // 15 minutes
+const SYNC_MAX_RETRIES = 3
+const SYNC_RETRY_BASE_MS = 2000
 
 // =============================================================================
 // State
@@ -67,6 +71,8 @@ const syncState: SyncState = {
 }
 
 let syncIntervalId: ReturnType<typeof setInterval> | null = null
+let retryAttempts = 0
+let retryTimeoutId: ReturnType<typeof setTimeout> | null = null
 
 // =============================================================================
 // Queue Management
@@ -189,6 +195,33 @@ async function flushQueue(): Promise<{ success: number; failed: number }> {
   }
 
   return { success, failed }
+}
+
+function resetRetryState(): void {
+  retryAttempts = 0
+  if (retryTimeoutId) {
+    clearTimeout(retryTimeoutId)
+    retryTimeoutId = null
+  }
+}
+
+function scheduleRetry(): void {
+  if (!syncState.isOnline) return
+  if (retryAttempts >= SYNC_MAX_RETRIES) return
+
+  retryAttempts += 1
+  const delay = SYNC_RETRY_BASE_MS * Math.pow(2, retryAttempts - 1)
+
+  toast.message(
+    getTranslation('sync.retrying', {
+      seconds: Math.round(delay / 1000).toString(),
+    }),
+  )
+
+  if (retryTimeoutId) clearTimeout(retryTimeoutId)
+  retryTimeoutId = setTimeout(() => {
+    syncOnLoad()
+  }, delay)
 }
 
 async function executeOperation(op: SyncOperation): Promise<boolean> {
@@ -379,10 +412,16 @@ async function syncOnLoad(): Promise<void> {
 
   try {
     // First, flush any pending operations
-    await flushQueue()
+    const flushResult = await flushQueue()
 
     // Then pull latest data
-    await pullFromSupabase()
+    const pullOk = await pullFromSupabase()
+
+    if (pullOk && flushResult.failed === 0) {
+      resetRetryState()
+    } else {
+      scheduleRetry()
+    }
   } finally {
     syncState.isSyncing = false
   }

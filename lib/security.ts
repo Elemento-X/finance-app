@@ -2,8 +2,13 @@
  * Security utilities for input validation, sanitization, and rate limiting
  */
 
+import {
+  TELEGRAM_RATE_LIMIT_MAX_REQUESTS,
+  TELEGRAM_RATE_LIMIT_WINDOW_MS,
+} from './constants'
+
 // =============================================================================
-// Rate Limiting (in-memory, per-instance)
+// Rate Limiting (in-memory fallback + Supabase persistence)
 // =============================================================================
 
 interface RateLimitEntry {
@@ -11,8 +16,7 @@ interface RateLimitEntry {
   resetAt: number
 }
 
-// In-memory store for rate limiting (resets on cold start)
-// For production at scale, consider Upstash Redis
+// In-memory store as fallback (for client-side or when DB is unavailable)
 const rateLimitStore = new Map<string, RateLimitEntry>()
 
 // Clean up old entries periodically (every 5 minutes)
@@ -43,7 +47,7 @@ export interface RateLimitResult {
 }
 
 /**
- * Check if a request should be rate limited
+ * Check if a request should be rate limited (in-memory, for client-side)
  * @param key Unique identifier (e.g., chatId, IP address)
  * @param config Rate limit configuration
  * @returns Whether the request is allowed and remaining quota
@@ -87,6 +91,108 @@ export function checkRateLimit(
     remaining: config.maxRequests - entry.count,
     resetAt: entry.resetAt,
   }
+}
+
+// =============================================================================
+// Supabase-based Rate Limiting (persisted across cold starts)
+// =============================================================================
+
+interface RateLimitRow {
+  key: string
+  count: number
+  reset_at: string
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClientLike = any
+
+/**
+ * Check rate limit using Supabase for persistence (server-side)
+ * Falls back to in-memory if DB call fails
+ * @param supabase Supabase admin client
+ * @param key Unique identifier (e.g., telegram:chatId)
+ * @param config Rate limit configuration
+ */
+export async function checkRateLimitAsync(
+  supabase: SupabaseClientLike,
+  key: string,
+  config: RateLimitConfig,
+): Promise<RateLimitResult> {
+  const now = Date.now()
+  const nowIso = new Date(now).toISOString()
+  const resetAtIso = new Date(now + config.windowMs).toISOString()
+
+  try {
+    // Try to get existing entry
+    const { data: existing, error: selectError } = await supabase
+      .from('rate_limit_entries')
+      .select('key, count, reset_at')
+      .eq('key', key)
+      .maybeSingle()
+
+    if (selectError) {
+      // Fallback to in-memory on DB error
+      return checkRateLimit(key, config)
+    }
+
+    // No entry or expired - create new
+    if (!existing || new Date(existing.reset_at).getTime() < now) {
+      await supabase.from('rate_limit_entries').upsert(
+        {
+          key,
+          count: 1,
+          reset_at: resetAtIso,
+          updated_at: nowIso,
+        },
+        { onConflict: 'key' },
+      )
+
+      return {
+        allowed: true,
+        remaining: config.maxRequests - 1,
+        resetAt: now + config.windowMs,
+      }
+    }
+
+    // Check if limit exceeded
+    if (existing.count >= config.maxRequests) {
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(existing.reset_at).getTime(),
+      }
+    }
+
+    // Increment count
+    await supabase.from('rate_limit_entries').upsert(
+      {
+        key,
+        count: existing.count + 1,
+        reset_at: existing.reset_at,
+        updated_at: nowIso,
+      },
+      { onConflict: 'key' },
+    )
+
+    return {
+      allowed: true,
+      remaining: config.maxRequests - (existing.count + 1),
+      resetAt: new Date(existing.reset_at).getTime(),
+    }
+  } catch {
+    // Fallback to in-memory on any error
+    return checkRateLimit(key, config)
+  }
+}
+
+/**
+ * Cleanup expired rate limit entries (call from a cron job)
+ */
+export async function cleanupRateLimitEntries(
+  supabase: SupabaseClientLike,
+): Promise<void> {
+  const nowIso = new Date().toISOString()
+  await supabase.from('rate_limit_entries').delete().lt('reset_at', nowIso)
 }
 
 // =============================================================================
@@ -184,8 +290,8 @@ export function validateInput(input: string): {
 
 // Rate limit for Telegram webhook (10 messages per minute per chat)
 export const TELEGRAM_RATE_LIMIT: RateLimitConfig = {
-  maxRequests: 10,
-  windowMs: 60 * 1000, // 1 minute
+  maxRequests: TELEGRAM_RATE_LIMIT_MAX_REQUESTS,
+  windowMs: TELEGRAM_RATE_LIMIT_WINDOW_MS,
 }
 
 // Maximum message length for Telegram messages

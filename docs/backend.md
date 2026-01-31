@@ -58,6 +58,7 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | Arquivo | Descrição |
 |---------|-----------|
 | `app/api/telegram/route.ts` | Webhook Telegram |
+| `app/api/health/route.ts` | Health check (Supabase + serviços externos) — feito por codex |
 | `app/api/cron/generate-recurring/route.ts` | Cron: transações recorrentes |
 | `app/api/cron/telegram-summary/route.ts` | Cron: resumos semanais/mensais |
 | `services/supabase.ts` | CRUD Supabase (usa `logger.supabase`) |
@@ -65,6 +66,10 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 | `services/groq.ts` | Parsing de mensagens com IA (usa `logger.telegram`) |
 | `services/migrations.ts` | Migrações de dados (usa `logger.migrations`) |
 | `services/bcb.ts` | API Banco Central (Selic, IPCA) |
+| `services/brapi.ts` | API Brapi.dev com timeout de 10s |
+| `services/usage-metrics.ts` | Registro de métricas de uso (mensagens/transações) |
+| `components/dashboard/trend-chart.tsx` | Card de tendência (saldo 6 meses + previsão) |
+| `utils/formatters.ts` | Formatação de moeda por locale (BRL/USD/EUR) |
 | `lib/supabase.ts` | Client Supabase (browser) |
 | `lib/supabase-admin.ts` | Client Supabase (service role) |
 | `lib/security.ts` | Rate limiting, sanitização, validação |
@@ -140,6 +145,7 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 | `assets` | Ativos de investimento |
 | `recurring_transactions` | Transações recorrentes |
 | `budget_alerts` | Limites de orçamento por categoria |
+| `usage_events` | Eventos de uso (mensagens/transactions) por dia |
 
 **RLS:** Todas as tabelas usam `auth.uid() = user_id`. API Routes com service role ignoram RLS.
 
@@ -158,10 +164,19 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 1. Cada mudança salva no localStorage e enfileira operação
 2. Se online: flush imediato (non-blocking)
 3. A cada 15 min: sync periódico (flush + pull)
+4. Retry exponencial no sync com notificação visual — feito por codex
 
 **Chaves localStorage:**
 - `supabase_sync_queue` - Operações pendentes
 - `supabase_last_sync` - Timestamp da última sync
+
+## 4.1 Cache de Cotações (Market Data) — feito por codex
+
+**Arquivo:** `services/market-data.ts`
+
+- Cache de cotações por 1h (`market_data_cache`) — feito por codex
+- Última cotação válida persistida para uso offline (`market_data_last_valid`) — feito por codex
+- Timeout de 10s em APIs externas (Yahoo, CoinGecko) — feito por codex
 
 ## 5. BCB (Banco Central)
 
@@ -251,6 +266,12 @@ curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://controlec.verce
 curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 ```
 
+### Health Check — feito por codex
+
+```bash
+curl "https://controlec.vercel.app/api/health"
+```
+
 ### SMTP (Supabase)
 1. Supabase Dashboard > Authentication > Settings > SMTP
 2. Configurar host/porta/usuário/senha do Resend
@@ -292,6 +313,9 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 - Em `development`: todos os níveis aparecem no console
 - Em `production`: apenas `error` aparece
 
+**Radar (Brapi):**
+- O Radar registra um aviso com a lista de ativos com “Dados indisponíveis” (RADAR_STOCKS) — feito por codex
+
 ### 9.2 Monitoramento em Produção
 
 | Ferramenta | O que monitora |
@@ -304,6 +328,15 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 1. Dashboard > Project > Functions
 2. Selecione a função (ex: `api/cron/generate-recurring`)
 3. Aba "Logs"
+
+### 9.3 Métricas de Uso (feito por codex)
+
+- Eventos de uso são registrados em `usage_events`.
+- View disponível: `usage_daily_metrics` (contagem por usuário, métrica e dia).
+- Métricas atuais:
+  - `telegram_message` (mensagens recebidas)
+  - `transaction_created` (transações criadas: web, telegram, recorrentes)
+- UI: Card de métricas no Profile (últimos 7 dias) — feito por codex
 
 ## 11. Segurança
 
