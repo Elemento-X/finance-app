@@ -462,7 +462,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 
 #### 11.2 — Métricas de Uso
 - [x] Contador de mensagens/transações por dia no Supabase — feito por codex
-- [ ] Dashboard de uso do bot (opcional)
+- [x] Dashboard de uso do bot (opcional) — feito por codex
 
 #### 11.3 — Alertas Proativos
 - [ ] Webhook para Telegram pessoal quando cron falhar
@@ -591,5 +591,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-30:** Fase 10.1 (Retry e Fallback — feito por codex): retry com backoff no sync + timeouts de 10s em APIs externas.
 - **2026-01-30:** Investimentos: removido botão manual de atualização; mantido auto-refresh a cada 5 min — feito por codex.
 - **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): contador de mensagens/transações por dia no Supabase.
+- **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): dashboard simples no Profile.
 
 > Histórico detalhado disponível no git.

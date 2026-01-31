@@ -336,6 +336,7 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 - Métricas atuais:
   - `telegram_message` (mensagens recebidas)
   - `transaction_created` (transações criadas: web, telegram, recorrentes)
+- UI: Card de métricas no Profile (últimos 7 dias) — feito por codex
 
 ## 11. Segurança
 

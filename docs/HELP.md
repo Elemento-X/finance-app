@@ -132,6 +132,7 @@ curl "https://controlec.vercel.app/api/health"
 
 - Supabase registra contagem diária de mensagens do Telegram e transações criadas.
 - View: `usage_daily_metrics`
+- Card no Profile mostra os últimos 7 dias — feito por codex
 
 ## Links Úteis
 
