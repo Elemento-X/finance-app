@@ -78,7 +78,8 @@ app/api/                → API Routes serverless (Vercel)
 ├── health/route.ts     → Health check (Supabase + serviços externos)
 └── cron/
     ├── generate-recurring/route.ts → Gera transações recorrentes (diário 03:05 UTC)
-    └── telegram-summary/route.ts   → Resumos semanais/mensais (segunda 12h, dia 1 12h)
+    ├── telegram-summary/route.ts   → Resumos semanais/mensais (segunda 12h, dia 1 12h)
+    └── cleanup-usage/route.ts      → Cleanup de métricas (mensal dia 1 04h UTC)
 
 components/             → Componentes React
 ├── dashboard/          → Gráficos e resumos
@@ -233,9 +234,9 @@ docs/                   → Documentação
 {
   id: string
   userId: string
-  metric: 'transaction_created' | 'telegram_message'
+  metric: 'transaction_created' | 'telegram_message' | 'api_call'
   day: string // YYYY-MM-DD
-  source?: 'web' | 'telegram' | 'recurring'
+  source?: 'web' | 'telegram' | 'recurring' | 'yahoo' | 'coingecko' | 'bcb'
   createdAt: string
 }
 ```
@@ -297,6 +298,7 @@ docs/                   → Documentação
 | `TELEGRAM_WEBHOOK_SECRET` | Secret para validar webhooks |
 | `GROQ_API_KEY` | API key Groq (Llama 3.3-70b) |
 | `NEXT_PUBLIC_BRAPI_API_KEY` | API key Brapi.dev (Radar) |
+| `NEXT_PUBLIC_ADMIN_EMAILS` | Emails admin (vírgula-separados) para métricas |
 | `CRON_SECRET` | Secret para autenticação dos cron jobs |
 
 **Arquivos:** `.env.local` (real, não commitado) | `.env.example` (template)
@@ -603,5 +605,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): contador de mensagens/transações por dia no Supabase.
 - **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): dashboard simples no Profile.
 - **2026-01-30:** Revisão técnica do trabalho do Codex: (1) Timeouts centralizados em lib/constants.ts, (2) Rate limit persistido no Supabase (evita reset em cold start), (3) Trend chart refatorado para usar média móvel, (4) Health check com cache de 30s, (5) Índice otimizado para usage_events, (6) Cron mensal para cleanup de usage_events (90 dias), (7) Métricas de API calls com card admin-only (NEXT_PUBLIC_ADMIN_EMAILS), (8) Correção de console.error e tipagem `as never`. TODO: criar email oficial ControleC.
+- **2026-01-30:** Bug fix: `handleSave` no Profile resetava `telegram_summary_enabled` para false ao salvar nome/moeda/idioma. Corrigido usando spread do profile existente.
 
 > Histórico detalhado disponível no git.

@@ -171,10 +171,10 @@ export function ProfileContent() {
     }
 
     updateProfile({
+      ...profile,
       name: name.trim(),
       currency,
       language,
-      defaultMonth: profile.defaultMonth,
     })
 
     toast.success(t('profile.updateSuccess'))
