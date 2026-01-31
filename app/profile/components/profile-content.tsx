@@ -53,6 +53,9 @@ import { useAuth } from '@/components/auth-provider'
 import { supabase } from '@/lib/supabase'
 import { supabaseService } from '@/services/supabase'
 
+// Check if user is admin (for admin-only features)
+const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') ?? []
+
 export function ProfileContent() {
   const { loadData, profile, updateProfile, transactions } = useFinanceStore()
   const { signOut, user } = useAuth()
@@ -70,8 +73,11 @@ export function ProfileContent() {
     telegramMessages: 0,
     transactions: 0,
   })
+  const [apiCalls, setApiCalls] = useState(0)
   const [usageLoading, setUsageLoading] = useState(false)
   const [usageError, setUsageError] = useState(false)
+
+  const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
 
   useEffect(() => {
     loadData()
@@ -133,6 +139,7 @@ export function ProfileContent() {
 
       let telegramMessages = 0
       let transactionsCreated = 0
+      let apiCallsTotal = 0
 
       for (const row of data ?? []) {
         if (row.metric === 'telegram_message') {
@@ -141,12 +148,16 @@ export function ProfileContent() {
         if (row.metric === 'transaction_created') {
           transactionsCreated += Number(row.total) || 0
         }
+        if (row.metric === 'api_call') {
+          apiCallsTotal += Number(row.total) || 0
+        }
       }
 
       setUsageTotals({
         telegramMessages,
         transactions: transactionsCreated,
       })
+      setApiCalls(apiCallsTotal)
       setUsageLoading(false)
     }
 
@@ -525,6 +536,41 @@ export function ProfileContent() {
             )}
           </CardContent>
         </Card>
+
+        {/* Admin-only: Infrastructure metrics */}
+        {isAdmin && (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <BarChart3 className="size-5 text-amber-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-amber-500">
+                    {t('profile.adminMetricsTitle')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('profile.adminMetricsDesc')}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {t('profile.usagePeriod')}
+              </p>
+              <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+                <p className="text-2xl font-bold text-amber-500">{apiCalls}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t('profile.usageApiCalls')}
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('profile.usageApiCallsHint')}
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <RecurringManager />
 

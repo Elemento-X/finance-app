@@ -14,6 +14,7 @@ import {
 import { investmentsCalculationsService } from '@/services/investments-calculations'
 import { getTranslation } from '@/lib/i18n'
 import { syncService } from '@/services/sync'
+import { logger } from '@/lib/logger'
 
 interface InvestmentsStore {
   assets: Asset[]
@@ -181,7 +182,7 @@ export const useInvestmentsStore = create<InvestmentsStore>((set, get) => ({
         failedAssets: [...failedSymbols, ...notFoundSymbols],
       })
     } catch (error) {
-      console.error('[Investments] Failed to refresh market data:', error)
+      logger.marketData.error('Failed to refresh market data:', error)
 
       toast.error(getTranslation('marketData.fetchError'), {
         description: getTranslation('marketData.fetchErrorDesc', {

@@ -1,8 +1,25 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { logger } from '@/lib/logger'
+import { HEALTH_CHECK_TIMEOUT_MS, HEALTH_CHECK_CACHE_MS } from '@/lib/constants'
 
-const DEFAULT_TIMEOUT_MS = 5000
+const DEFAULT_TIMEOUT_MS = HEALTH_CHECK_TIMEOUT_MS
+
+// Cache for health check responses (30 seconds)
+interface CachedHealthResponse {
+  data: HealthResponse
+  cachedAt: number
+}
+
+interface HealthResponse {
+  ok: boolean
+  timestamp: string
+  durationMs: number
+  checks: Record<string, ServiceCheck>
+  cached?: boolean
+}
+
+let healthCache: CachedHealthResponse | null = null
 
 type ServiceCheck = {
   ok: boolean
@@ -70,6 +87,15 @@ async function checkExternal(
 }
 
 export async function GET() {
+  // Check cache first (30 seconds TTL)
+  const now = Date.now()
+  if (healthCache && now - healthCache.cachedAt < HEALTH_CHECK_CACHE_MS) {
+    return NextResponse.json(
+      { ...healthCache.data, cached: true },
+      { status: healthCache.data.ok ? 200 : 503 },
+    )
+  }
+
   const startedAt = Date.now()
 
   const supabase = await checkSupabase()
@@ -106,13 +132,18 @@ export async function GET() {
     logger.app.error('Health check failed', { checks })
   }
 
-  return NextResponse.json(
-    {
-      ok,
-      timestamp: new Date().toISOString(),
-      durationMs,
-      checks,
-    },
-    { status: ok ? 200 : 503 },
-  )
+  const response: HealthResponse = {
+    ok,
+    timestamp: new Date().toISOString(),
+    durationMs,
+    checks,
+  }
+
+  // Cache the response
+  healthCache = {
+    data: response,
+    cachedAt: now,
+  }
+
+  return NextResponse.json(response, { status: ok ? 200 : 503 })
 }

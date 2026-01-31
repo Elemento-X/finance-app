@@ -24,6 +24,23 @@ interface RecurringTransactionRow {
   is_active: boolean
 }
 
+interface TransactionInsert {
+  id: string
+  user_id: string
+  type: string
+  amount: number
+  category: string
+  date: string
+  description: string | null
+  is_future: boolean
+  is_unexpected: boolean
+  source: string
+}
+
+interface RecurringTransactionUpdate {
+  last_generated_date: string
+}
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -168,7 +185,7 @@ export async function GET(request: NextRequest) {
 
       // Generate transaction
       const transactionId = generateTransactionId()
-      const transactionData = {
+      const transactionData: TransactionInsert = {
         id: transactionId,
         user_id: recurring.user_id,
         type: recurring.type,
@@ -201,9 +218,10 @@ export async function GET(request: NextRequest) {
       })
 
       // Update last_generated_date
+      const updateData: RecurringTransactionUpdate = { last_generated_date: todayStr }
       const { error: updateError } = await supabase
         .from('recurring_transactions')
-        .update({ last_generated_date: todayStr } as never)
+        .update(updateData as never)
         .eq('id', recurring.id)
 
       if (updateError) {

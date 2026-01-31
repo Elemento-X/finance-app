@@ -1,11 +1,13 @@
 // Market Data Service - Fetches real-time market data from external APIs
 import type { AssetClass, MarketData } from '@/lib/investment-types'
 import { logger } from '@/lib/logger'
+import { API_TIMEOUT_MS, MARKET_DATA_CACHE_MS } from '@/lib/constants'
+import { recordApiCall } from './usage-metrics'
 
-const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
+const CACHE_DURATION = MARKET_DATA_CACHE_MS
 const CACHE_KEY = 'market_data_cache'
 const LAST_VALID_CACHE_KEY = 'market_data_last_valid'
-const REQUEST_TIMEOUT_MS = 10 * 1000
+const REQUEST_TIMEOUT_MS = API_TIMEOUT_MS
 
 // Retry configuration
 const MAX_RETRIES = 3
@@ -252,6 +254,9 @@ class MarketDataService {
       this.saveCache()
       this.failedSymbols.delete(symbol)
 
+      // Record API call metric (non-blocking)
+      recordApiCall('yahoo').catch(() => {})
+
       return { data: marketData }
     } catch (error) {
       logger.marketData.error(`Failed to fetch ${symbol}:`, error)
@@ -319,6 +324,9 @@ class MarketDataService {
       this.lastValidCache[cacheKey] = marketData
       this.saveCache()
       this.failedSymbols.delete(symbol)
+
+      // Record API call metric (non-blocking)
+      recordApiCall('coingecko').catch(() => {})
 
       return { data: marketData }
     } catch (error) {

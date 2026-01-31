@@ -34,27 +34,29 @@ function TrendChartSkeleton() {
   )
 }
 
+/**
+ * Calculate trend using moving average (more stable than linear regression)
+ * Uses the last 3 months to calculate the average and trend direction
+ */
 function calculateTrend(values: number[]) {
   const n = values.length
   if (n < 2) {
     return { slope: 0, forecast: values[values.length - 1] ?? 0 }
   }
 
-  let sumX = 0
-  let sumY = 0
-  let sumXY = 0
-  let sumX2 = 0
+  // Use last 3 months for moving average (or all if less than 3)
+  const windowSize = Math.min(3, n)
+  const recentValues = values.slice(-windowSize)
+  const movingAverage =
+    recentValues.reduce((sum, v) => sum + v, 0) / recentValues.length
 
-  for (let i = 0; i < n; i++) {
-    sumX += i
-    sumY += values[i]
-    sumXY += i * values[i]
-    sumX2 += i * i
-  }
+  // Calculate slope based on difference between last value and moving average
+  const lastValue = values[n - 1]
+  const slope = lastValue - movingAverage
 
-  const denominator = n * sumX2 - sumX * sumX
-  const slope = denominator === 0 ? 0 : (n * sumXY - sumX * sumY) / denominator
-  const forecast = values[n - 1] + slope
+  // Forecast is the moving average adjusted by recent trend
+  // This gives a more conservative estimate than linear regression
+  const forecast = movingAverage + slope * 0.5
 
   return { slope, forecast }
 }

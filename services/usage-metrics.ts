@@ -1,14 +1,10 @@
 import { logger } from '@/lib/logger'
+import { supabase } from '@/lib/supabase'
 
-type SupabaseClientLike = {
-  from: (table: string) => {
-    upsert: (values: Record<string, unknown>, options?: unknown) => Promise<{
-      error: { code?: string; message?: string } | null
-    }>
-  }
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseClientLike = any
 
-type UsageMetric = 'transaction_created' | 'telegram_message'
+export type UsageMetric = 'transaction_created' | 'telegram_message' | 'api_call'
 
 const USAGE_TABLE = 'usage_events'
 
@@ -16,6 +12,9 @@ function getDayKey(date: Date = new Date()): string {
   return date.toISOString().split('T')[0]
 }
 
+/**
+ * Record a usage event (server-side, requires Supabase client)
+ */
 export async function recordUsageEvent(
   client: SupabaseClientLike,
   payload: {
@@ -47,5 +46,42 @@ export async function recordUsageEvent(
       userId: payload.userId,
       id: payload.id,
     })
+  }
+}
+
+/**
+ * Record an API call metric (client-side, uses browser Supabase client)
+ * Only records if user is authenticated
+ */
+export async function recordApiCall(source: string): Promise<void> {
+  if (typeof window === 'undefined') return
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const day = getDayKey()
+    const id = `api_${day}_${source}_${crypto.randomUUID().slice(0, 8)}`
+
+    const { error } = await supabase.from(USAGE_TABLE).upsert(
+      {
+        id,
+        user_id: user.id,
+        metric: 'api_call',
+        day,
+        source,
+      },
+      { onConflict: 'id' },
+    )
+
+    if (error) {
+      logger.supabase.warn('API call metric insert failed:', {
+        code: error.code,
+        message: error.message,
+        source,
+      })
+    }
+  } catch {
+    // Silently fail - metrics should not break the app
   }
 }

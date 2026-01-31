@@ -403,12 +403,13 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] Mensagens de erro e feedback multilíngues
 - [x] Formatação de moeda baseada no perfil
 
-#### 7.5 — Dashboard com Tendências (feito por codex)
+#### 7.5 — Dashboard com Tendências (feito por codex) ✅
 - [x] Gráfico de tendência (últimos 6 meses) — feito por codex
 - [x] Previsão: "Se continuar assim, terminará com R$X" — feito por codex
 - [x] Indicadores visuais: ↑ ↓ → — feito por codex
 - [x] Limiar: max(10% da média do saldo absoluto, R$500) — feito por codex
 - [x] Tooltip explicativo no card de tendência — feito por codex
+- [x] Refatorar previsão: usar média móvel (3 meses) em vez de regressão linear
 
 ### Fase 8 — Indicadores
 
@@ -429,6 +430,7 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 #### 9.1 — Rate Limiting ✅
 - [x] Implementar rate limit no webhook Telegram (10 msg/min por chatId)
 - [x] Proteção contra abuso do bot
+- [x] Persistir rate limit (evitar reset em cold start) — tabela rate_limit_entries no Supabase
 
 #### 9.2 — Validação de Input ✅
 - [x] Sanitizar mensagens antes de enviar para Groq (prompt injection)
@@ -440,13 +442,16 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 - [x] RLS ativo em todas as tabelas (profiles, transactions, categories, goals, assets, recurring_transactions, budget_alerts, telegram_link_tokens)
 - [x] Variáveis NEXT_PUBLIC_* revisadas (apenas URLs e chaves públicas expostas)
 - [x] Migração de console.* para logger em todas as API Routes
+- [x] Corrigir console.error restante em use-investments-store.ts
 
 ### Fase 10 — Resiliência (Prioridade Média)
 
-#### 10.1 — Retry e Fallback (feito por codex)
+#### 10.1 — Retry e Fallback (feito por codex) ✅
 - [x] Exponential backoff no sync offline com notificação visual — feito por codex
 - [x] AbortController com timeout de 10s nas APIs externas (Brapi, Yahoo, BCB) — feito por codex
 - [x] Fallback para última cotação quando API falhar — feito por codex
+- [x] Centralizar timeouts em lib/constants.ts
+- [x] Corrigir tipagem `as never` em generate-recurring/route.ts
 
 #### 10.2 — Cache Agressivo (feito por codex)
 - [x] Cache de cotações de 1h (atualmente 5 min) — feito por codex
@@ -454,15 +459,20 @@ t('home.title') // "Personal Finance" ou "Controle Financeiro"
 
 ### Fase 11 — Observabilidade (Prioridade Média)
 
-#### 11.1 — Health Check (feito por codex)
+#### 11.1 — Health Check (feito por codex) ✅
 - [x] Endpoint `/api/health` retornando status do Supabase — feito por codex
 - [x] Verificação de conectividade com serviços externos — feito por codex
 - [x] Log de indisponibilidade no Radar (RADAR_STOCKS) — feito por codex
 - [ ] (Opcional) Relatório interno/cron de indisponibilidade do Radar (RADAR_STOCKS)
+- [x] Cache de 30s no health check para evitar abuso
 
-#### 11.2 — Métricas de Uso
+#### 11.2 — Métricas de Uso ✅
 - [x] Contador de mensagens/transações por dia no Supabase — feito por codex
 - [x] Dashboard de uso do bot (opcional) — feito por codex
+- [x] Índice composto otimizado para usage_events (user_id, day, metric)
+- [x] Cron mensal para cleanup de usage_events (retenção 90 dias)
+- [x] Métrica de chamadas API (cotações) com card admin-only
+- [x] Variável NEXT_PUBLIC_ADMIN_EMAILS para controle de visibilidade
 
 #### 11.3 — Alertas Proativos
 - [ ] Webhook para Telegram pessoal quando cron falhar
@@ -592,5 +602,6 @@ Para contexto técnico aprofundado, leia os seguintes arquivos:
 - **2026-01-30:** Investimentos: removido botão manual de atualização; mantido auto-refresh a cada 5 min — feito por codex.
 - **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): contador de mensagens/transações por dia no Supabase.
 - **2026-01-30:** Fase 11.2 (Métricas de Uso — feito por codex): dashboard simples no Profile.
+- **2026-01-30:** Revisão técnica do trabalho do Codex: (1) Timeouts centralizados em lib/constants.ts, (2) Rate limit persistido no Supabase (evita reset em cold start), (3) Trend chart refatorado para usar média móvel, (4) Health check com cache de 30s, (5) Índice otimizado para usage_events, (6) Cron mensal para cleanup de usage_events (90 dias), (7) Métricas de API calls com card admin-only (NEXT_PUBLIC_ADMIN_EMAILS), (8) Correção de console.error e tipagem `as never`. TODO: criar email oficial ControleC.
 
 > Histórico detalhado disponível no git.

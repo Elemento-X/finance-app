@@ -4,7 +4,7 @@ import { parseMessage, formatQueryResponse, Locale } from '@/services/groq'
 import { logger } from '@/lib/logger'
 import { recordUsageEvent } from '@/services/usage-metrics'
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   sanitizeInput,
   validateInput,
   TELEGRAM_RATE_LIMIT,
@@ -195,9 +195,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  // Rate limiting: 10 messages per minute per chat
+  // Rate limiting: 10 messages per minute per chat (persisted in Supabase)
+  const supabaseForRateLimit = getSupabaseAdmin()
   const rateLimitKey = `telegram:${chatId}`
-  const rateLimitResult = checkRateLimit(rateLimitKey, TELEGRAM_RATE_LIMIT)
+  const rateLimitResult = await checkRateLimitAsync(
+    supabaseForRateLimit,
+    rateLimitKey,
+    TELEGRAM_RATE_LIMIT,
+  )
 
   if (!rateLimitResult.allowed) {
     logger.telegram.warn(`Rate limit exceeded for chat ${chatId}`)

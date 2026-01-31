@@ -3,9 +3,10 @@
 // Docs: https://dadosabertos.bcb.gov.br/
 
 import { logger } from '@/lib/logger'
+import { API_TIMEOUT_MS } from '@/lib/constants'
 
 const BASE_URL = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs'
-const REQUEST_TIMEOUT_MS = 10 * 1000
+const REQUEST_TIMEOUT_MS = API_TIMEOUT_MS
 
 // Series codes
 const SELIC_SERIES = 432 // Taxa Selic Meta

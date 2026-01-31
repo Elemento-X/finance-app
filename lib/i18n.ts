@@ -358,6 +358,11 @@ export const translations = {
     'profile.usageTelegram': 'Telegram messages',
     'profile.usageTransactions': 'Transactions created',
     'profile.usageEmpty': 'No activity recorded yet.',
+    'profile.adminMetricsTitle': 'Infrastructure Metrics',
+    'profile.adminMetricsDesc': 'Admin-only: API usage and system health',
+    'profile.usageApiCalls': 'API calls (quotes)',
+    'profile.usageApiCallsHint':
+      'Above 200/week → consider implementing Supabase cache for quotes',
     'profile.usageUnavailable': 'Usage metrics unavailable.',
 
     // Telegram
@@ -908,6 +913,11 @@ export const translations = {
     'profile.usageTelegram': 'Mensagens do Telegram',
     'profile.usageTransactions': 'Transações criadas',
     'profile.usageEmpty': 'Sem atividade registrada ainda.',
+    'profile.adminMetricsTitle': 'Métricas de Infraestrutura',
+    'profile.adminMetricsDesc': 'Admin: uso de APIs e saúde do sistema',
+    'profile.usageApiCalls': 'Chamadas API (cotações)',
+    'profile.usageApiCallsHint':
+      'Acima de 200/semana → considerar cache no Supabase para cotações',
     'profile.usageUnavailable': 'Métricas indisponíveis.',
 
     // Telegram

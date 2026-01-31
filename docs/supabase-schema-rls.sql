@@ -112,6 +112,14 @@ create table if not exists budget_alerts (
   unique(user_id, category)              -- apenas 1 alerta por categoria por usuário
 );
 
+-- Rate limiting for Telegram webhook (persisted across cold starts)
+create table if not exists rate_limit_entries (
+  key text primary key,
+  count smallint not null default 1,
+  reset_at timestamptz not null,
+  updated_at timestamptz default now()
+);
+
 -- 2) Indexes
 create index if not exists idx_transactions_user_date on transactions (user_id, date);
 create index if not exists idx_usage_events_user_day on usage_events (user_id, day);
@@ -123,6 +131,9 @@ create index if not exists idx_telegram_tokens_code on telegram_link_tokens (cod
 create index if not exists idx_telegram_tokens_user on telegram_link_tokens (user_id);
 create index if not exists idx_recurring_user_active on recurring_transactions (user_id, is_active);
 create index if not exists idx_budget_alerts_user on budget_alerts (user_id);
+create index if not exists idx_rate_limit_reset on rate_limit_entries (reset_at);
+-- Optimized index for usage_events queries in Profile
+create index if not exists idx_usage_events_user_day_metric on usage_events (user_id, day, metric);
 
 -- 3) RLS enable
 alter table profiles enable row level security;

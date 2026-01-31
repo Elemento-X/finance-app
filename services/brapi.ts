@@ -3,12 +3,13 @@
 // Docs: https://brapi.dev/docs
 
 import { logger } from '@/lib/logger'
+import { API_TIMEOUT_MS, BRAPI_CACHE_MS } from '@/lib/constants'
 
 const API_KEY = process.env.NEXT_PUBLIC_BRAPI_API_KEY
 const BASE_URL = 'https://brapi.dev/api'
 const CACHE_KEY = 'brapi_stocks_cache'
-const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
-const REQUEST_TIMEOUT_MS = 10 * 1000
+const CACHE_TTL = BRAPI_CACHE_MS
+const REQUEST_TIMEOUT_MS = API_TIMEOUT_MS
 
 // List of 15 Brazilian stocks to display in the radar
 export const RADAR_STOCKS = [
