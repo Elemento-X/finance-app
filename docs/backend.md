@@ -119,6 +119,16 @@ Este documento explica como o backend do ControleC funciona. Não há servidor t
 3. Calcula resumo (semana/mês anterior)
 4. Envia via Telegram Bot API
 
+### 2.4 Cron: Cleanup de Métricas
+
+**Arquivo:** `app/api/cron/cleanup-usage/route.ts`
+**Schedule:** Mensal (dia 1 às 04:00 UTC)
+
+**Fluxo:**
+1. Valida `Authorization: Bearer <CRON_SECRET>`
+2. Deleta `usage_events` com mais de 90 dias
+3. Limpa `rate_limit_entries` expiradas
+
 ## 3. Supabase
 
 ### 3.1 Client Público (Browser)
@@ -145,7 +155,8 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 | `assets` | Ativos de investimento |
 | `recurring_transactions` | Transações recorrentes |
 | `budget_alerts` | Limites de orçamento por categoria |
-| `usage_events` | Eventos de uso (mensagens/transactions) por dia |
+| `usage_events` | Eventos de uso (mensagens/transações/api_calls) por dia |
+| `rate_limit_entries` | Rate limiting persistido (evita reset em cold start) |
 
 **RLS:** Todas as tabelas usam `auth.uid() = user_id`. API Routes com service role ignoram RLS.
 
@@ -230,6 +241,7 @@ Usa `SUPABASE_SERVICE_ROLE_KEY`. Usado apenas em API Routes. Ignora RLS.
 | `TELEGRAM_WEBHOOK_SECRET` | Server only |
 | `GROQ_API_KEY` | Server only |
 | `NEXT_PUBLIC_BRAPI_API_KEY` | Browser |
+| `NEXT_PUBLIC_ADMIN_EMAILS` | Browser (emails admin, separados por vírgula) |
 | `CRON_SECRET` | Server only |
 
 **Onde configurar:**
@@ -336,7 +348,10 @@ logger.sync.error('Erro crítico')          // Sempre (prod + dev)
 - Métricas atuais:
   - `telegram_message` (mensagens recebidas)
   - `transaction_created` (transações criadas: web, telegram, recorrentes)
+  - `api_call` (chamadas a APIs externas: Yahoo, CoinGecko, BCB)
 - UI: Card de métricas no Profile (últimos 7 dias) — feito por codex
+- Card admin-only para métricas de API (NEXT_PUBLIC_ADMIN_EMAILS)
+- Retenção: 90 dias (cleanup mensal via cron)
 
 ## 11. Segurança
 
@@ -357,7 +372,7 @@ if (!result.allowed) {
 **Configuração:**
 - `maxRequests`: 10 mensagens
 - `windowMs`: 60.000ms (1 minuto)
-- Storage: in-memory (reset em cold start)
+- Storage: Supabase (tabela `rate_limit_entries`) com fallback in-memory
 
 ### 11.2 Sanitização de Input
 

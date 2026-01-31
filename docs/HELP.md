@@ -92,7 +92,10 @@ TELEGRAM_WEBHOOK_SECRET=
 GROQ_API_KEY=
 NEXT_PUBLIC_BRAPI_API_KEY=
 CRON_SECRET=
+NEXT_PUBLIC_ADMIN_EMAILS=  # Emails com acesso a métricas admin (separados por vírgula)
 ```
+
+> **Nota:** Todas as variáveis acima devem ser configuradas tanto em `.env.local` (dev) quanto na Vercel (prod).
 
 ## Telegram Bot
 
@@ -106,7 +109,7 @@ curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://controlec.verce
 - Categorizacao automatica: tenta casar categoria localmente (keywords) e usa IA como fallback.
 - Bot multilingue: respostas em pt/en conforme idioma do perfil do usuario.
 - Idioma do bot: definido pelo campo `language` do profile (pt ou en).
-- Rate limiting: 10 mensagens/min por chat (memoria local).
+- Rate limiting: 10 mensagens/min por chat (persistido no Supabase).
 - Sanitizacao: remove HTML e caracteres de controle, limita tamanho de mensagem.
 - Exemplos:
   - PT: "gastei 50 no mercado" -> registra despesa.
